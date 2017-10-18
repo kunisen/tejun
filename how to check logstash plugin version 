@@ -1,0 +1,10 @@
+how to check logstash plugin version
+
+/tmp/logstash-5.4.1 % bin/logstash-plugin list --verbose logstash-output-elasticsearch
+logstash-output-elasticsearch (7.3.1)
+/tmp/logstash-5.4.1 % bin/logstash-plugin install --version 7.3.2 logstash-output-elasticsearch
+Validating logstash-output-elasticsearch-7.3.2
+Installing logstash-output-elasticsearch
+Installation successful
+/tmp/logstash-5.4.1 % bin/logstash-plugin list --verbose logstash-output-elasticsearch
+logstash-output-elasticsearch (7.3.2)

@@ -1,0 +1,82 @@
+#ユーザー辞書の設定方法
+
+
+Elasticsearchでの形態素解析はKuromoji一択だけど、やや辞書が貧弱な部分もある。
+
+例えば東京に「西国分寺駅」という駅があるけど、「西国分寺」で形態素解析すると「西」「国分寺」で分かれる。
+読みも「サイコクブンジ」となってしまう。（正しくは「ニシコクブンジ」）
+
+なので、ある程度ユーザー辞書で補いたいと思う。
+
+
+
+辞書ファイルの作成
+
+まず辞書ファイルを作成。
+普通のテキストファイルで、文字コードは UTF-8。拡張子は自由。
+ここでは例として「my_jisho.dic」とした。
+
+辞書ファイルの置き場所
+
+ファイルの保存先は
+/etc/elasticsearch/my_jisho.dic
+でいけた。
+これはもしかしたら Elasticsearch 1.1.1 だからかも。
+
+他のサイト等を見ると「(Elasticsearchホーム)/cofig/my_jisho.dic」と書いているところも多かったので、はじめそこに置いてみたんだけどインデックス作成時に「/etc/elasticsearch/ に置け」とエラーが出た。
+
+辞書ファイルの書き方
+
+ファイルの中身はCSV形式で、以下の並びで書く。
+
+単語,形態素解析後の単語,読み,品詞
+「形態素解析後の単語」は、半角スペースで分けると分かち書きされる。
+
+「東京スカイツリー」の例
+
+東京スカイツリー,東京 スカイツリー,トウキョウ スカイツリー,カスタム名詞
+「西国分寺」の例
+
+西国分寺,西国分寺,ニシコクブンジ,駅名
+
+<text>,<token 1> ... <token n>,<reading 1> ... <reading n>,<part-of-speech tag>
+
+
+# kibana の設定
+
+PUT userdict_sample
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "tokenizer": {
+          "kuromoji_user_dict": {
+            "type": "kuromoji_tokenizer",
+            "mode": "extended",
+            "discard_punctuation": "false",
+            "user_dictionary": "userdict_ja.txt"
+          }
+        },
+        "analyzer": {
+          "my_analyzer": {
+            "type": "custom",
+            "tokenizer": "kuromoji_user_dict"
+          }
+        }
+      }
+    }
+  }
+}
+
+POST userdict_sample/_analyze
+{
+  "analyzer": "my_analyzer",
+  "text": "規定値以上"
+}
+
+POST userdict_sample/_analyze
+{
+  "analyzer": "my_analyzer",
+  "text": "規定値以下"
+}
+

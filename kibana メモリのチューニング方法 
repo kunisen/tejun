@@ -1,0 +1,8 @@
+kibana メモリのチューニング方法
+
+Kibanaが利用するメモリ値を変更するには/bin/kibana ファイル内に次のように記載する必要があります（sizeinMB部分でメモリの値を指定します）。
+
+NODE_OPTIONS="--max-old-space-size=[sizeinMB]"
+
+指定されました値が正常に読み込まれている事を確認するには次のコマンドをご使用下さい：ps -ef | grep -i node
+環境によって出力が若干違ってくる事もありますが、参考として「./bin/../node/bin/node --max-old-space-size=1024」のような表示になります。

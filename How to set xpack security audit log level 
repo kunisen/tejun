@@ -1,0 +1,19 @@
+How to set xpack security audit log level
+
+https://elastic.my.salesforce.com/5006100000CDXAFAA5
+
+You can set the audit log level in 
+$ES_HOME/config/x-pack/log4j2.properties
+
+logger.xpack_security_audit_logfile.level = info
+
+also, you can limit the event types that gets captured in 
+
+xpack.security.audit.logfile.events.include
+
+For additional information see 
+
+https://www.elastic.co/guide/en/x-pack/current/auditing.html
+
+★ただ、logfile だけなので、xpack そのものの設定じゃなさそう。
+
