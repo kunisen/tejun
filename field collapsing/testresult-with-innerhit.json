@@ -1,0 +1,291 @@
+GET /twitter/tweet/_search
+{
+    "query": {
+        "match": {
+            "message": "elasticsearch"
+        }
+    },
+    "collapse" : {
+        "field" : "user",
+        "inner_hits": {
+          "name": "overall"
+        }
+    },
+    "sort": "likes" 
+}
+
+#result
+#----
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 10,
+    "max_score": null,
+    "hits": [
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "1",
+        "_score": null,
+        "_source": {
+          "title": "doc1",
+          "message": "elasticsearch",
+          "user": "user1",
+          "likes": 10
+        },
+        "fields": {
+          "user": [
+            "user1"
+          ]
+        },
+        "sort": [
+          10
+        ],
+        "inner_hits": {
+          "overall": {
+            "hits": {
+              "total": 3,
+              "max_score": 0.2876821,
+              "hits": [
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "1",
+                  "_score": 0.2876821,
+                  "_source": {
+                    "title": "doc1",
+                    "message": "elasticsearch",
+                    "user": "user1",
+                    "likes": 10
+                  }
+                },
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "12",
+                  "_score": 0.13353139,
+                  "_source": {
+                    "title": "doc12",
+                    "message": "elasticsearch",
+                    "user": "user1",
+                    "likes": 20
+                  }
+                },
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "11",
+                  "_score": 0.13353139,
+                  "_source": {
+                    "title": "doc11",
+                    "message": "elasticsearch",
+                    "user": "user1",
+                    "likes": 20
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "2",
+        "_score": null,
+        "_source": {
+          "title": "doc2",
+          "message": "elasticsearch",
+          "user": "user2",
+          "likes": 20
+        },
+        "fields": {
+          "user": [
+            "user2"
+          ]
+        },
+        "sort": [
+          20
+        ],
+        "inner_hits": {
+          "overall": {
+            "hits": {
+              "total": 4,
+              "max_score": 0.2876821,
+              "hits": [
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "22",
+                  "_score": 0.2876821,
+                  "_source": {
+                    "title": "doc22",
+                    "message": "elasticsearch",
+                    "user": "user2",
+                    "likes": 40
+                  }
+                },
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "2",
+                  "_score": 0.18232156,
+                  "_source": {
+                    "title": "doc2",
+                    "message": "elasticsearch",
+                    "user": "user2",
+                    "likes": 20
+                  }
+                },
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "21",
+                  "_score": 0.13353139,
+                  "_source": {
+                    "title": "doc21",
+                    "message": "elasticsearch",
+                    "user": "user2",
+                    "likes": 30
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "3",
+        "_score": null,
+        "_source": {
+          "title": "doc3",
+          "message": "elasticsearch",
+          "user": "user3",
+          "likes": 30
+        },
+        "fields": {
+          "user": [
+            "user3"
+          ]
+        },
+        "sort": [
+          30
+        ],
+        "inner_hits": {
+          "overall": {
+            "hits": {
+              "total": 1,
+              "max_score": 0.13353139,
+              "hits": [
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "3",
+                  "_score": 0.13353139,
+                  "_source": {
+                    "title": "doc3",
+                    "message": "elasticsearch",
+                    "user": "user3",
+                    "likes": 30
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "4",
+        "_score": null,
+        "_source": {
+          "title": "doc4",
+          "message": "elasticsearch",
+          "user": "user4",
+          "likes": 40
+        },
+        "fields": {
+          "user": [
+            "user4"
+          ]
+        },
+        "sort": [
+          40
+        ],
+        "inner_hits": {
+          "overall": {
+            "hits": {
+              "total": 1,
+              "max_score": 0.18232156,
+              "hits": [
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "4",
+                  "_score": 0.18232156,
+                  "_source": {
+                    "title": "doc4",
+                    "message": "elasticsearch",
+                    "user": "user4",
+                    "likes": 40
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "5",
+        "_score": null,
+        "_source": {
+          "title": "doc5",
+          "message": "elasticsearch",
+          "user": "user5",
+          "likes": 50
+        },
+        "fields": {
+          "user": [
+            "user5"
+          ]
+        },
+        "sort": [
+          50
+        ],
+        "inner_hits": {
+          "overall": {
+            "hits": {
+              "total": 1,
+              "max_score": 0.13353139,
+              "hits": [
+                {
+                  "_index": "twitter",
+                  "_type": "tweet",
+                  "_id": "5",
+                  "_score": 0.13353139,
+                  "_source": {
+                    "title": "doc5",
+                    "message": "elasticsearch",
+                    "user": "user5",
+                    "likes": 50
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  }
+}
