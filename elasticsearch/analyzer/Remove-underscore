@@ -1,0 +1,57 @@
+# sample of using underscore splitter token filter
+DELETE my_test4
+PUT my_test4
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "filter": {
+          "underscore_splitter": {
+            "type": "word_delimiter",
+            "type_table": [
+              "_ => SUBWORD_DELIM"
+            ]
+          }
+        },
+        "analyzer": {
+          "my_analyzer": {
+            "type": "custom",
+            "tokenizer": "standard",
+            "filter": [
+              "lowercase",
+              "underscore_splitter"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+GET my_test4/_analyze
+{
+  "analyzer": "my_analyzer", 
+  "text": "hello_hi"
+}
+
+
+Result
+————
+{
+  "tokens": [
+    {
+      "token": "hello",
+      "start_offset": 0,
+      "end_offset": 5,
+      "type": "<ALPHANUM>",
+      "position": 0
+    },
+    {
+      "token": "hi",
+      "start_offset": 6,
+      "end_offset": 8,
+      "type": "<ALPHANUM>",
+      "position": 1
+    }
+  ]
+}
