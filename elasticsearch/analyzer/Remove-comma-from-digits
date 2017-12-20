@@ -1,54 +1,7 @@
 # sample of using patter_replace character filter
 DELETE my_test5
-PUT my_test5
-{
-  "settings": {
-    "analysis": {
-      "analyzer": {
-        "my_analyzer": {
-          "tokenizer": "standard",
-          "char_filter": [
-            "my_char_filter"
-          ]
-        }
-      },
-      "char_filter": {
-        "my_char_filter": {
-          "type": "pattern_replace",
-          "pattern": ",",
-          "replacement": ""
-        }
-      }
-    }
-  }
-}
 
-
-GET my_test5/_analyze
-{
-  "analyzer": "my_analyzer", 
-  "text": "1,000"
-}
-
-
-Result
-———
-{
-  "tokens": [
-    {
-      "token": "1000",
-      "start_offset": 0,
-      "end_offset": 5,
-      "type": "<NUM>",
-      "position": 0
-    }
-  ]
-}
-
-
-
-# sample of using patter_replace character filter
-DELETE my_test5
+# settings
 PUT my_test5
 {
   "settings": {
@@ -72,8 +25,25 @@ PUT my_test5
   }
 }
 
+
+# analyze
 GET my_test5/_analyze
 {
   "analyzer": "my_analyzer", 
-  "text": "1,000万円"
+  "text": "1,000"
+}
+
+
+Result
+————
+{
+  "tokens": [
+    {
+      "token": "1000",
+      "start_offset": 0,
+      "end_offset": 5,
+      "type": "word",
+      "position": 0
+    }
+  ]
 }
