@@ -1,0 +1,29 @@
+# 1. Set repo in elasticsearch.yml
+path.repo: ["/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backup"]
+
+# 2. Setup locations for taking snapshot
+PUT /_snapshot/my_backup
+{
+  "type": "fs",
+  "settings": {
+    "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backup/my_backup"
+  }
+}
+
+# 3. Check settings
+GET _snapshot/my_backup
+
+# 4. Take snapshot (all indices / particular indicies)
+PUT /_snapshot/my_backup/snapshot_1?wait_for_completion=true
+PUT /_snapshot/my_backup/snapshot_2?wait_for_completion=true
+{
+  "indices": "my_*",
+  "ignore_unavailable": true,
+  "include_global_state": false
+}
+
+
+# 5. Restore indices
+POST my*/_close
+POST _snapshot/my_backup/snapshot_2/_restore
+GET my*/_search
