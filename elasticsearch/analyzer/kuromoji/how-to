@@ -1,0 +1,47 @@
+DELETE  my_test2
+PUT my_test2
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "tokenizer": {
+          "kuromoji_user_dict": {
+            "type": "kuromoji_tokenizer",
+            "mode": "extended",
+            "discard_punctuation": "false"
+          }
+        },
+        "analyzer": {
+          "my_analyzer": {
+            "type": "custom",
+            "tokenizer": "kuromoji_user_dict"
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "doc": {
+      "properties": {
+        "title": {
+          "type":     "text",
+          "analyzer": "my_analyzer"
+        }
+      }
+    }
+  }
+}
+
+POST my_test2/doc
+{
+  "title": "大阪国立大学"
+}
+
+GET my_test2/_search
+{
+  "query": {
+    "match": {
+      "title": "大学"
+    }
+  }
+}
