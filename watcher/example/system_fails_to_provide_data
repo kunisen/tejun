@@ -1,0 +1,95 @@
+# watcher example for "https://github.com/elastic/examples/tree/master/Alerting/Sample%20Watches/system_fails_to_provide_data"
+DELETE my_test
+
+# mapping settings
+PUT my_test
+{
+  "mappings": {
+    "log": {
+      "properties": {
+        "host": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
+
+# how to create / update watcher
+PUT _xpack/watcher/watch/my_test
+{
+  "metadata": {
+    "window_period": "24h",
+    "last_period": "5m"
+  },
+  "trigger": {
+    "schedule": {
+      "interval": "5m"
+    }
+  },
+  "input": {
+    "search": {
+      "request": {
+        "indices": "log",
+        "types": "log",
+        "body": {
+          "query": {
+            "range": {
+              "@timestamp": {
+                "gte": "now-{{ctx.metadata.window_period}}"
+              }
+            }
+          },
+          "aggs": {
+            "periods": {
+              "filters": {
+                "filters": {
+                  "history": {
+                    "range": {
+                      "@timestamp": {
+                        "gte": "now-{{ctx.metadata.window_period}}"
+                      }
+                    }
+                  },
+                  "last_period": {
+                    "range": {
+                      "@timestamp": {
+                        "gte": "now-{{ctx.metadata.last_period}}"
+                      }
+                    }
+                  }
+                }
+              },
+              "aggs": {
+                "hosts": {
+                  "terms": {
+                    "field": "host",
+                    "size": 10000
+                  }
+                }
+              }
+            }
+          },
+          "size": 0
+        }
+      }
+    }
+  },
+  "condition": {
+    "script": "return ctx.payload.aggregations.periods.buckets.history.hosts.buckets.size() > ctx.payload.aggregations.periods.buckets.last_period.hosts.buckets.size();"
+  },
+  "throttle_period": "5m",
+  "actions": {
+    "log": {
+      "transform": {
+        "script": "def last_period=ctx.payload.aggregations.periods.buckets.last_period.hosts.buckets.stream().map(e -> e.key).collect(Collectors.toList()); return ctx.payload.aggregations.periods.buckets.history.hosts.buckets.stream().map(e -> e.key).filter(p -> !last_period.contains(p)).collect(Collectors.toList());"
+      },
+      "logging": {
+        "text": "Systems not responding in the last {{ctx.metadata.last_period}} minutes:{{#ctx.payload._value}}{{.}}:{{/ctx.payload._value}}"
+      }
+    }
+  }
+}
+
+# how to delete watcher
+DELETE _xpack/watcher/watch/my_test
