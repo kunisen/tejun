@@ -1,0 +1,52 @@
+#-----------------
+# update mapping
+#-----------------
+DELETE my_test3
+PUT my_test3
+{}
+
+# put mapping
+PUT my_test3/_mapping/doc
+{"properties":{"name":{"type":"text"}}}
+
+# add some data
+PUT my_test3/doc/1
+{ "name": "bob" }
+
+# update mapping
+PUT my_test3/_mapping/doc
+{
+  "properties": {
+    "name": {
+      "type": "text",
+      "fields": {
+        "english": {
+          "type": "text",
+          "analyzer": "english"
+        }
+      }
+    }
+  }
+}
+
+# search
+GET my_test3/_search
+{"query":{"match":{"name":"bob"}}}
+
+# hit
+
+# search
+GET my_test3/_search
+{"query":{"match":{"name.english":"bob"}}}
+
+# no hit
+
+# update
+POST my_test3/doc/1/_update
+{"doc":{"name":"bob"}, "detect_noop": false}
+
+# search
+GET my_test3/_search
+{"query":{"match":{"name.english":"bob"}}}
+
+# hit
