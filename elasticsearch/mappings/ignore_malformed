@@ -1,0 +1,122 @@
+#-----------------------
+# index level settings
+#-----------------------
+DELETE  my_index
+
+# set ignore_malformed to true for my_index
+PUT my_index
+{
+  "settings": {
+    "index.mapping.ignore_malformed": true
+  },
+  "mappings": {
+    "my_type": {
+      "properties": {
+        "number_one": {
+          "type": "integer"
+        },
+        "number_two": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
+
+# check settings
+GET my_index
+
+# response
+{
+  "my_index": {
+    "aliases": {},
+    "mappings": {
+      "my_type": {
+        "properties": {
+          "number_one": {
+            "type": "integer"
+          },
+          "number_two": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "mapping": {
+          "ignore_malformed": "true"     <----- here
+        },
+        "number_of_shards": "5",
+        "provided_name": "my_index",
+        "creation_date": "1516155264705",
+        "number_of_replicas": "1",
+        "uuid": "fUuvC-xER3G456obSXX5Gg",
+        "version": {
+          "created": "5000099"
+        }
+      }
+    }
+  }
+}
+
+
+#-----------------------
+# field level settings
+#-----------------------
+DELETE  my_index2
+
+# set ignore_malformed to true for number_one field
+PUT my_index2
+{
+  "mappings": {
+    "my_type": {
+      "properties": {
+        "number_one": {
+          "type": "integer",
+          "ignore_malformed": true
+        },
+        "number_two": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}
+
+
+# check settings
+GET my_index2
+
+# response
+{
+  "my_index2": {
+    "aliases": {},
+    "mappings": {
+      "my_type": {
+        "properties": {
+          "number_one": {
+            "type": "integer",
+            "ignore_malformed": true
+          },
+          "number_two": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "creation_date": "1516155351645",
+        "number_of_shards": "5",
+        "number_of_replicas": "1",
+        "uuid": "2P_PEiWHSnyN529O7h6WLg",
+        "version": {
+          "created": "5000099"
+        },
+        "provided_name": "my_index2"
+      }
+    }
+  }
+}
+
