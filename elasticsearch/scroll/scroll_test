@@ -1,0 +1,282 @@
+#--------------------------
+# scroll test in 5.0
+#--------------------------
+# ingest 30 times this data
+POST /twitter/tweet
+{
+  "title": "elasticsearch",
+  "author": "aaa"
+}
+
+# call scroll api
+POST /twitter/tweet/_search?scroll=1m
+{
+    "size": 10,
+    "query": {
+        "match" : {
+            "title" : "elasticsearch"
+        }
+    }
+}
+
+
+# get both scroll id and search result
+{
+  "_scroll_id": "DnF1ZXJ5VGhlbkZldGNoBQAAAAAAAAeEFmNJZlBfQ0IzUWdPRnlwMFRQUFFYRncAAAAAAAAHhhZjSWZQX0NCM1FnT0Z5cDBUUFBRWEZ3AAAAAAAAB4UWY0lmUF9DQjNRZ09GeXAwVFBQUVhGdwAAAAAAAAeHFmNJZlBfQ0IzUWdPRnlwMFRQUFFYRncAAAAAAAAHiBZjSWZQX0NCM1FnT0Z5cDBUUFBRWEZ3",
+  "took": 13,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 30,
+    "max_score": 0.6931472,
+    "hits": [
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8-AUutiKnEg6PEtX",
+        "_score": 0.6931472,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8-imutiKnEg6PEte",
+        "_score": 0.6931472,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8_ClutiKnEg6PEtn",
+        "_score": 0.6931472,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8-CnutiKnEg6PEtY",
+        "_score": 0.4307829,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8-WeutiKnEg6PEtZ",
+        "_score": 0.4307829,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8-7ButiKnEg6PEtk",
+        "_score": 0.4307829,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8-9TutiKnEg6PEtl",
+        "_score": 0.4307829,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8_MPutiKnEg6PEtr",
+        "_score": 0.4307829,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB8_OtutiKnEg6PEts",
+        "_score": 0.4307829,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB891PutiKnEg6PEtS",
+        "_score": 0.2876821,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+
+#--------------------------
+# scroll test in 2.4
+#--------------------------
+# ingest 30 times this data
+POST /twitter/tweet
+{
+  "title": "elasticsearch",
+  "author": "aaa"
+}
+
+
+# call scroll api
+POST /twitter/tweet/_search?scroll=1m
+{
+    "size": 10,
+    "query": {
+        "match" : {
+            "title" : "elasticsearch"
+        }
+    }
+}
+
+
+# get both scroll id and search result
+{
+  "_scroll_id": "cXVlcnlUaGVuRmV0Y2g7NTs0NjphN3Z2YUdxX1RRbXUxWDU2amdjWjJBOzQ3OmE3dnZhR3FfVFFtdTFYNTZqZ2NaMkE7NDg6YTd2dmFHcV9UUW11MVg1NmpnY1oyQTs0OTphN3Z2YUdxX1RRbXUxWDU2amdjWjJBOzUwOmE3dnZhR3FfVFFtdTFYNTZqZ2NaMkE7MDs=",
+  "took": 26,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 30,
+    "max_score": 0.8946395,
+    "hits": [
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB95UNTP44EPQhSxOf",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB95shTP44EPQhSxOm",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB95vGTP44EPQhSxOn",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB95zoTP44EPQhSxOo",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB96DHTP44EPQhSxOu",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB96ItTP44EPQhSxOw",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB96UVTP44EPQhSxOz",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB96W-TP44EPQhSxO0",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB96nATP44EPQhSxO6",
+        "_score": 0.8946395,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      },
+      {
+        "_index": "twitter",
+        "_type": "tweet",
+        "_id": "AWEB95a2TP44EPQhSxOg",
+        "_score": 0.8664686,
+        "_source": {
+          "title": "elasticsearch",
+          "author": "aaa"
+        }
+      }
+    ]
+  }
+}
