@@ -74,7 +74,7 @@ PUT my_index2
       "properties": {
         "number_one": {
           "type": "integer",
-          "ignore_malformed": true    <------ here
+          "ignore_malformed": true
         },
         "number_two": {
           "type": "integer"
@@ -97,7 +97,7 @@ GET my_index2
         "properties": {
           "number_one": {
             "type": "integer",
-            "ignore_malformed": true
+            "ignore_malformed": true    <------ here
           },
           "number_two": {
             "type": "integer"
