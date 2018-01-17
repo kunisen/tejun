@@ -1,0 +1,58 @@
+Logstash-stdin.conf
+———————————
+# usage 
+# echo "Jan 01 00:00:00 ip-127-0-0-1 clamd[2763]: SelfCheck: Database status OK." | bin/logstash -f config/logstash-stdin.conf 
+
+input { stdin { } }
+
+filter {
+  # get timestamp from log
+  grok {
+    match => { "message" => "%{SYSLOGBASE:base}"}
+  }
+  
+  # get timestamp and set to start_date
+  date {
+    match => ["timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss"]
+    target => "my_timestamp"
+  }
+  
+  ruby {
+    code => "
+      #one_day_before = event.get('my_timestamp') - (60*60*24);
+      #event.set('one_day_before',one_day_before);
+
+      tmp = event.get('my_timestamp').to_i
+      event.set('my_timestamp2', Time.at(tmp).strftime('%H:%M'))
+      "
+  }
+}
+
+
+output {
+  stdout { codec => rubydebug }
+}
+
+
+
+# output
+senmac:logstash-5.5.2 kuniyasu$echo "Jan 01 00:00:00 ip-127-0-0-1 clamd[2763]: SelfCheck: Database status OK." | bin/logstash -f config/logstash-stdin.conf 
+ERROR StatusLogger No log4j2 configuration file found. Using default configuration: logging only errors to the console.
+Sending Logstash's logs to /Users/kuniyasu/Work/installer/logstash/logstash-5.5.2/logs which is now configured via log4j2.properties
+[2018-01-16T22:29:50,882][INFO ][logstash.pipeline        ] Starting pipeline {"id"=>"main", "pipeline.workers"=>8, "pipeline.batch.size"=>125, "pipeline.batch.delay"=>5, "pipeline.max_inflight"=>1000}
+[2018-01-16T22:29:50,894][INFO ][logstash.pipeline        ] Pipeline main started
+[2018-01-16T22:29:50,963][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600}
+{
+       "@timestamp" => 2018-01-16T13:29:50.904Z,
+    "my_timestamp2" => "00:00",
+     "my_timestamp" => 2017-12-31T15:00:00.000Z,
+         "@version" => "1",
+             "host" => "senmac",
+              "pid" => "2763",
+          "program" => "clamd",
+          "message" => "Jan 01 00:00:00 ip-127-0-0-1 clamd[2763]: SelfCheck: Database status OK.",
+        "logsource" => "ip-127-0-0-1",
+             "base" => "Jan 01 00:00:00 ip-127-0-0-1 clamd[2763]:",
+        "timestamp" => "Jan 01 00:00:00"
+}
+[2018-01-16T22:29:53,931][WARN ][logstash.agent           ] stopping pipeline {:id=>"main"}

@@ -1,0 +1,55 @@
+# logstash-stdin.conf
+————————————————————————
+
+# how to use it
+# echo "2018-01-01 00:00" | bin/logstash -f config/logstash-stdin.conf 
+
+# put the following file under <logstash install folder>/config
+# file content
+# ---------------
+# # my pattern
+# MY_PATTERN %{YEAR}-%{MONTHNUM}-%{MONTHDAY} %{HOUR}:%{MINUTE}
+# ---------------
+# 
+
+input {
+  stdin { }
+}
+
+filter {
+  grok {
+    # use custom patterns
+    patterns_dir => ["./config/patterns"]
+    match => { "message" => "%{MY_PATTERN:timestamp}"}
+  }
+
+  ruby {
+    code => "
+      event.set('test',event.get('timestamp'));
+      "
+  }
+}
+
+
+output {
+  stdout { codec => rubydebug }
+}
+
+
+# output
+————————————————————————
+senmac:logstash-5.5.2 kuniyasu$echo "2018-01-01 00:00" | bin/logstash -f config/logstash-stdin.conf 
+ERROR StatusLogger No log4j2 configuration file found. Using default configuration: logging only errors to the console.
+Sending Logstash's logs to /Users/kuniyasu/Work/installer/logstash/logstash-5.5.2/logs which is now configured via log4j2.properties
+[2018-01-16T22:32:19,098][INFO ][logstash.pipeline        ] Starting pipeline {"id"=>"main", "pipeline.workers"=>8, "pipeline.batch.size"=>125, "pipeline.batch.delay"=>5, "pipeline.max_inflight"=>1000}
+[2018-01-16T22:32:19,112][INFO ][logstash.pipeline        ] Pipeline main started
+[2018-01-16T22:32:19,182][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600}
+{
+    "@timestamp" => 2018-01-16T13:32:19.123Z,
+          "test" => "2018-01-01 00:00",
+      "@version" => "1",
+          "host" => "senmac",
+       "message" => "2018-01-01 00:00",
+     "timestamp" => "2018-01-01 00:00"
+}
+[2018-01-16T22:32:22,149][WARN ][logstash.agent           ] stopping pipeline {:id=>"main"}
