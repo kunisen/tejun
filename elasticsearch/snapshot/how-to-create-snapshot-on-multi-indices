@@ -1,0 +1,33 @@
+# 1. set elasticsearch.yml
+# path.repo: ["/Users/kuniyasu/Work/installer/elastic/elasticsearch-2.4.6/backups"]
+
+# 2. register the repo
+PUT _snapshot/my_backup
+{
+  "type": "fs",
+  "settings": {
+    "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-2.4.6/backups/my_backup",
+    "compress": true
+  }
+}
+
+# 3. create some indices
+DELETE index_1, index_2
+PUT index_1/doc/1
+{"title": "aaaa"}
+
+PUT index_2/doc/1
+{"author": "bbbb"}
+
+# 4. create snapshot
+PUT /_snapshot/my_backup/snapshot_1
+{
+  "indices": "index_1,index_2",
+  "ignore_unavailable": true,
+  "include_global_state": false
+}
+
+# response
+#{
+#  "accepted": true
+#}
