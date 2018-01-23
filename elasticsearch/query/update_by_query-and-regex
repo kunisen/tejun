@@ -1,0 +1,105 @@
+# put data
+DELETE my_test
+
+PUT my_test/doc/1
+{"title": "1234"}
+
+PUT my_test/doc/2
+{"title": "5678"}
+
+
+# search for data
+GET my_test/_search
+
+# result
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "title": "5678"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "1234"
+        }
+      }
+    ]
+  }
+}
+
+
+# use regex and update_by_query 
+GET my_test/_update_by_query
+{
+  "script": {
+    "source": """
+      ctx._source.title = "0000" + ctx._source.title;
+    """
+  },
+  "query": {
+    "regexp": {
+      "title.keyword": "[0-9]{4}"
+    }
+  }
+}
+
+
+# check data again
+GET my_test/_search
+
+# result
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "title": "00005678"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "00001234"
+        }
+      }
+    ]
+  }
+}
+
