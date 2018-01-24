@@ -1,5 +1,5 @@
 #----------------
-# watcher sample : get hits separately
+# watcher sample : use watcher to indexing a new index separately
 #----------------
 # put some data
 DELETE my_test
@@ -12,7 +12,7 @@ PUT my_test/doc/2
 PUT my_test/doc/3
 {"number": 3}
 
-# search 
+# search "aaaa"
 GET my_test/_search
 
 # result
@@ -63,16 +63,15 @@ GET my_test/_search
 
 # prepare for watcher
 # condition : if hits total >= 0
-# transform : return sum of number field in each index
-# action    : 1. output this sum to console
-#             2. index this sum to another index
-
+# transform : n/a
+# action    : 1. output some messages to console
+#             2. indexing data to another new index per document
 DELETE _xpack/watcher/watch/my_test_watcher
 PUT _xpack/watcher/watch/my_test_watcher
 {
   "trigger": {
     "schedule": {
-      "interval": "5s"
+      "interval": "30s"
     }
   },
   "input": {
@@ -96,24 +95,25 @@ PUT _xpack/watcher/watch/my_test_watcher
       }
     }
   },
-  "transform": {
-    "script": """
-    def items = ctx.payload.hits.hits;
-    def sum = 0;
-    def flag = false;
-    for (int i = 0; i < items.size(); i++) {
-        sum += items[i]._source.number;
-    }
-    return [ 'my_sum' : sum ];
-"""
-  },
   "actions": {
     "logging_test": {
       "logging": {
-        "text": "show my sum - {{ctx.payload.my_sum}}"
+        "text": "watcher is running"
       }
     },
     "index_test": {
+      "transform": {
+          "script": """
+          for (int i = 0; i < ctx.payload.hits.hits.length; ++i) {
+            // copy the source field to new index
+            ctx.payload.hits.hits[i] = ctx.payload.hits.hits[i]._source;
+            
+            // add a new field to new index
+            ctx.payload.hits.hits[i].test_field = i;
+          }  
+          return [ '_doc' : ctx.payload.hits.hits]
+          """
+        },
       "index": {
         "index": "my_test2",
         "doc_type": "doc"
@@ -122,24 +122,20 @@ PUT _xpack/watcher/watch/my_test_watcher
   }
 }
 
+# or run watcher manually if a long interval needs to be specified
+POST _xpack/watcher/watch/my_test_watcher/_execute
 
-# response
-{
-  "_id": "my_test_watcher",
-  "_version": 10,
-  "created": false
-}
-
-# console log output
-[2018-01-24T11:04:32,154][INFO ][o.e.x.w.a.l.ExecutableLoggingAction] [75_8Hwx] show my sum - 6
+# result from console
+# [2018-01-24T17:26:38,502][INFO ][o.e.x.w.a.l.ExecutableLoggingAction] [buvHyIV] watcher is running
 
 
-# search my_test2 index
+# check the new index
+DELETE my_test2
 GET my_test2/_search
 
 # result
 {
-  "took": 31,
+  "took": 0,
   "timed_out": false,
   "_shards": {
     "total": 5,
@@ -148,27 +144,40 @@ GET my_test2/_search
     "failed": 0
   },
   "hits": {
-    "total": 2,
+    "total": 3,
     "max_score": 1,
     "hits": [
       {
         "_index": "my_test2",
         "_type": "doc",
-        "_id": "AWEmEb0KX2pHHpUEAWKT",
+        "_id": "RWVHJ2EBWufEwockdK-J",
         "_score": 1,
         "_source": {
-          "my_sum": 6
+          "number": 2,
+          "test_field": 0
         }
       },
       {
         "_index": "my_test2",
         "_type": "doc",
-        "_id": "AWEmEdCsX2pHHpUEAWOA",
+        "_id": "RmVHJ2EBWufEwockdK-J",
         "_score": 1,
         "_source": {
-          "my_sum": 6
+          "number": 1,
+          "test_field": 1
+        }
+      },
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "R2VHJ2EBWufEwockdK-J",
+        "_score": 1,
+        "_source": {
+          "number": 3,
+          "test_field": 2
         }
       }
     ]
   }
 }
+
