@@ -1,0 +1,174 @@
+#----------------
+# watcher sample : get hits separately
+#----------------
+# put some data
+DELETE my_test
+PUT my_test/doc/1
+{"number": 1}
+
+PUT my_test/doc/2
+{"number": 2}
+
+PUT my_test/doc/3
+{"number": 3}
+
+# search 
+GET my_test/_search
+
+# result
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "number": 2
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "number": 1
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "number": 3
+        }
+      }
+    ]
+  }
+}
+
+
+# prepare for watcher
+# condition : if hits total >= 0
+# transform : return sum of number field in each index
+# action    : 1. output this sum to console
+#             2. index this sum to another index
+
+DELETE _xpack/watcher/watch/my_test_watcher
+PUT _xpack/watcher/watch/my_test_watcher
+{
+  "trigger": {
+    "schedule": {
+      "interval": "5s"
+    }
+  },
+  "input": {
+    "search": {
+      "request": {
+        "indices": [
+          "my_test"
+        ],
+        "body": {
+          "query": {
+            "match_all": {}
+          }
+        }
+      }
+    }
+  },
+  "condition": {
+    "compare": {
+      "ctx.payload.hits.total": {
+        "gte": 0
+      }
+    }
+  },
+  "transform": {
+    "script": """
+    def items = ctx.payload.hits.hits;
+    def sum = 0;
+    def flag = false;
+    for (int i = 0; i < items.size(); i++) {
+        sum += items[i]._source.number;
+    }
+    return [ 'my_sum' : sum ];
+"""
+  },
+  "actions": {
+    "logging_test": {
+      "logging": {
+        "text": "show my sum - {{ctx.payload.my_sum}}"
+      }
+    },
+    "index_test": {
+      "index": {
+        "index": "my_test2",
+        "doc_type": "doc"
+      }
+    }
+  }
+}
+
+
+# response
+{
+  "_id": "my_test_watcher",
+  "_version": 10,
+  "created": false
+}
+
+# console log output
+[2018-01-24T11:04:32,154][INFO ][o.e.x.w.a.l.ExecutableLoggingAction] [75_8Hwx] show my sum - 6
+
+
+# search my_test2 index
+GET my_test2/_search
+
+# result
+{
+  "took": 31,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "AWEmEb0KX2pHHpUEAWKT",
+        "_score": 1,
+        "_source": {
+          "my_sum": 6
+        }
+      },
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "AWEmEdCsX2pHHpUEAWOA",
+        "_score": 1,
+        "_source": {
+          "my_sum": 6
+        }
+      }
+    ]
+  }
+}
