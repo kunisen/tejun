@@ -1,0 +1,26 @@
+# put some data for index : true pattern
+DELETE  my_test_index*
+PUT my_test_index_true
+{"mappings":{"doc":{"properties":{"title":{"type":"text","index":true}}}}}
+
+PUT my_test_index_true/doc/1
+{
+  "title": "aaa"
+}
+
+# put some data for index : false pattern
+PUT my_test_index_false
+{"mappings":{"doc":{"properties":{"title":{"type":"text","index":false}}}}}
+
+PUT my_test_index_false/doc/1
+{
+  "title": "aaa"
+}
+
+# check the size
+GET _cat/indices?v&index=my_test_index*
+
+# result
+health status index               uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   my_test_index_true  HYx76F5eRfuAm12RMDqMIQ   5   1          1            0      3.5kb          3.5kb
+yellow open   my_test_index_false h7ODsMuhQ-Ovy4VPVXxX4Q   5   1          1            0       324b           324b
