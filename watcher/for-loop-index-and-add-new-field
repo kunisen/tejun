@@ -1,0 +1,262 @@
+#----------------
+# watcher sample
+# 1. use watcher to indexing a new index separately
+# 2. add other fields (e.g. ctx.trigger.triggered_time) to new index
+# 3. use alias and access the index from the same endpoint
+# 4. use ctx.payload.hits as source
+#----------------
+
+# put some data
+DELETE my_test1, my_test2
+PUT my_test1/doc/1
+{"number": 1}
+
+PUT my_test1/doc/2
+{"number": 2}
+
+PUT my_test1/doc/3
+{"number": 3}
+
+# use alias and set the endpoint to my_test
+POST /_aliases
+{
+    "actions" : [
+        { "add" : { "index" : "my_test1", "alias" : "my_test" } }
+    ]
+}
+
+# search my_test
+GET my_test/_search
+
+# result
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test1",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "number": 2
+        }
+      },
+      {
+        "_index": "my_test1",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "number": 1
+        }
+      },
+      {
+        "_index": "my_test1",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "number": 3
+        }
+      }
+    ]
+  }
+}
+
+
+# prepare for watcher
+# condition : if hits total >= 0
+# transform : n/a
+# action    : 1. output some messages to console
+#             2. indexing data to another new index per document
+#             3. use ctx.trigger.triggered_time as a new field
+DELETE _xpack/watcher/watch/my_test_watcher
+PUT _xpack/watcher/watch/my_test_watcher
+{
+  "trigger": {
+    "schedule": {
+      "interval": "1h"
+    }
+  },
+  "input": {
+    "search": {
+      "request": {
+        "indices": [
+          "my_test"
+        ],
+        "body": {
+          "query": {
+            "match_all": {}
+          }
+        }
+      }
+    }
+  },
+  "condition": {
+    "compare": {
+      "ctx.payload.hits.total": {
+        "gte": 0
+      }
+    }
+  },
+  "actions": {
+    "logging_test": {
+      "logging": {
+        "text": "watcher is running"
+      }
+    },
+    "index_test": {
+      "transform": {
+          "script": """
+          for (int i = 0; i < ctx.payload.hits.hits.length; ++i) {
+            // copy the source field to new index
+            ctx.payload.hits.hits[i] = ctx.payload.hits.hits[i]._source;
+            
+            // add ctx.trigger.triggered_time as new field to new index
+            ctx.payload.hits.hits[i].triggered_time = ctx.trigger.triggered_time;
+          }  
+          return [ '_doc' : ctx.payload.hits.hits]
+          """
+        },
+      "index": {
+        "index": "my_test2",
+        "doc_type": "doc"
+      }
+    }
+  }
+}
+
+# or run watcher manually if a long interval needs to be specified
+POST _xpack/watcher/watch/my_test_watcher/_execute
+
+# result from console
+# [2018-01-24T21:54:35,422][INFO ][o.e.x.w.a.l.ExecutableLoggingAction] [buvHyIV] watcher is running
+# [2018-01-24T21:54:35,425][INFO ][o.e.c.m.MetaDataCreateIndexService] [buvHyIV] [my_test2] creating index, cause [auto(bulk api)], templates [], shards [5]/[1], mappings []
+# [2018-01-24T21:54:35,477][INFO ][o.e.c.m.MetaDataMappingService] [buvHyIV] [my_test2/sKV-ErJCRnK-qaXGCd63hQ] create_mapping [doc]
+
+
+# check the new index
+GET my_test2/_search
+
+# result
+# - we got ctx.payload.hits as source
+# - also ctx.trigger.triggered_time as a new field
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "CPg7KGEBC3mjtNLi_O3S",
+        "_score": 1,
+        "_source": {
+          "number": 1,
+          "triggered_time": "2018-01-24T12:54:35.421Z"
+        }
+      },
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "Cfg7KGEBC3mjtNLi_O3S",
+        "_score": 1,
+        "_source": {
+          "number": 3,
+          "triggered_time": "2018-01-24T12:54:35.421Z"
+        }
+      },
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "B_g7KGEBC3mjtNLi_O3S",
+        "_score": 1,
+        "_source": {
+          "number": 2,
+          "triggered_time": "2018-01-24T12:54:35.421Z"
+        }
+      }
+    ]
+  }
+}
+
+# switch the alias from my_test1 to my_test2
+POST /_aliases
+{
+    "actions" : [
+        { "remove" : { "index" : "my_test1", "alias" : "my_test" } },
+        { "add" : { "index" : "my_test2", "alias" : "my_test" } }
+    ]
+}
+
+
+# search the my_test endpoint again
+GET my_test/_search
+
+# result
+# - we got the result of my_test2 here
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "CPg7KGEBC3mjtNLi_O3S",
+        "_score": 1,
+        "_source": {
+          "number": 1,
+          "triggered_time": "2018-01-24T12:54:35.421Z"
+        }
+      },
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "Cfg7KGEBC3mjtNLi_O3S",
+        "_score": 1,
+        "_source": {
+          "number": 3,
+          "triggered_time": "2018-01-24T12:54:35.421Z"
+        }
+      },
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "B_g7KGEBC3mjtNLi_O3S",
+        "_score": 1,
+        "_source": {
+          "number": 2,
+          "triggered_time": "2018-01-24T12:54:35.421Z"
+        }
+      }
+    ]
+  }
+}
+
