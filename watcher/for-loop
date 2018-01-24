@@ -12,7 +12,7 @@ PUT my_test/doc/2
 PUT my_test/doc/3
 {"number": 3}
 
-# search "aaaa"
+# search 
 GET my_test/_search
 
 # result
@@ -65,7 +65,7 @@ GET my_test/_search
 # condition : if hits total >= 0
 # transform : return sum of number field in each index
 # action    : output this sum to console
- 
+
 DELETE _xpack/watcher/watch/my_test_watcher
 PUT _xpack/watcher/watch/my_test_watcher
 {
