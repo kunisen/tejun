@@ -310,7 +310,7 @@ https://kibana.local:5601/
 # and access again
 #----------------------
 $cd /Users/kuniyasu/tmp/cert_blog
-$curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node1.local:9200/_cat/nodes'
+$curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic:changeme 'https://node1.local:9200/_cat/nodes'
 Enter host password for user 'elastic':
 127.0.0.1 32 99 5 1.46   mdi * node1
 127.0.0.1 21 99 4 1.46   mdi - node2
