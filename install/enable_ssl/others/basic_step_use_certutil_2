@@ -1,0 +1,395 @@
+#============================================================
+# Basic steps to enable SSL in elasticsearch 6.1.2 by using certutil
+#============================================================
+
+#-------------
+# documents
+#-------------
+https://www.elastic.co/blog/tls-elastic-stack-elasticsearch-kibana-logstash-filebeat
+https://www.elastic.co/guide/en/elasticsearch/reference/6.1/configuring-tls.html
+
+#-----------------------------------------------------------------
+# step 1 - download and install elasticsearch and kibana
+#-----------------------------------------------------------------
+https://www.elastic.co/jp/downloads/elasticsearch
+https://www.elastic.co/jp/downloads/kibana
+
+#-----------------------------------------------------------------
+# step 2 - install x-pack plugin
+#-----------------------------------------------------------------
+# put elasticsearch and kibana into ~/tmp/certutil_sample and install x-pack
+
+$mkdir ~/tmp/certutil_sample/
+
+$cd /Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl
+$./bin/elasticsearch-plugin install x-pack
+
+$cd /Users/kuniyasu/tmp/certutil_sample/kibana-6.1.2-darwin-x86_64-ssl
+$./bin/kibana-plugin install x-pack
+
+
+#-----------------------------------------------------------------
+# step 3 - Create CA
+#-----------------------------------------------------------------
+# create CA
+#-------------
+$cd /Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl
+
+senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/x-pack/certutil ca --ca-dn 'CN=MyExample Global CA' --pass --days 3650 --keysize 4096 --out ~/tmp/certutil_sample/MyExample_Global_CA.zip -pem
+This tool assists you in the generation of X.509 certificates and certificate
+signing requests for use with SSL/TLS in the Elastic stack.
+
+The 'ca' mode generates a new 'certificate authority'
+This will create a new X.509 certificate and private key that can be used
+to sign certificate when running in 'cert' mode.
+
+Use the 'ca-dn' option if you wish to configure the 'distinguished name'
+of the certificate authority
+
+By default the 'ca' mode produces a single PKCS#12 output file which holds:
+    * The CA certificate
+    * The CA's private key
+
+If you elect to generate PEM format certificates (the -pem option), then the output will
+be a zip file containing individual files for the CA certificate and private key
+
+Enter password for CA Private key : 
+
+
+# unzip 
+#-------------
+senmac:elasticsearch-6.1.2-ssl kuniyasu$cd ~/tmp/certutil_sample/
+senmac:certutil_sample kuniyasu$unzip MyExample_Global_CA.zip 
+Archive:  MyExample_Global_CA.zip
+   creating: ca/
+  inflating: ca/ca.crt               
+  inflating: ca/ca.key               
+
+
+
+#-----------------------------------------------------------------
+# step 4 - Generate server certificates
+#-----------------------------------------------------------------
+# create instance yml file
+#---------------------------
+$echo 'instances:
+>   - name: 'node1'
+>     dns: [ 'node1.local' ]
+>   - name: "node2"
+>     dns: [ 'node2.local' ]
+>   - name: 'my-kibana'
+>     dns: [ 'kibana.local' ]
+>   - name: 'logstash'
+>     dns: [ 'logstash.local' ]' > certutil_example.yml
+
+
+# create server certificates for each instance
+#-----------------------------------------------
+$cd /Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl
+
+senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/x-pack/certutil cert --days 1095 --ca-cert ~/tmp/cert_blog/ca/ca.crt --ca-key ~/tmp/certutil_sample/ca/ca.key --pass --in ~/tmp/certutil_sample/certutil_example.yml --out ~/tmp/certutil_sample/certs.zip -pem
+This tool assists you in the generation of X.509 certificates and certificate
+signing requests for use with SSL/TLS in the Elastic stack.
+
+The 'cert' mode generates X.509 certificate and private keys.
+    * By default, this generates a single certificate and key for use
+       on a single instance.
+    * The '-multiple' option will prompt you to enter details for multiple
+       instances and will generate a certificate and key for each one
+    * The '-in' option allows for the certificate generation to be automated by describing
+       the details of each instance in a YAML file
+
+    * An instance is any piece of the Elastic Stack that requires a SSL certificate.
+      Depending on your configuration, Elasticsearch, Logstash, Kibana, and Beats
+      may all require a certificate and private key.
+    * The minimum required value for each instance is a name. This can simply be the
+      hostname, which will be used as the Common Name of the certificate. A full
+      distinguished name may also be used.
+    * A filename value may be required for each instance. This is necessary when the
+      name would result in an invalid file or directory name. The name provided here
+      is used as the directory name (within the zip) and the prefix for the key and
+      certificate files. The filename is required if you are prompted and the name
+      is not displayed in the prompt.
+    * IP addresses and DNS names are optional. Multiple values can be specified as a
+      comma separated string. If no IP addresses or DNS names are provided, you may
+      disable hostname verification in your SSL configuration.
+
+    * All certificates generated by this tool will be signed by a certificate authority (CA).
+    * The tool can automatically generate a new CA for you, or you can provide your own with the
+         -ca or -ca-cert command line options.
+
+By default the 'cert' mode produces a single PKCS#12 output file which holds:
+    * The instance certificate
+    * The private key for the instance certificate
+    * The CA certificate
+
+If you elect to generate PEM format certificates (the -pem option), then the output will
+be a zip file containing individual files for the instance certificate, the key and the CA certificate
+
+If you elect to generate multiple instances certificates, the output will be a zip file
+containing all the generated certificates
+
+Enter password for CA private key (ca.key) : 
+Enter password for node1/node1.key : 
+Enter password for node2/node2.key : 
+Enter password for my-kibana/my-kibana.key : 
+Enter password for logstash/logstash.key : 
+
+Certificates written to /Users/kuniyasu/tmp/certutil_sample/certs.zip
+
+This file should be properly secured as it contains the private keys for 
+all instances.
+
+After unzipping the file, there will be a directory for each instance.
+Each instance has a certificate and private key.
+For each Elastic product that you wish to configure, you should copy
+the certificate, key, and CA certificate to the relevant configuration directory
+and then follow the SSL configuration instructions in the product guide.
+
+For client applications, you may only need to copy the CA certificate and
+configure the client to trust this certificate.
+
+
+# unzip
+#------------
+$cd ~/tmp/certutil_sample
+$unzip certs.zip -d ./certs
+Archive:  certs.zip
+   creating: ./certs/node1/
+  inflating: ./certs/node1/node1.crt  
+  inflating: ./certs/node1/node1.key  
+   creating: ./certs/node2/
+  inflating: ./certs/node2/node2.crt  
+  inflating: ./certs/node2/node2.key  
+   creating: ./certs/my-kibana/
+  inflating: ./certs/my-kibana/my-kibana.crt  
+  inflating: ./certs/my-kibana/my-kibana.key  
+   creating: ./certs/logstash/
+  inflating: ./certs/logstash/logstash.crt  
+  inflating: ./certs/logstash/logstash.key  
+
+
+# modify the 127.0.0.1 line in /etc/hosts to the following line
+#------------------------------------------------------------------------
+127.0.0.1 localhost node1.local node2.local kibana.local logstash.local
+
+
+#-----------------------------------------------------------------
+# step 5 - Elasticsearch TLS setup
+#-----------------------------------------------------------------
+# create and copy certs to config and config2 folder
+#--------------------------------------------------------
+$cd /Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl
+$mkdir config/certs
+$cp ~/tmp/certutil_sample/ca/ca.crt ~/tmp/certutil_sample/certs/node1/* config/certs
+
+
+# edit config/elasticsearch.yml (add the follow lines to the end of the yml file)
+#----------------------------------------------------------------------------------
+node.name: node1
+network.host: node1.local
+xpack.ssl.key: certs/node1.key
+xpack.ssl.certificate: certs/node1.crt
+xpack.ssl.certificate_authorities: certs/ca.crt
+xpack.security.transport.ssl.enabled: true
+xpack.security.http.ssl.enabled: true
+discovery.zen.ping.unicast.hosts: [ 'node1.local', 'node2.local']
+node.max_local_storage_nodes: 2
+xpack.security.transport.ssl.verification_mode: certificate 
+
+
+# add keystore, truststore, key_phrase secure password
+#--------------------------------------------------
+senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/elasticsearch-keystore add xpack.ssl.keystore.secure_password
+Enter value for xpack.ssl.keystore.secure_password: 
+senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/elasticsearch-keystore add xpack.ssl.truststore.secure_password
+Enter value for xpack.ssl.truststore.secure_password: 
+senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/elasticsearch-keystore add xpack.ssl.secure_key_passphrase
+Enter value for xpack.ssl.secure_key_passphrase: 
+
+
+
+# start up node1
+#------------------------------
+senmac:elasticsearch-6.1.2-ssl kuniyasu$ES_PATH_CONF=config ./bin/elasticsearch
+(...)
+[2018-01-25T17:37:18,458][INFO ][o.e.n.Node               ] [node1] started
+
+
+# create config2 and copy certs
+#----------------------------------
+$cd /Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl
+$cp -r config config2
+$cp ~/tmp/certutil_sample/ca/ca.crt ~/tmp/certutil_sample/certs/node2/* config2/certs
+
+
+# edit config2/elasticsearch.yml (add the follow lines to the end of the yml file)
+#----------------------------------------------------------------------------------
+node.name: node2
+network.host: node2.local
+xpack.ssl.key: certs/node2.key
+xpack.ssl.certificate: certs/node2.crt
+xpack.ssl.certificate_authorities: certs/ca.crt
+xpack.security.transport.ssl.enabled: true
+xpack.security.http.ssl.enabled: true
+discovery.zen.ping.unicast.hosts: [ 'node1.local', 'node2.local']
+node.max_local_storage_nodes: 2
+xpack.security.transport.ssl.verification_mode: certificate 
+
+
+# open a new terminal and start the second node (but failed)
+#--------------------------------------------------------------
+senmac:elasticsearch-6.1.2-ssl kuniyasu$ES_PATH_CONF=config2 ./bin/elasticsearch
+[2018-01-25T17:43:18,590][INFO ][o.e.n.Node               ] [node2] initializing ...
+[2018-01-25T17:43:18,654][INFO ][o.e.e.NodeEnvironment    ] [node2] using [1] data paths, mounts [[/ (/dev/disk1)]], net usable_space [200.4gb], net total_space [464.6gb], types [hfs]
+[2018-01-25T17:43:18,655][INFO ][o.e.e.NodeEnvironment    ] [node2] heap size [989.8mb], compressed ordinary object pointers [true]
+[2018-01-25T17:43:18,656][INFO ][o.e.n.Node               ] [node2] node name [node2], node ID [zROSLRTAR3aRTwbEpCDWBQ]
+[2018-01-25T17:43:18,657][INFO ][o.e.n.Node               ] [node2] version[6.1.2], pid[15749], build[5b1fea5/2018-01-10T02:35:59.208Z], OS[Mac OS X/10.12.6/x86_64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[2018-01-25T17:43:18,657][INFO ][o.e.n.Node               ] [node2] JVM arguments [-Xms1g, -Xmx1g, -XX:+UseConcMarkSweepGC, -XX:CMSInitiatingOccupancyFraction=75, -XX:+UseCMSInitiatingOccupancyOnly, -XX:+AlwaysPreTouch, -Xss1m, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djna.nosys=true, -XX:-OmitStackTraceInFastThrow, -Dio.netty.noUnsafe=true, -Dio.netty.noKeySetOptimization=true, -Dio.netty.recycler.maxCapacityPerThread=0, -Dlog4j.shutdownHookEnabled=false, -Dlog4j2.disable.jmx=true, -XX:+HeapDumpOnOutOfMemoryError, -Des.path.home=/Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl, -Des.path.conf=config2]
+[2018-01-25T17:43:20,035][WARN ][o.e.b.ElasticsearchUncaughtExceptionHandler] [node2] uncaught exception in thread [main]
+org.elasticsearch.bootstrap.StartupException: java.lang.IllegalStateException: failed to load plugin class [org.elasticsearch.xpack.XPackPlugin]
+  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:125) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Elasticsearch.execute(Elasticsearch.java:112) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.cli.EnvironmentAwareCommand.execute(EnvironmentAwareCommand.java:86) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.cli.Command.mainWithoutErrorHandling(Command.java:124) ~[elasticsearch-cli-6.1.2.jar:6.1.2]
+  at org.elasticsearch.cli.Command.main(Command.java:90) ~[elasticsearch-cli-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Elasticsearch.main(Elasticsearch.java:92) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Elasticsearch.main(Elasticsearch.java:85) ~[elasticsearch-6.1.2.jar:6.1.2]
+Caused by: java.lang.IllegalStateException: failed to load plugin class [org.elasticsearch.xpack.XPackPlugin]
+  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:452) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
+  ... 6 more
+Caused by: java.lang.reflect.InvocationTargetException
+  at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
+  at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[?:?]
+  at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
+  at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[?:1.8.0_144]
+  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:443) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
+  ... 6 more
+Caused by: org.elasticsearch.ElasticsearchException: failed to initialize a KeyManagerFactory
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:77) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.createSslContext(SSLService.java:410) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.loadSSLConfigurations(SSLService.java:444) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.<init>(SSLService.java:87) ~[?:?]
+  at org.elasticsearch.xpack.XPackPlugin.<init>(XPackPlugin.java:244) ~[?:?]
+  at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
+  at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[?:?]
+  at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
+  at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[?:1.8.0_144]
+  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:443) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
+  ... 6 more
+Caused by: org.bouncycastle.openssl.PEMException: exception processing key pair: password empty
+  at org.bouncycastle.openssl.PEMEncryptedKeyPair.decryptKeyPair(Unknown Source) ~[?:?]
+  at org.elasticsearch.xpack.ssl.CertUtils.innerReadPrivateKey(CertUtils.java:337) ~[?:?]
+  at org.elasticsearch.xpack.ssl.CertUtils.readPrivateKey(CertUtils.java:312) ~[?:?]
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.readPrivateKey(PEMKeyConfig.java:92) ~[?:?]
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:69) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.createSslContext(SSLService.java:410) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.loadSSLConfigurations(SSLService.java:444) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.<init>(SSLService.java:87) ~[?:?]
+  at org.elasticsearch.xpack.XPackPlugin.<init>(XPackPlugin.java:244) ~[?:?]
+  at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
+  at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[?:?]
+  at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
+  at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[?:1.8.0_144]
+  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:443) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
+  ... 6 more
+Caused by: java.lang.IllegalArgumentException: password empty
+  at org.bouncycastle.jcajce.provider.symmetric.OpenSSLPBKDF$PBKDF.engineGenerateSecret(Unknown Source) ~[?:?]
+  at javax.crypto.SecretKeyFactory.generateSecret(SecretKeyFactory.java:330) ~[?:1.8.0_121]
+  at org.bouncycastle.openssl.jcajce.PEMUtilities.getKey(Unknown Source) ~[?:?]
+  at org.bouncycastle.openssl.jcajce.PEMUtilities.crypt(Unknown Source) ~[?:?]
+  at org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder$1$1.decrypt(Unknown Source) ~[?:?]
+  at org.bouncycastle.openssl.PEMEncryptedKeyPair.decryptKeyPair(Unknown Source) ~[?:?]
+  at org.elasticsearch.xpack.ssl.CertUtils.innerReadPrivateKey(CertUtils.java:337) ~[?:?]
+  at org.elasticsearch.xpack.ssl.CertUtils.readPrivateKey(CertUtils.java:312) ~[?:?]
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.readPrivateKey(PEMKeyConfig.java:92) ~[?:?]
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:69) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.createSslContext(SSLService.java:410) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.loadSSLConfigurations(SSLService.java:444) ~[?:?]
+  at org.elasticsearch.xpack.ssl.SSLService.<init>(SSLService.java:87) ~[?:?]
+  at org.elasticsearch.xpack.XPackPlugin.<init>(XPackPlugin.java:244) ~[?:?]
+  at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
+  at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[?:?]
+  at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
+  at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[?:1.8.0_144]
+  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:443) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
+  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
+  ... 6 more
+senmac:elasticsearch-6.1.2-ssl kuniyasu$
+
+
+
+# set built-in role password (but failed)
+#----------------------------------------------------------
+$cd /Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl
+$bin/x-pack/setup-passwords auto -u "https://node1.local:9200"
+
+
+senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/x-pack/setup-passwords auto -u "https://node1.local:9200"
+Exception in thread "main" ElasticsearchException[failed to initialize a KeyManagerFactory]; nested: PEMException[exception processing key pair: password empty]; nested: IllegalArgumentException[password empty];
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:77)
+  at org.elasticsearch.xpack.ssl.SSLService.createSslContext(SSLService.java:410)
+  at org.elasticsearch.xpack.ssl.SSLService.loadSSLConfigurations(SSLService.java:444)
+  at org.elasticsearch.xpack.ssl.SSLService.<init>(SSLService.java:87)
+  at org.elasticsearch.xpack.security.authc.esnative.tool.CommandLineHttpClient.postURL(CommandLineHttpClient.java:91)
+  at org.elasticsearch.xpack.security.authc.esnative.tool.SetupPasswordTool$SetupCommand.checkElasticKeystorePasswordValid(SetupPasswordTool.java:278)
+  at org.elasticsearch.xpack.security.authc.esnative.tool.SetupPasswordTool$AutoSetup.execute(SetupPasswordTool.java:127)
+  at org.elasticsearch.cli.EnvironmentAwareCommand.execute(EnvironmentAwareCommand.java:86)
+  at org.elasticsearch.cli.Command.mainWithoutErrorHandling(Command.java:124)
+  at org.elasticsearch.cli.MultiCommand.execute(MultiCommand.java:75)
+  at org.elasticsearch.cli.Command.mainWithoutErrorHandling(Command.java:124)
+  at org.elasticsearch.cli.Command.main(Command.java:90)
+  at org.elasticsearch.xpack.security.authc.esnative.tool.SetupPasswordTool.main(SetupPasswordTool.java:105)
+Caused by: org.bouncycastle.openssl.PEMException: exception processing key pair: password empty
+  at org.bouncycastle.openssl.PEMEncryptedKeyPair.decryptKeyPair(Unknown Source)
+  at org.elasticsearch.xpack.ssl.CertUtils.innerReadPrivateKey(CertUtils.java:337)
+  at org.elasticsearch.xpack.ssl.CertUtils.readPrivateKey(CertUtils.java:312)
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.readPrivateKey(PEMKeyConfig.java:92)
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:69)
+  ... 12 more
+Caused by: java.lang.IllegalArgumentException: password empty
+  at org.bouncycastle.jcajce.provider.symmetric.OpenSSLPBKDF$PBKDF.engineGenerateSecret(Unknown Source)
+  at javax.crypto.SecretKeyFactory.generateSecret(SecretKeyFactory.java:330)
+  at org.bouncycastle.openssl.jcajce.PEMUtilities.getKey(Unknown Source)
+  at org.bouncycastle.openssl.jcajce.PEMUtilities.crypt(Unknown Source)
+  at org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder$1$1.decrypt(Unknown Source)
+  ... 17 more
