@@ -1,0 +1,1197 @@
+#-------------------
+# highlighter test
+#-------------------
+# ES 2.4
+#-------------
+DELETE  traina000_test_24
+PUT traina000_test_24
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "tokenizer": {
+          "kuromoji_user_dict": {
+            "type": "kuromoji_tokenizer",
+            "mode": "extended",
+            "discard_punctuation": "false"
+          }
+        },
+        "analyzer": {
+          "my_analyzer": {
+            "type": "custom",
+            "tokenizer": "kuromoji_user_dict"
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "test": {
+      "properties": {
+        "title": {
+          "type": "string",
+          "index": "analyzed",
+          "analyzer": "my_analyzer",
+          "term_vector": "with_positions_offsets"
+        },
+        "body": {
+          "type": "string",
+          "index": "analyzed",
+          "analyzer": "my_analyzer",
+          "term_vector": "with_positions_offsets"
+        }
+      }
+    }
+  }
+}
+
+# set search body
+POST traina000_test_24/test?pretty
+{
+  "title": "検索対象",
+  "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA A100 BBBB 鈴木 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB B200 CCCC CCCC 田中 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC C300 DDDD DDDD DDDD 佐藤 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD D400 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE E500 FFFF FFFF FFFF FFFF 佐藤 佐藤 佐藤 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF F600 GGGG GGGG GGGG GGGG GGGG GGGG 田中 田中 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG G700 HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH H800 IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII I900 JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ J000"
+}
+
+
+# run 16 times for hightlighting
+POST traina000_test_24/test/?pretty
+{"title":"ダミー","body":"佐藤"}
+
+# run 4 times for hightlighting
+POST traina000_test_24/test/?pretty
+{"title":"ダミー","body":"田中"}
+
+# get search result
+GET traina000_test_24/_search
+{
+  "highlight": {
+    "number_of_fragments": 1,
+    "pre_tags": [
+      "<mark>"
+    ],
+    "post_tags": [
+      "</mark>"
+    ],
+    "fields": {
+      "body": {}
+    }
+  },
+  "size": 50,
+  "query": {
+    "simple_query_string": {
+      "query": "田中 鈴木 佐藤",
+      "default_operator": "and",
+      "fields": [
+        "title", "body"
+      ]
+    }
+  }
+}
+
+# get search result with explain
+GET traina000_test_24/_search?explain
+{
+  "highlight": {
+    "number_of_fragments": 1,
+    "pre_tags": [
+      "<mark>"
+    ],
+    "post_tags": [
+      "</mark>"
+    ],
+    "fields": {
+      "body": {}
+    }
+  },
+  "size" : 50,
+  "query": {
+    "simple_query_string": {
+      "fields": [
+        "title",
+        "body",
+        "keywords_from_user",
+        "keywords_from_csv",
+        "keywords_from_auto"
+      ],
+      "query": "田中 鈴木 佐藤",
+      "default_operator": "and"
+    }
+  },
+  "fields": [
+    "title"
+  ]
+
+}
+
+# ES 6.0
+#-------------
+DELETE  traina000_test_60
+PUT traina000_test_60
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "tokenizer": {
+          "kuromoji_user_dict": {
+            "type": "kuromoji_tokenizer",
+            "mode": "extended",
+            "discard_punctuation": "false"
+          }
+        },
+        "analyzer": {
+          "my_analyzer": {
+            "type": "custom",
+            "tokenizer": "kuromoji_user_dict"
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "test": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "analyzer": "my_analyzer",
+          "term_vector": "with_positions_offsets"
+        },
+        "body": {
+          "type": "text",
+          "analyzer": "my_analyzer",
+          "term_vector": "with_positions_offsets"
+        }
+      }
+    }
+  }
+}
+
+
+# set search body
+POST traina000_test_60/test?pretty
+{
+  "title": "検索対象",
+  "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA A100 BBBB 鈴木 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB B200 CCCC CCCC 田中 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC C300 DDDD DDDD DDDD 佐藤 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD D400 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE E500 FFFF FFFF FFFF FFFF 佐藤 佐藤 佐藤 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF F600 GGGG GGGG GGGG GGGG GGGG GGGG 田中 田中 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG G700 HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH H800 IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII I900 JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ J000"
+}
+
+
+# run 16 times for hightlighting
+POST traina000_test_60/test/?pretty
+{"title":"ダミー","body":"佐藤"}
+
+# run 4 times for hightlighting
+POST traina000_test_60/test/?pretty
+{"title":"ダミー","body":"田中"}
+
+# get search result
+GET traina000_test_60/_search
+{
+  "highlight": {
+    "number_of_fragments": 1,
+    "pre_tags": [
+      "<mark>"
+    ],
+    "post_tags": [
+      "</mark>"
+    ],
+    "fields": {
+      "body": {}
+    }
+  },
+  "size": 50,
+  "query": {
+    "simple_query_string": {
+      "query": "田中 鈴木 佐藤",
+      "default_operator": "and",
+      "fields": [
+        "title", "body"
+      ]
+    }
+  }
+}
+
+# get search result with explain
+GET traina000_test_60/_search
+{
+  "explain": true, 
+  "highlight": {
+    "number_of_fragments": 1,
+    "pre_tags": [
+      "<mark>"
+    ],
+    "post_tags": [
+      "</mark>"
+    ],
+    "fields": {
+      "body": {}
+    }
+  },
+  "size": 50,
+  "query": {
+    "simple_query_string": {
+      "query": "田中 鈴木 佐藤",
+      "default_operator": "and",
+      "fields": [
+        "title", "body"
+      ]
+    }
+  }
+}
+
+
+
+
+
+
+
+--------
+ES 2.4
+--------
+
+# "number_of_fragments": 1,
+--------------------------------
+{
+  "took": 6,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.022026092,
+    "hits": [
+      {
+        "_shard": 4,
+        "_node": "xLccnfP3SRimHf4MW_fnaQ",
+        "_index": "traina000_test_24",
+        "_type": "test",
+        "_id": "AWErjnUuXVFxqFAAb3rU",
+        "_score": 0.022026092,
+        "fields": {
+          "title": [
+            "検索対象"
+          ]
+        },
+        "highlight": {
+          "body": [
+            "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA A100 BBBB <mark>鈴木</mark> BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB"
+          ]
+        },
+        "_explanation": {
+          "value": 0.022026092,
+          "description": "sum of:",
+          "details": [
+            {
+              "value": 0.012099342,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.012099342,
+                  "description": "weight(body:田中 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.012099342,
+                      "description": "score(doc=0,freq=3.0), product of:",
+                      "details": [
+                        {
+                          "value": 0.15088579,
+                          "description": "queryWeight, product of:",
+                          "details": [
+                            {
+                              "value": 1.6931472,
+                              "description": "idf(docFreq=1, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.08911558,
+                              "description": "queryNorm",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 0.080188744,
+                          "description": "fieldWeight in 0, product of:",
+                          "details": [
+                            {
+                              "value": 1.7320508,
+                              "description": "tf(freq=3.0), with freq of:",
+                              "details": [
+                                {
+                                  "value": 3,
+                                  "description": "termFreq=3.0",
+                                  "details": []
+                                }
+                              ]
+                            },
+                            {
+                              "value": 1.6931472,
+                              "description": "idf(docFreq=1, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.02734375,
+                              "description": "fieldNorm(doc=0)",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": 0.006985558,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.006985558,
+                  "description": "weight(body:鈴木 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.006985558,
+                      "description": "score(doc=0,freq=1.0), product of:",
+                      "details": [
+                        {
+                          "value": 0.15088579,
+                          "description": "queryWeight, product of:",
+                          "details": [
+                            {
+                              "value": 1.6931472,
+                              "description": "idf(docFreq=1, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.08911558,
+                              "description": "queryNorm",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 0.04629699,
+                          "description": "fieldWeight in 0, product of:",
+                          "details": [
+                            {
+                              "value": 1,
+                              "description": "tf(freq=1.0), with freq of:",
+                              "details": [
+                                {
+                                  "value": 1,
+                                  "description": "termFreq=1.0",
+                                  "details": []
+                                }
+                              ]
+                            },
+                            {
+                              "value": 1.6931472,
+                              "description": "idf(docFreq=1, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.02734375,
+                              "description": "fieldNorm(doc=0)",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": 0.0029411912,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.0029411912,
+                  "description": "weight(body:佐藤 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.0029411912,
+                      "description": "score(doc=0,freq=4.0), product of:",
+                      "details": [
+                        {
+                          "value": 0.06923001,
+                          "description": "queryWeight, product of:",
+                          "details": [
+                            {
+                              "value": 0.7768564,
+                              "description": "idf(docFreq=4, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.08911558,
+                              "description": "queryNorm",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 0.042484336,
+                          "description": "fieldWeight in 0, product of:",
+                          "details": [
+                            {
+                              "value": 2,
+                              "description": "tf(freq=4.0), with freq of:",
+                              "details": [
+                                {
+                                  "value": 4,
+                                  "description": "termFreq=4.0",
+                                  "details": []
+                                }
+                              ]
+                            },
+                            {
+                              "value": 0.7768564,
+                              "description": "idf(docFreq=4, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.02734375,
+                              "description": "fieldNorm(doc=0)",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+
+
+
+
+
+# "number_of_fragments": default
+--------------------------------
+{
+  "took": 8,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.022026092,
+    "hits": [
+      {
+        "_shard": 4,
+        "_node": "xLccnfP3SRimHf4MW_fnaQ",
+        "_index": "traina000_test_24",
+        "_type": "test",
+        "_id": "AWErjnUuXVFxqFAAb3rU",
+        "_score": 0.022026092,
+        "fields": {
+          "title": [
+            "検索対象"
+          ]
+        },
+        "highlight": {
+          "body": [
+            "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA A100 BBBB <mark>鈴木</mark> BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB",
+            "BBBB BBBB BBBB BBBB BBBB BBBB BBBB B200 CCCC CCCC <mark>田中</mark> CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC",
+            "CCCC CCCC CCCC CCCC CCCC CCCC C300 DDDD DDDD DDDD <mark>佐藤</mark> DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD",
+            "EEEE EEEE EEEE EEEE EEEE E500 FFFF FFFF FFFF FFFF <mark>佐藤</mark> <mark>佐藤</mark> <mark>佐藤</mark> FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF",
+            "FFFF FFFF FFFF F600 GGGG GGGG GGGG GGGG GGGG GGGG <mark>田中</mark> <mark>田中</mark> GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG"
+          ]
+        },
+        "_explanation": {
+          "value": 0.022026092,
+          "description": "sum of:",
+          "details": [
+            {
+              "value": 0.012099342,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.012099342,
+                  "description": "weight(body:田中 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.012099342,
+                      "description": "score(doc=0,freq=3.0), product of:",
+                      "details": [
+                        {
+                          "value": 0.15088579,
+                          "description": "queryWeight, product of:",
+                          "details": [
+                            {
+                              "value": 1.6931472,
+                              "description": "idf(docFreq=1, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.08911558,
+                              "description": "queryNorm",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 0.080188744,
+                          "description": "fieldWeight in 0, product of:",
+                          "details": [
+                            {
+                              "value": 1.7320508,
+                              "description": "tf(freq=3.0), with freq of:",
+                              "details": [
+                                {
+                                  "value": 3,
+                                  "description": "termFreq=3.0",
+                                  "details": []
+                                }
+                              ]
+                            },
+                            {
+                              "value": 1.6931472,
+                              "description": "idf(docFreq=1, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.02734375,
+                              "description": "fieldNorm(doc=0)",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": 0.006985558,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.006985558,
+                  "description": "weight(body:鈴木 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.006985558,
+                      "description": "score(doc=0,freq=1.0), product of:",
+                      "details": [
+                        {
+                          "value": 0.15088579,
+                          "description": "queryWeight, product of:",
+                          "details": [
+                            {
+                              "value": 1.6931472,
+                              "description": "idf(docFreq=1, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.08911558,
+                              "description": "queryNorm",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 0.04629699,
+                          "description": "fieldWeight in 0, product of:",
+                          "details": [
+                            {
+                              "value": 1,
+                              "description": "tf(freq=1.0), with freq of:",
+                              "details": [
+                                {
+                                  "value": 1,
+                                  "description": "termFreq=1.0",
+                                  "details": []
+                                }
+                              ]
+                            },
+                            {
+                              "value": 1.6931472,
+                              "description": "idf(docFreq=1, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.02734375,
+                              "description": "fieldNorm(doc=0)",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": 0.0029411912,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.0029411912,
+                  "description": "weight(body:佐藤 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.0029411912,
+                      "description": "score(doc=0,freq=4.0), product of:",
+                      "details": [
+                        {
+                          "value": 0.06923001,
+                          "description": "queryWeight, product of:",
+                          "details": [
+                            {
+                              "value": 0.7768564,
+                              "description": "idf(docFreq=4, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.08911558,
+                              "description": "queryNorm",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 0.042484336,
+                          "description": "fieldWeight in 0, product of:",
+                          "details": [
+                            {
+                              "value": 2,
+                              "description": "tf(freq=4.0), with freq of:",
+                              "details": [
+                                {
+                                  "value": 4,
+                                  "description": "termFreq=4.0",
+                                  "details": []
+                                }
+                              ]
+                            },
+                            {
+                              "value": 0.7768564,
+                              "description": "idf(docFreq=4, maxDocs=4)",
+                              "details": []
+                            },
+                            {
+                              "value": 0.02734375,
+                              "description": "fieldNorm(doc=0)",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+
+
+
+
+
+
+--------
+ES 6.0
+--------
+
+# "number_of_fragments": 1,
+--------------------------------
+{
+  "took": 4,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1.8253996,
+    "hits": [
+      {
+        "_shard": "[traina000_test_60][4]",
+        "_node": "buvHyIVYTciYDNRzpFAY6w",
+        "_index": "traina000_test_60",
+        "_type": "test",
+        "_id": "qSiSK2EBzgyfWVRiZMB6",
+        "_score": 1.8253996,
+        "_source": {
+          "title": "検索対象",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA A100 BBBB 鈴木 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB B200 CCCC CCCC 田中 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC C300 DDDD DDDD DDDD 佐藤 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD D400 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE E500 FFFF FFFF FFFF FFFF 佐藤 佐藤 佐藤 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF F600 GGGG GGGG GGGG GGGG GGGG GGGG 田中 田中 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG G700 HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH H800 IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII I900 JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ J000"
+        },
+        "highlight": {
+          "body": [
+            "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA A100 BBBB <mark>鈴木</mark>"
+          ]
+        },
+        "_explanation": {
+          "value": 1.8253998,
+          "description": "sum of:",
+          "details": [
+            {
+              "value": 1.0996306,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 1.0996306,
+                  "description": "weight(body:田中 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 1.0996306,
+                      "description": "score(doc=0,freq=3.0 = termFreq=3.0\n), product of:",
+                      "details": [
+                        {
+                          "value": 0.98082924,
+                          "description": "idf, computed as log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5)) from:",
+                          "details": [
+                            {
+                              "value": 1,
+                              "description": "docFreq",
+                              "details": []
+                            },
+                            {
+                              "value": 3,
+                              "description": "docCount",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 1.1211234,
+                          "description": "tfNorm, computed as (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength)) from:",
+                          "details": [
+                            {
+                              "value": 3,
+                              "description": "termFreq=3.0",
+                              "details": []
+                            },
+                            {
+                              "value": 1.2,
+                              "description": "parameter k1",
+                              "details": []
+                            },
+                            {
+                              "value": 0.75,
+                              "description": "parameter b",
+                              "details": []
+                            },
+                            {
+                              "value": 342.33334,
+                              "description": "avgFieldLength",
+                              "details": []
+                            },
+                            {
+                              "value": 984,
+                              "description": "fieldLength",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": 0.5551456,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.5551456,
+                  "description": "weight(body:鈴木 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.5551456,
+                      "description": "score(doc=0,freq=1.0 = termFreq=1.0\n), product of:",
+                      "details": [
+                        {
+                          "value": 0.98082924,
+                          "description": "idf, computed as log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5)) from:",
+                          "details": [
+                            {
+                              "value": 1,
+                              "description": "docFreq",
+                              "details": []
+                            },
+                            {
+                              "value": 3,
+                              "description": "docCount",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 0.56599617,
+                          "description": "tfNorm, computed as (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength)) from:",
+                          "details": [
+                            {
+                              "value": 1,
+                              "description": "termFreq=1.0",
+                              "details": []
+                            },
+                            {
+                              "value": 1.2,
+                              "description": "parameter k1",
+                              "details": []
+                            },
+                            {
+                              "value": 0.75,
+                              "description": "parameter b",
+                              "details": []
+                            },
+                            {
+                              "value": 342.33334,
+                              "description": "avgFieldLength",
+                              "details": []
+                            },
+                            {
+                              "value": 984,
+                              "description": "fieldLength",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": 0.17062356,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.17062356,
+                  "description": "weight(body:佐藤 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.17062356,
+                      "description": "score(doc=0,freq=4.0 = termFreq=4.0\n), product of:",
+                      "details": [
+                        {
+                          "value": 0.13353139,
+                          "description": "idf, computed as log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5)) from:",
+                          "details": [
+                            {
+                              "value": 3,
+                              "description": "docFreq",
+                              "details": []
+                            },
+                            {
+                              "value": 3,
+                              "description": "docCount",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 1.2777786,
+                          "description": "tfNorm, computed as (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength)) from:",
+                          "details": [
+                            {
+                              "value": 4,
+                              "description": "termFreq=4.0",
+                              "details": []
+                            },
+                            {
+                              "value": 1.2,
+                              "description": "parameter k1",
+                              "details": []
+                            },
+                            {
+                              "value": 0.75,
+                              "description": "parameter b",
+                              "details": []
+                            },
+                            {
+                              "value": 342.33334,
+                              "description": "avgFieldLength",
+                              "details": []
+                            },
+                            {
+                              "value": 984,
+                              "description": "fieldLength",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+
+
+
+
+
+# "number_of_fragments": default value,
+--------------------------------
+{
+  "took": 3,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1.8253996,
+    "hits": [
+      {
+        "_shard": "[traina000_test_60][4]",
+        "_node": "buvHyIVYTciYDNRzpFAY6w",
+        "_index": "traina000_test_60",
+        "_type": "test",
+        "_id": "qSiSK2EBzgyfWVRiZMB6",
+        "_score": 1.8253996,
+        "_source": {
+          "title": "検索対象",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA A100 BBBB 鈴木 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB B200 CCCC CCCC 田中 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC C300 DDDD DDDD DDDD 佐藤 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD D400 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE E500 FFFF FFFF FFFF FFFF 佐藤 佐藤 佐藤 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF F600 GGGG GGGG GGGG GGGG GGGG GGGG 田中 田中 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG G700 HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH H800 IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII I900 JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ JJJJ J000"
+        },
+        "highlight": {
+          "body": [
+            "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA A100 BBBB <mark>鈴木</mark>",
+            "BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB B200 CCCC CCCC <mark>田中</mark>",
+            "CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC C300 DDDD DDDD DDDD <mark>佐藤</mark>",
+            "<mark>佐藤</mark> <mark>佐藤</mark> FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF F600 GGGG GGGG GGGG GGGG GGGG",
+            "GGGG <mark>田中</mark> <mark>田中</mark> GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG G700 HHHH HHHH HHHH HHHH HHHH"
+          ]
+        },
+        "_explanation": {
+          "value": 1.8253998,
+          "description": "sum of:",
+          "details": [
+            {
+              "value": 1.0996306,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 1.0996306,
+                  "description": "weight(body:田中 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 1.0996306,
+                      "description": "score(doc=0,freq=3.0 = termFreq=3.0\n), product of:",
+                      "details": [
+                        {
+                          "value": 0.98082924,
+                          "description": "idf, computed as log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5)) from:",
+                          "details": [
+                            {
+                              "value": 1,
+                              "description": "docFreq",
+                              "details": []
+                            },
+                            {
+                              "value": 3,
+                              "description": "docCount",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 1.1211234,
+                          "description": "tfNorm, computed as (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength)) from:",
+                          "details": [
+                            {
+                              "value": 3,
+                              "description": "termFreq=3.0",
+                              "details": []
+                            },
+                            {
+                              "value": 1.2,
+                              "description": "parameter k1",
+                              "details": []
+                            },
+                            {
+                              "value": 0.75,
+                              "description": "parameter b",
+                              "details": []
+                            },
+                            {
+                              "value": 342.33334,
+                              "description": "avgFieldLength",
+                              "details": []
+                            },
+                            {
+                              "value": 984,
+                              "description": "fieldLength",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": 0.5551456,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.5551456,
+                  "description": "weight(body:鈴木 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.5551456,
+                      "description": "score(doc=0,freq=1.0 = termFreq=1.0\n), product of:",
+                      "details": [
+                        {
+                          "value": 0.98082924,
+                          "description": "idf, computed as log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5)) from:",
+                          "details": [
+                            {
+                              "value": 1,
+                              "description": "docFreq",
+                              "details": []
+                            },
+                            {
+                              "value": 3,
+                              "description": "docCount",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 0.56599617,
+                          "description": "tfNorm, computed as (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength)) from:",
+                          "details": [
+                            {
+                              "value": 1,
+                              "description": "termFreq=1.0",
+                              "details": []
+                            },
+                            {
+                              "value": 1.2,
+                              "description": "parameter k1",
+                              "details": []
+                            },
+                            {
+                              "value": 0.75,
+                              "description": "parameter b",
+                              "details": []
+                            },
+                            {
+                              "value": 342.33334,
+                              "description": "avgFieldLength",
+                              "details": []
+                            },
+                            {
+                              "value": 984,
+                              "description": "fieldLength",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "value": 0.17062356,
+              "description": "sum of:",
+              "details": [
+                {
+                  "value": 0.17062356,
+                  "description": "weight(body:佐藤 in 0) [PerFieldSimilarity], result of:",
+                  "details": [
+                    {
+                      "value": 0.17062356,
+                      "description": "score(doc=0,freq=4.0 = termFreq=4.0\n), product of:",
+                      "details": [
+                        {
+                          "value": 0.13353139,
+                          "description": "idf, computed as log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5)) from:",
+                          "details": [
+                            {
+                              "value": 3,
+                              "description": "docFreq",
+                              "details": []
+                            },
+                            {
+                              "value": 3,
+                              "description": "docCount",
+                              "details": []
+                            }
+                          ]
+                        },
+                        {
+                          "value": 1.2777786,
+                          "description": "tfNorm, computed as (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength)) from:",
+                          "details": [
+                            {
+                              "value": 4,
+                              "description": "termFreq=4.0",
+                              "details": []
+                            },
+                            {
+                              "value": 1.2,
+                              "description": "parameter k1",
+                              "details": []
+                            },
+                            {
+                              "value": 0.75,
+                              "description": "parameter b",
+                              "details": []
+                            },
+                            {
+                              "value": 342.33334,
+                              "description": "avgFieldLength",
+                              "details": []
+                            },
+                            {
+                              "value": 984,
+                              "description": "fieldLength",
+                              "details": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
