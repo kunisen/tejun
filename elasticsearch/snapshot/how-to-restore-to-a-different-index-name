@@ -1,0 +1,201 @@
+#------------------------------------------------------
+# snapshot - backup and restore to a new index name
+#------------------------------------------------------
+# put some data
+DELETE my_test
+PUT my_test/doc/1
+{ "title": "aaa" }
+
+PUT my_test2/doc/1
+{ "title": "bbb" }
+
+# set snapshot backup directory
+PUT /_snapshot/my_backup
+{
+  "type": "fs",
+  "settings": {
+    "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup"
+  }
+}
+
+# check the settings
+GET _snapshot/my_backup
+
+# response
+{
+  "my_backup": {
+    "type": "fs",
+    "settings": {
+      "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup"
+    }
+  }
+}
+
+# take a snapshot
+PUT /_snapshot/my_backup/snapshot_my_test?wait_for_completion=true
+{
+  "indices": "my_test",
+  "ignore_unavailable": true,
+  "include_global_state": false
+}
+
+# response
+{
+  "snapshot": {
+    "snapshot": "snapshot_my_test",
+    "uuid": "ZEeyX1GsRwKFEGLCcPt6MQ",
+    "version_id": 6000099,
+    "version": "6.0.0",
+    "indices": [
+      "my_test"
+    ],
+    "state": "SUCCESS",
+    "start_time": "2018-01-30T02:10:23.086Z",
+    "start_time_in_millis": 1517278223086,
+    "end_time": "2018-01-30T02:10:23.127Z",
+    "end_time_in_millis": 1517278223127,
+    "duration_in_millis": 41,
+    "failures": [],
+    "shards": {
+      "total": 5,
+      "failed": 0,
+      "successful": 5
+    }
+  }
+}
+
+# restore it to a new index name
+POST /_snapshot/my_backup/snapshot_my_test/_restore
+{
+  "indices": "my_test",
+  "ignore_unavailable": true,
+  "include_global_state": true,
+  "rename_pattern": "my_(.+)",
+  "rename_replacement": "restored_$1"
+}
+
+
+# response
+{
+  "accepted": true
+}
+
+# check the restored index
+GET restored_test/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "restored_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+# next time, restore it back to an existing index
+POST /_snapshot/my_backup/snapshot_my_test/_restore
+{
+  "indices": "my_test",
+  "ignore_unavailable": true,
+  "include_global_state": true,
+  "rename_pattern": "(.+)_test",
+  "rename_replacement": "$1_test2"
+}
+
+# response
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "snapshot_restore_exception",
+        "reason": "[my_backup:snapshot_my_test/ZEeyX1GsRwKFEGLCcPt6MQ] cannot restore index [my_test2] because it's open"
+      }
+    ],
+    "type": "snapshot_restore_exception",
+    "reason": "[my_backup:snapshot_my_test/ZEeyX1GsRwKFEGLCcPt6MQ] cannot restore index [my_test2] because it's open"
+  },
+  "status": 500
+}
+
+# it looks like we need to close "my_test2" before restore it
+# so close it
+POST my_test2/_close
+
+# response
+{
+  "acknowledged": true
+}
+
+# and restore again
+POST /_snapshot/my_backup/snapshot_my_test/_restore
+{
+  "indices": "my_test",
+  "ignore_unavailable": true,
+  "include_global_state": true,
+  "rename_pattern": "(.+)_test",
+  "rename_replacement": "$1_test2"
+}
+
+# response
+{
+  "accepted": true
+}
+
+# check index itself
+GET my_test2/_search
+
+# response
+# we got "aaa" here, so it is the index restored from my_test1
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test2",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+# check _cat/indices
+GET _cat/indices?v&index=my_test1,my_test2
+
+# response
+# health status index    uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+# yellow open   my_test1 6BEUbICvSvurpFt3lHbC8w   5   1          1            0      4.6kb          4.6kb
+# yellow open   my_test2 5S6-39OQRVWAM0UaiV7Rcg   5   1          1            0      4.5kb          4.5kb
+
