@@ -1,0 +1,95 @@
+#--------------------------------
+# index close & open with alias
+#--------------------------------
+DELETE  my_test_index*
+
+# put some data
+#----------------------------------
+PUT my_test_index1/doc/1
+{ "title": "aaa" }
+
+PUT my_test_index2/doc/1
+{ "author": "bbb" }
+
+# check the index size
+#----------------------------------
+GET _cat/indices?v&index=my_test_index*
+
+# result
+#----------------------------------
+# health status index          uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+# yellow open   my_test_index1 AHN6g14ARTmyJnBOLCW8BA   5   1          1            0      4.4kb          4.4kb
+# yellow open   my_test_index2 YYRqmxvbQQOb4tSx4akJNA   5   1          1            0      4.4kb          4.4kb
+
+
+# set an alias
+#----------------------------------
+POST _aliases
+{
+  "actions": [
+    {
+      "add": {
+        "index": "my_test_index1",
+        "alias": "my_test_index"
+      }
+    }
+  ]
+}
+
+# check alias
+#----------------------------------
+GET _cat/aliases?v
+
+# alias         index          filter routing.index routing.search
+# my_test_index my_test_index1 -      -             -
+
+# check index size
+#----------------------------------
+GET _cat/indices?v&index=my_test_index*
+
+# result : no size changes with alias add
+#----------------------------------
+# health status index          uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+# yellow open   my_test_index1 AHN6g14ARTmyJnBOLCW8BA   5   1          1            0      4.4kb          4.4kb
+# yellow open   my_test_index2 YYRqmxvbQQOb4tSx4akJNA   5   1          1            0      4.4kb          4.4kb
+
+
+# close index
+#----------------------------------
+POST my_test_index1/_close
+
+# result - no problem to close index when alias exists
+# {
+#   "acknowledged": true
+# }
+
+# check index size
+#----------------------------------
+GET _cat/indices?v&index=my_test_index*
+
+# result
+#----------------------------------
+# health status index          uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+#        close  my_test_index1 AHN6g14ARTmyJnBOLCW8BA                                                          
+# yellow open   my_test_index2 YYRqmxvbQQOb4tSx4akJNA   5   1          1            0      4.4kb          4.4kb
+
+
+# check the size on the disk
+#----------------------------------
+# check my_test_index1
+
+# senmac:0 kuniyasu$pwd
+# /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0
+# senmac:0 kuniyasu$du -sh ./indices/AHN6g14ARTmyJnBOLCW8BA
+# 104K	./indices/AHN6g14ARTmyJnBOLCW8BA
+# senmac:0 kuniyasu$
+
+
+# check my_test_index2
+
+# senmac:0 kuniyasu$du -sh ./indices/YYRqmxvbQQOb4tSx4akJNA
+# 104K	./indices/YYRqmxvbQQOb4tSx4akJNA
+
+# conclusion
+# - After index is closed, we can not see the size from _cat/indices API, but it still exists on the disk.
+# - So we need to take care about this unvisible size.
