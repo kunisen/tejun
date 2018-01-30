@@ -1,6 +1,12 @@
 #------------------------------------------------------
 # snapshot - backup and restore to a new index name
 #------------------------------------------------------
+# documents
+#--------------
+# https://www.elastic.co/guide/en/elasticsearch/guide/current/_restoring_from_a_snapshot.html
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-snapshots.html#_restore
+
+
 # put some data
 DELETE my_test
 PUT my_test/doc/1
