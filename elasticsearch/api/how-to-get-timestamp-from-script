@@ -1,0 +1,102 @@
+_search API
+=============
+
+request
+---------
+GET my_test_logstash/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "size": 0,
+  "aggs": {
+    "aaa": {
+      "terms": {
+        "script": """
+        def time = doc['@timestamp'].toString();
+        return time + " **** hello ****";
+        """
+      }
+    }
+  }
+}
+
+
+response
+----------
+{
+  "took": 2,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0,
+    "hits": []
+  },
+  "aggregations": {
+    "aaa": {
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": [
+        {
+          "key": "[2018-01-31T04:37:08.948Z] **** hello ****",
+          "doc_count": 1
+        }
+      ]
+    }
+  }
+}
+
+
+
+_reindex API
+===============
+
+request
+----------
+POST _reindex
+{
+  "source": {
+    "index": "my_test_logstash"
+  },
+  "dest": {
+    "index": "my_test_logstash_dst"
+  },
+  "script": {
+    "lang": "painless",
+    "source": """
+    ctx._source['@timestamp'] = ctx._source['@timestamp'] + " **** hello ****"
+    """
+  }
+}
+
+
+response
+----------
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_logstash_dst",
+        "_type": "logs",
+        "_id": "test1",
+        "_score": 1,
+        "_source": {
+          "path": "/Users/kuniyasu/Work/installer/logstash/logstash-5.5.2/data/test.txt",
+          "@timestamp": "2018-01-31T04:37:08.948Z **** hello ****",
+          "@version": "1",
