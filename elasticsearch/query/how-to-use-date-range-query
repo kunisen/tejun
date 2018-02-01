@@ -1,0 +1,156 @@
+# manual : 
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-range-query.html#ranges-on-dates
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-bool-query.html
+
+
+# Set mappings
+DELETE my_test
+PUT my_test
+{
+  "mappings": {
+      "doc": {
+        "properties": {
+          "daytime": {
+            "type": "date"
+          }
+        }
+      }
+    }
+}
+
+# check mapping
+GET my_test/_mapping
+
+# response
+{
+  "my_test": {
+    "mappings": {
+      "doc": {
+        "properties": {
+          "daytime": {
+            "type": "date"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+# put some data 
+# - need to take care about the date format
+PUT my_test/doc/1
+{
+  "daytime": "2017-12-02T00:00:00.000Z"
+}
+
+PUT my_test/doc/2
+{
+  "daytime": "2018-01-02T00:00:00.000Z"
+}
+
+
+# check data we put in
+GET my_test/_search
+
+
+# response
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-01-02T00:00:00.000Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "daytime": "2017-12-02T00:00:00.000Z"
+        }
+      }
+    ]
+  }
+}
+
+
+# now check the date range query
+GET my_test/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "range": {
+            "daytime": {
+              "gt": "2017-12-01T00:00:00.000Z",
+              "lt": "2017-12-23T00:00:00.000Z"
+            }
+          }
+        },
+        {
+          "range": {
+            "daytime": {
+              "gt": "2018-01-01T00:00:00.000Z",
+              "lt": "2018-01-05T00:00:00.000Z"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+
+# response
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-01-02T00:00:00.000Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "daytime": "2017-12-02T00:00:00.000Z"
+        }
+      }
+    ]
+  }
+}
