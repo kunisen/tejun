@@ -1,0 +1,84 @@
+#-----------------
+# shrink
+#-----------------
+# check node name
+GET _cat/nodes?v
+
+# response
+# ip        heap.percent ram.percent cpu load_1m load_5m load_15m node.role master name
+# 127.0.0.1           40          99   9    2.85                  mdi       *      buvHyIV
+
+
+# put some data
+DELETE my_test_src
+PUT my_test_src/doc/1
+{ "title": "aaa" }
+
+# response
+{
+  "_index": "my_test_src",
+  "_type": "doc",
+  "_id": "1",
+  "_version": 1,
+  "result": "created",
+  "_shards": {
+    "total": 2,
+    "successful": 1,
+    "failed": 0
+  },
+  "_seq_no": 0,
+  "_primary_term": 1
+}
+
+
+# check index status
+GET _cat/indices?v&index=my_test_*
+
+# response
+# health status index                uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+# yellow open   my_test_src          Ygqclo8ZSNKdW1NDLU6tlw   5   1          1            0      4.4kb          4.4kb
+
+
+# prepare to shrink
+PUT /my_test_src/_settings
+{
+  "settings": {
+    "index.routing.allocation.require._name": "buvHyIV", 
+    "index.blocks.write": true 
+  }
+}
+
+# response
+{
+  "acknowledged": true
+}
+
+# run shrink API
+POST my_test_src/_shrink/my_test_dst
+{
+  "settings": {
+    "index.number_of_replicas": 1,
+    "index.number_of_shards": 1, 
+    "index.codec": "best_compression" 
+  }
+}
+
+# response
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test_dst"
+}
+
+
+# check index status
+GET _cat/indices?v&index=my_test_*
+
+
+# response
+# health status index                uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+# yellow open   my_test_dst          pQ1LBjJyScWGuZv-nO0Zgw   1   1          1            0      3.6kb          3.6kb
+# yellow open   my_test_src          Ygqclo8ZSNKdW1NDLU6tlw   5   1          1            0      4.5kb          4.5kb
+
+
+## you can see the shard number decreased in target index "my_test_dst"
