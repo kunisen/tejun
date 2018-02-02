@@ -198,143 +198,55 @@ node.max_local_storage_nodes: 2
 xpack.security.transport.ssl.verification_mode: certificate 
 
 
-# add keystore and truststore secure password
+# add keystore, truststore, key_phrase secure password
 #--------------------------------------------------
 senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/elasticsearch-keystore add xpack.ssl.keystore.secure_password
 Enter value for xpack.ssl.keystore.secure_password: 
 senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/elasticsearch-keystore add xpack.ssl.truststore.secure_password
 Enter value for xpack.ssl.truststore.secure_password: 
+senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/elasticsearch-keystore add xpack.ssl.secure_key_passphrase
+Enter value for xpack.ssl.secure_key_passphrase: 
 
 
-# start up node1 (but failed)
+
+# start up node1
 #------------------------------
 senmac:elasticsearch-6.1.2-ssl kuniyasu$ES_PATH_CONF=config ./bin/elasticsearch
-[2018-01-25T16:10:04,889][INFO ][o.e.n.Node               ] [node1] initializing ...
-[2018-01-25T16:10:04,949][INFO ][o.e.e.NodeEnvironment    ] [node1] using [1] data paths, mounts [[/ (/dev/disk1)]], net usable_space [200.6gb], net total_space [464.6gb], types [hfs]
-[2018-01-25T16:10:04,949][INFO ][o.e.e.NodeEnvironment    ] [node1] heap size [989.8mb], compressed ordinary object pointers [true]
-[2018-01-25T16:10:04,950][INFO ][o.e.n.Node               ] [node1] node name [node1], node ID [iH1dPioyRvChKbkUwFy5ng]
-[2018-01-25T16:10:04,950][INFO ][o.e.n.Node               ] [node1] version[6.1.2], pid[15128], build[5b1fea5/2018-01-10T02:35:59.208Z], OS[Mac OS X/10.12.6/x86_64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
-[2018-01-25T16:10:04,951][INFO ][o.e.n.Node               ] [node1] JVM arguments [-Xms1g, -Xmx1g, -XX:+UseConcMarkSweepGC, -XX:CMSInitiatingOccupancyFraction=75, -XX:+UseCMSInitiatingOccupancyOnly, -XX:+AlwaysPreTouch, -Xss1m, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djna.nosys=true, -XX:-OmitStackTraceInFastThrow, -Dio.netty.noUnsafe=true, -Dio.netty.noKeySetOptimization=true, -Dio.netty.recycler.maxCapacityPerThread=0, -Dlog4j.shutdownHookEnabled=false, -Dlog4j2.disable.jmx=true, -XX:+HeapDumpOnOutOfMemoryError, -Des.path.home=/Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl, -Des.path.conf=config]
-[2018-01-25T16:10:06,260][WARN ][o.e.b.ElasticsearchUncaughtExceptionHandler] [node1] uncaught exception in thread [main]
-org.elasticsearch.bootstrap.StartupException: java.lang.IllegalStateException: failed to load plugin class [org.elasticsearch.xpack.XPackPlugin]
-  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:125) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Elasticsearch.execute(Elasticsearch.java:112) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.cli.EnvironmentAwareCommand.execute(EnvironmentAwareCommand.java:86) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.cli.Command.mainWithoutErrorHandling(Command.java:124) ~[elasticsearch-cli-6.1.2.jar:6.1.2]
-  at org.elasticsearch.cli.Command.main(Command.java:90) ~[elasticsearch-cli-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Elasticsearch.main(Elasticsearch.java:92) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Elasticsearch.main(Elasticsearch.java:85) ~[elasticsearch-6.1.2.jar:6.1.2]
-Caused by: java.lang.IllegalStateException: failed to load plugin class [org.elasticsearch.xpack.XPackPlugin]
-  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:452) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
-  ... 6 more
-Caused by: java.lang.reflect.InvocationTargetException
-  at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
-  at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[?:?]
-  at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
-  at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[?:1.8.0_144]
-  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:443) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
-  ... 6 more
-Caused by: org.elasticsearch.ElasticsearchException: failed to initialize a KeyManagerFactory
-  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:77) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.createSslContext(SSLService.java:410) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.loadSSLConfigurations(SSLService.java:444) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.<init>(SSLService.java:87) ~[?:?]
-  at org.elasticsearch.xpack.XPackPlugin.<init>(XPackPlugin.java:244) ~[?:?]
-  at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
-  at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[?:?]
-  at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
-  at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[?:1.8.0_144]
-  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:443) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
-  ... 6 more
-Caused by: org.bouncycastle.openssl.PEMException: exception processing key pair: password empty
-  at org.bouncycastle.openssl.PEMEncryptedKeyPair.decryptKeyPair(Unknown Source) ~[?:?]
-  at org.elasticsearch.xpack.ssl.CertUtils.innerReadPrivateKey(CertUtils.java:337) ~[?:?]
-  at org.elasticsearch.xpack.ssl.CertUtils.readPrivateKey(CertUtils.java:312) ~[?:?]
-  at org.elasticsearch.xpack.ssl.PEMKeyConfig.readPrivateKey(PEMKeyConfig.java:92) ~[?:?]
-  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:69) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.createSslContext(SSLService.java:410) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.loadSSLConfigurations(SSLService.java:444) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.<init>(SSLService.java:87) ~[?:?]
-  at org.elasticsearch.xpack.XPackPlugin.<init>(XPackPlugin.java:244) ~[?:?]
-  at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
-  at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[?:?]
-  at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
-  at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[?:1.8.0_144]
-  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:443) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
-  ... 6 more
-Caused by: java.lang.IllegalArgumentException: password empty
-  at org.bouncycastle.jcajce.provider.symmetric.OpenSSLPBKDF$PBKDF.engineGenerateSecret(Unknown Source) ~[?:?]
-  at javax.crypto.SecretKeyFactory.generateSecret(SecretKeyFactory.java:330) ~[?:1.8.0_121]
-  at org.bouncycastle.openssl.jcajce.PEMUtilities.getKey(Unknown Source) ~[?:?]
-  at org.bouncycastle.openssl.jcajce.PEMUtilities.crypt(Unknown Source) ~[?:?]
-  at org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder$1$1.decrypt(Unknown Source) ~[?:?]
-  at org.bouncycastle.openssl.PEMEncryptedKeyPair.decryptKeyPair(Unknown Source) ~[?:?]
-  at org.elasticsearch.xpack.ssl.CertUtils.innerReadPrivateKey(CertUtils.java:337) ~[?:?]
-  at org.elasticsearch.xpack.ssl.CertUtils.readPrivateKey(CertUtils.java:312) ~[?:?]
-  at org.elasticsearch.xpack.ssl.PEMKeyConfig.readPrivateKey(PEMKeyConfig.java:92) ~[?:?]
-  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:69) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.createSslContext(SSLService.java:410) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.loadSSLConfigurations(SSLService.java:444) ~[?:?]
-  at org.elasticsearch.xpack.ssl.SSLService.<init>(SSLService.java:87) ~[?:?]
-  at org.elasticsearch.xpack.XPackPlugin.<init>(XPackPlugin.java:244) ~[?:?]
-  at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[?:?]
-  at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[?:?]
-  at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[?:?]
-  at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[?:1.8.0_144]
-  at org.elasticsearch.plugins.PluginsService.loadPlugin(PluginsService.java:443) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.loadBundles(PluginsService.java:392) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.plugins.PluginsService.<init>(PluginsService.java:142) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:302) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.node.Node.<init>(Node.java:245) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap$5.<init>(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.setup(Bootstrap.java:212) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
-  at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
-  ... 6 more
+(...)
+[2018-01-25T17:37:18,458][INFO ][o.e.n.Node               ] [node1] started
 
 
-# try again with password settings (still get the same error)
+# create config2 and copy certs
+#----------------------------------
+$cd /Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl
+$cp -r config config2
+$cp ~/tmp/certutil_sample/ca/ca.crt ~/tmp/certutil_sample/certs/node2/* config2/certs
+
+
+# edit config2/elasticsearch.yml (add the follow lines to the end of the yml file)
+#----------------------------------------------------------------------------------
+node.name: node2
+network.host: node2.local
+xpack.ssl.key: certs/node2.key
+xpack.ssl.certificate: certs/node2.crt
+xpack.ssl.certificate_authorities: certs/ca.crt
+xpack.security.transport.ssl.enabled: true
+xpack.security.http.ssl.enabled: true
+discovery.zen.ping.unicast.hosts: [ 'node1.local', 'node2.local']
+node.max_local_storage_nodes: 2
+xpack.security.transport.ssl.verification_mode: certificate 
+
+
+# open a new terminal and start the second node (but failed)
 #--------------------------------------------------------------
-senmac:elasticsearch-6.1.2-ssl kuniyasu$ES_PATH_CONF=config ./bin/elasticsearch -E 'xpack.ssl.keystore.password=Sky2000!' -E 'xpack.ssl.truststore.password=Sky2000!'
-[2018-01-25T16:13:55,120][INFO ][o.e.n.Node               ] [node1] initializing ...
-[2018-01-25T16:13:55,180][INFO ][o.e.e.NodeEnvironment    ] [node1] using [1] data paths, mounts [[/ (/dev/disk1)]], net usable_space [200.6gb], net total_space [464.6gb], types [hfs]
-[2018-01-25T16:13:55,180][INFO ][o.e.e.NodeEnvironment    ] [node1] heap size [989.8mb], compressed ordinary object pointers [true]
-[2018-01-25T16:13:55,181][INFO ][o.e.n.Node               ] [node1] node name [node1], node ID [iH1dPioyRvChKbkUwFy5ng]
-[2018-01-25T16:13:55,181][INFO ][o.e.n.Node               ] [node1] version[6.1.2], pid[15177], build[5b1fea5/2018-01-10T02:35:59.208Z], OS[Mac OS X/10.12.6/x86_64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
-[2018-01-25T16:13:55,182][INFO ][o.e.n.Node               ] [node1] JVM arguments [-Xms1g, -Xmx1g, -XX:+UseConcMarkSweepGC, -XX:CMSInitiatingOccupancyFraction=75, -XX:+UseCMSInitiatingOccupancyOnly, -XX:+AlwaysPreTouch, -Xss1m, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djna.nosys=true, -XX:-OmitStackTraceInFastThrow, -Dio.netty.noUnsafe=true, -Dio.netty.noKeySetOptimization=true, -Dio.netty.recycler.maxCapacityPerThread=0, -Dlog4j.shutdownHookEnabled=false, -Dlog4j2.disable.jmx=true, -XX:+HeapDumpOnOutOfMemoryError, -Des.path.home=/Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl, -Des.path.conf=config]
-[2018-01-25T16:13:56,423][WARN ][o.e.b.ElasticsearchUncaughtExceptionHandler] [node1] uncaught exception in thread [main]
+senmac:elasticsearch-6.1.2-ssl kuniyasu$ES_PATH_CONF=config2 ./bin/elasticsearch
+[2018-01-25T17:43:18,590][INFO ][o.e.n.Node               ] [node2] initializing ...
+[2018-01-25T17:43:18,654][INFO ][o.e.e.NodeEnvironment    ] [node2] using [1] data paths, mounts [[/ (/dev/disk1)]], net usable_space [200.4gb], net total_space [464.6gb], types [hfs]
+[2018-01-25T17:43:18,655][INFO ][o.e.e.NodeEnvironment    ] [node2] heap size [989.8mb], compressed ordinary object pointers [true]
+[2018-01-25T17:43:18,656][INFO ][o.e.n.Node               ] [node2] node name [node2], node ID [zROSLRTAR3aRTwbEpCDWBQ]
+[2018-01-25T17:43:18,657][INFO ][o.e.n.Node               ] [node2] version[6.1.2], pid[15749], build[5b1fea5/2018-01-10T02:35:59.208Z], OS[Mac OS X/10.12.6/x86_64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[2018-01-25T17:43:18,657][INFO ][o.e.n.Node               ] [node2] JVM arguments [-Xms1g, -Xmx1g, -XX:+UseConcMarkSweepGC, -XX:CMSInitiatingOccupancyFraction=75, -XX:+UseCMSInitiatingOccupancyOnly, -XX:+AlwaysPreTouch, -Xss1m, -Djava.awt.headless=true, -Dfile.encoding=UTF-8, -Djna.nosys=true, -XX:-OmitStackTraceInFastThrow, -Dio.netty.noUnsafe=true, -Dio.netty.noKeySetOptimization=true, -Dio.netty.recycler.maxCapacityPerThread=0, -Dlog4j.shutdownHookEnabled=false, -Dlog4j2.disable.jmx=true, -XX:+HeapDumpOnOutOfMemoryError, -Des.path.home=/Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl, -Des.path.conf=config2]
+[2018-01-25T17:43:20,035][WARN ][o.e.b.ElasticsearchUncaughtExceptionHandler] [node2] uncaught exception in thread [main]
 org.elasticsearch.bootstrap.StartupException: java.lang.IllegalStateException: failed to load plugin class [org.elasticsearch.xpack.XPackPlugin]
   at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:125) ~[elasticsearch-6.1.2.jar:6.1.2]
   at org.elasticsearch.bootstrap.Elasticsearch.execute(Elasticsearch.java:112) ~[elasticsearch-6.1.2.jar:6.1.2]
@@ -442,3 +354,42 @@ Caused by: java.lang.IllegalArgumentException: password empty
   at org.elasticsearch.bootstrap.Bootstrap.init(Bootstrap.java:322) ~[elasticsearch-6.1.2.jar:6.1.2]
   at org.elasticsearch.bootstrap.Elasticsearch.init(Elasticsearch.java:121) ~[elasticsearch-6.1.2.jar:6.1.2]
   ... 6 more
+senmac:elasticsearch-6.1.2-ssl kuniyasu$
+
+
+
+# set built-in role password (but failed)
+#----------------------------------------------------------
+$cd /Users/kuniyasu/tmp/certutil_sample/elasticsearch-6.1.2-ssl
+$bin/x-pack/setup-passwords auto -u "https://node1.local:9200"
+
+
+senmac:elasticsearch-6.1.2-ssl kuniyasu$bin/x-pack/setup-passwords auto -u "https://node1.local:9200"
+Exception in thread "main" ElasticsearchException[failed to initialize a KeyManagerFactory]; nested: PEMException[exception processing key pair: password empty]; nested: IllegalArgumentException[password empty];
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:77)
+  at org.elasticsearch.xpack.ssl.SSLService.createSslContext(SSLService.java:410)
+  at org.elasticsearch.xpack.ssl.SSLService.loadSSLConfigurations(SSLService.java:444)
+  at org.elasticsearch.xpack.ssl.SSLService.<init>(SSLService.java:87)
+  at org.elasticsearch.xpack.security.authc.esnative.tool.CommandLineHttpClient.postURL(CommandLineHttpClient.java:91)
+  at org.elasticsearch.xpack.security.authc.esnative.tool.SetupPasswordTool$SetupCommand.checkElasticKeystorePasswordValid(SetupPasswordTool.java:278)
+  at org.elasticsearch.xpack.security.authc.esnative.tool.SetupPasswordTool$AutoSetup.execute(SetupPasswordTool.java:127)
+  at org.elasticsearch.cli.EnvironmentAwareCommand.execute(EnvironmentAwareCommand.java:86)
+  at org.elasticsearch.cli.Command.mainWithoutErrorHandling(Command.java:124)
+  at org.elasticsearch.cli.MultiCommand.execute(MultiCommand.java:75)
+  at org.elasticsearch.cli.Command.mainWithoutErrorHandling(Command.java:124)
+  at org.elasticsearch.cli.Command.main(Command.java:90)
+  at org.elasticsearch.xpack.security.authc.esnative.tool.SetupPasswordTool.main(SetupPasswordTool.java:105)
+Caused by: org.bouncycastle.openssl.PEMException: exception processing key pair: password empty
+  at org.bouncycastle.openssl.PEMEncryptedKeyPair.decryptKeyPair(Unknown Source)
+  at org.elasticsearch.xpack.ssl.CertUtils.innerReadPrivateKey(CertUtils.java:337)
+  at org.elasticsearch.xpack.ssl.CertUtils.readPrivateKey(CertUtils.java:312)
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.readPrivateKey(PEMKeyConfig.java:92)
+  at org.elasticsearch.xpack.ssl.PEMKeyConfig.createKeyManager(PEMKeyConfig.java:69)
+  ... 12 more
+Caused by: java.lang.IllegalArgumentException: password empty
+  at org.bouncycastle.jcajce.provider.symmetric.OpenSSLPBKDF$PBKDF.engineGenerateSecret(Unknown Source)
+  at javax.crypto.SecretKeyFactory.generateSecret(SecretKeyFactory.java:330)
+  at org.bouncycastle.openssl.jcajce.PEMUtilities.getKey(Unknown Source)
+  at org.bouncycastle.openssl.jcajce.PEMUtilities.crypt(Unknown Source)
+  at org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder$1$1.decrypt(Unknown Source)
+  ... 17 more
