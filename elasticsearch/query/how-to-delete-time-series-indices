@@ -1,0 +1,101 @@
+#------------------
+# how to delete time series index 
+#------------------
+# manual
+#------------------
+# https://www.elastic.co/guide/en/watcher/watcher-1.0/dynamic-index-names.html
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/date-math-index-names.html
+
+# about URL encoding
+# https://meyerweb.com/eric/tools/dencoder/
+
+# put some data
+#------------------
+DELETE my_test_*
+
+# today (assuming today is 20180202)
+PUT my_test_20180202/doc/1
+{"title":"aaa"}
+
+# this week (assuming today is 20180202)
+PUT my_test_20180202/doc/1
+{"title":"aaa"}
+
+PUT my_test_20180201/doc/1
+{"title":"aaa"}
+
+PUT my_test_20180131/doc/1
+{"title":"aaa"}
+
+PUT my_test_20180130/doc/1
+{"title":"aaa"}
+
+PUT my_test_20180129/doc/1
+{"title":"aaa"}
+
+PUT my_test_20180128/doc/1
+{"title":"aaa"}
+
+PUT my_test_20180127/doc/1
+{"title":"aaa"}
+
+# this month
+PUT my_test_201802/doc/1
+{"title":"aaa"}
+
+# last month
+PUT my_test_201801/doc/1
+{"title":"aaa"}
+
+
+# delete from Dev Tool
+#--------------------------
+# delete today
+# DELETE <my_test_{now/d{YYYYMMdd|+09:00}}>
+
+DELETE %3Cmy_test_%7Bnow%2Fd%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E
+
+
+# delete this week
+# DELETE <my_test_{now/d{YYYYMMdd|+09:00}}>,<my_test_{now/d-1d{YYYYMMdd|+09:00}}>,<my_test_{now/d-2d{YYYYMMdd|+09:00}}>,<my_test_{now/d-3d{YYYYMMdd|+09:00}}>,<my_test_{now/d-4d{YYYYMMdd|+09:00}}>,<my_test_{now/d-5d{YYYYMMdd|+09:00}}>,<my_test_{now/d-6d{YYYYMMdd|+09:00}}>
+
+DELETE %3Cmy_test_%7Bnow%2Fd%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-1d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-2d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-3d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-4d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-5d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-6d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E
+
+# delete this month
+# DELETE <my_test_{now/M{YYYYMM|+09:00}}>
+
+DELETE %3Cmy_test_%7Bnow%2FM%7BYYYYMM%7C%2B09%3A00%7D%7D%3E
+
+
+# delete last month
+# DELETE <my_test_{now/M-1M{YYYYMM|+09:00}}>
+
+DELETE %3Cmy_test_%7Bnow%2FM-1M%7BYYYYMM%7C%2B09%3A00%7D%7D%3E
+
+
+
+# delete from curl command
+#--------------------------
+# delete today
+# DELETE <my_test_{now/d{YYYYMMdd|+09:00}}>
+
+curl -XDELETE "http://localhost:9200/%3Cmy_test_%7Bnow%2Fd%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E"
+
+
+# delete this week
+# DELETE <my_test_{now/d{YYYYMMdd|+09:00}}>,<my_test_{now/d-1d{YYYYMMdd|+09:00}}>,<my_test_{now/d-2d{YYYYMMdd|+09:00}}>,<my_test_{now/d-3d{YYYYMMdd|+09:00}}>,<my_test_{now/d-4d{YYYYMMdd|+09:00}}>,<my_test_{now/d-5d{YYYYMMdd|+09:00}}>,<my_test_{now/d-6d{YYYYMMdd|+09:00}}>
+
+curl -XDELETE "http://localhost:9200/%3Cmy_test_%7Bnow%2Fd%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-1d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-2d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-3d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-4d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-5d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E%2C%3Cmy_test_%7Bnow%2Fd-6d%7BYYYYMMdd%7C%2B09%3A00%7D%7D%3E"
+
+
+# delete this month
+# DELETE <my_test_{now/M{YYYYMM|+09:00}}>
+
+curl -XDELETE "http://localhost:9200/%3Cmy_test_%7Bnow%2FM%7BYYYYMM%7C%2B09%3A00%7D%7D%3E"
+
+
+# delete last month
+# DELETE <my_test_{now/M-1M{YYYYMM|+09:00}}>
+
+curl -XDELETE "http://localhost:9200/%3Cmy_test_%7Bnow%2FM-1M%7BYYYYMM%7C%2B09%3A00%7D%7D%3E"
+
