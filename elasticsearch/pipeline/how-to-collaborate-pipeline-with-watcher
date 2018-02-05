@@ -1,0 +1,25 @@
+PUT _ingest/pipeline/flag_security_breaches
+{
+    "description": "Find Security Breaches during ingestion to flag for Watcher",
+    "processors": [
+      {
+        "script": {
+          "source": """
+              ctx._flagThreat = (ctx.visits.stream().filter( v -> 
+                  v.actions.stream().filter(a -> (
+                       !a.requestResult.equals('api.request_result.field1') &&
+                       !a.requestResult.equals('api.request_result.field2') &&
+                       !a.requestResult.equals('api.request_result.field3') 
+                     ) && ( 
+                       a.threats.stream().filter(t ->
+                         !t.securityRule.isEmpty()
+                       ).count() > 0 
+                     )
+
+                  ).count() > 0
+                ).count() > 0)
+          """
+        }
+      }
+    ]
+}
