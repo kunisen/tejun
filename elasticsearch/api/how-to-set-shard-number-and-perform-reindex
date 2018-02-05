@@ -1,0 +1,167 @@
+#---------------------------------------------------
+# how to set shard number and perform reindex
+#---------------------------------------------------
+# manual
+#---------------------------------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html
+# quotes : Reindex does not attempt to set up the destination index. It does not copy the settings of the source index. You should set up the destination index prior to running a _reindex action, including setting up mappings, shard counts, replicas, etc.
+
+
+# put some data
+#---------------------------------------------------
+DELETE my_test_*
+PUT my_test_src/doc/1
+{"title": "aaa"}
+
+
+# check the shard number
+#---------------------------------------------------
+GET my_test_src/_settings
+
+# response
+# we can see there are 5 shard in primary and 1 replica.
+# so total number is 5 + 5 = 10
+{
+  "my_test_src": {
+    "settings": {
+      "index": {
+        "creation_date": "1517811678841",
+        "number_of_shards": "5",
+        "number_of_replicas": "1",
+        "uuid": "xOcgLcf3Qb6aJk75tGlzDw",
+        "version": {
+          "created": "6000099"
+        },
+        "provided_name": "my_test_src"
+      }
+    }
+  }
+}
+
+# also check shards number from this API
+GET _cat/shards?v&index=my_test_src
+
+# response
+# index       shard prirep state      docs store ip        node
+# my_test_src 1     p      STARTED       0  233b 127.0.0.1 buvHyIV
+# my_test_src 1     r      UNASSIGNED                      
+# my_test_src 2     p      STARTED       0  233b 127.0.0.1 buvHyIV
+# my_test_src 2     r      UNASSIGNED                      
+# my_test_src 4     p      STARTED       0  233b 127.0.0.1 buvHyIV
+# my_test_src 4     r      UNASSIGNED                      
+# my_test_src 3     p      STARTED       1 3.5kb 127.0.0.1 buvHyIV
+# my_test_src 3     r      UNASSIGNED                      
+# my_test_src 0     p      STARTED       0  233b 127.0.0.1 buvHyIV
+# my_test_src 0     r      UNASSIGNED                      
+
+
+# set the shard number of target index
+#---------------------------------------------------
+PUT my_test_dst
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "1"
+    }
+  }
+}
+
+# response
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test_dst"
+}
+
+
+# check the settings
+#---------------------------------------------------
+GET my_test_dst/_settings
+
+
+# response
+# we can see there are 1 shard in primary and 1 replica.
+# so total number is 1 + 1 = 2
+{
+  "my_test_dst": {
+    "settings": {
+      "index": {
+        "creation_date": "1517811903064",
+        "number_of_shards": "1",
+        "number_of_replicas": "1",
+        "uuid": "kaPZ5jXqTdKnTCATNC5vkg",
+        "version": {
+          "created": "6000099"
+        },
+        "provided_name": "my_test_dst"
+      }
+    }
+  }
+}
+
+
+# perform the reindex
+#---------------------------------------------------
+POST _reindex
+{
+  "source": {
+    "index": "my_test_src"
+  },
+  "dest": {
+    "index": "my_test_dst"
+  }
+}
+
+# response
+{
+  "took": 28,
+  "timed_out": false,
+  "total": 1,
+  "updated": 0,
+  "created": 1,
+  "deleted": 0,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1,
+  "throttled_until_millis": 0,
+  "failures": []
+}
+
+
+# check the dst index
+#---------------------------------------------------
+GET my_test_dst/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_dst",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      }
+    ]
+  }
+}
