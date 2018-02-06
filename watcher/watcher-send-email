@@ -1,0 +1,120 @@
+#----------------------------------------------
+# how to use watcher to send mail
+# - based on ES 5.2.0
+#
+# [functions]
+# 1. send "hello watcher" to gmail account
+# 2. send it everyday at 8:40AM
+#----------------------------------------------
+# manual
+#-----------------------
+# https://www.elastic.co/guide/en/x-pack/current/actions-email.html
+# https://www.elastic.co/guide/en/x-pack/5.2/trigger-schedule.html
+
+# 1. set email account config in elasticsearch.yml
+#---------------------------------------------------------
+xpack.notification.email.account:
+    gmail_account:
+        profile: gmail
+        smtp:
+            auth: true
+            starttls.enable: true
+            host: smtp.gmail.com
+            port: 587
+            user: <username>
+            password: <password>
+
+
+# additional information
+#---------------------------------------------------------
+# Need to set gmail to allow less safer app to access or the 2 factor authentication
+
+# 2. Set watcher
+#---------------------------------------------------------
+# remember watcher is using UTC time, so need to minus 9 from the target time
+PUT _xpack/watcher/watch/error_report
+{
+  "trigger": {
+    "schedule": {
+      "daily" : { "at" : "23:40" }
+    }
+  },
+  "actions": {
+    "send_email": {
+      "email": {
+        "to": "kuniyasu.sen@gmail.com",
+        "from": "kuniyasu.sen@gmail.com",
+        "subject": "Watcher Notification",
+        "body": "Hello World!"
+      }
+    }
+  }
+}
+
+
+# Execute watcher for a quick result (Optional)
+# - Generally you should wait for watcher to run automatically
+# - And only run this when you want to see a quick result
+POST _xpack/watcher/watch/error_report/_execute
+
+
+# response
+{
+  "_id": "error_report_3225ecb2-6a03-4718-93ca-b095051c600b-2018-02-05T15:18:57.477Z",
+  "watch_record": {
+    "watch_id": "error_report",
+    "state": "executed",
+    "trigger_event": {
+      "type": "manual",
+      "triggered_time": "2018-02-05T15:18:57.474Z",
+      "manual": {
+        "schedule": {
+          "scheduled_time": "2018-02-05T15:18:57.474Z"
+        }
+      }
+    },
+    "input": {
+      "none": {}
+    },
+    "condition": {
+      "always": {}
+    },
+    "result": {
+      "execution_time": "2018-02-05T15:18:57.477Z",
+      "execution_duration": 4597,
+      "input": {
+        "type": "none",
+        "status": "success",
+        "payload": {}
+      },
+      "condition": {
+        "type": "always",
+        "status": "success",
+        "met": true
+      },
+      "actions": [
+        {
+          "id": "send_email",
+          "type": "email",
+          "status": "success",
+          "email": {
+            "account": "gmail_account",
+            "message": {
+              "id": "error_report_3225ecb2-6a03-4718-93ca-b095051c600b-2018-02-05T15:18:57.477Z",
+              "from": "kuniyasu.sen@gmail.com",
+              "sent_date": "2018-02-05T15:18:57.509Z",
+              "to": [
+                "kuniyasu.sen@gmail.com"
+              ],
+              "subject": "Watcher Notification",
+              "body": {
+                "text": "Hello World!"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "messages": []
+  }
+}
