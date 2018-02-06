@@ -49,6 +49,13 @@ PUT my_test/doc/2
   "daytime": "2018-01-02T00:00:00.000Z"
 }
 
+PUT my_test/doc/3
+{
+  "daytime": "2018-02-02T00:00:00.000Z"
+}
+
+
+
 
 # check data we put in
 GET my_test/_search
@@ -149,6 +156,56 @@ GET my_test/_search
         "_score": 1,
         "_source": {
           "daytime": "2017-12-02T00:00:00.000Z"
+        }
+      }
+    ]
+  }
+}
+
+
+# now get data of this month
+GET my_test/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "range": {
+            "daytime": {
+              "from": "now/M",
+              "to": "now/M",
+              "include_lower": true,
+              "include_upper": true,
+              "format": "epoch_millis",
+              "boost": 1
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+#response
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-02-02T00:00:00.000Z"
         }
       }
     ]
