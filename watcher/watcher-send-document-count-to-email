@@ -9027,3 +9027,9 @@ PUT _xpack/watcher/watch/index_status_report
     "messages": []
   }
 }
+
+
+
+
+# the mail body will be like this
+{0=[index_name, index_document_count, index_size], 1=[my_test, 99, 60994], 2=[my_test2, 30, 72805]}
