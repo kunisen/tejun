@@ -208,6 +208,7 @@ GET .monitoring-es-2-2018*/_search
             "timestamp": {
               "from": "now/M",
               "to": "now/M",
+              "time_zone": "+09:00", 
               "include_lower": true,
               "include_upper": true,
               "format": "epoch_millis",
@@ -436,6 +437,7 @@ PUT _xpack/watcher/watch/index_status_report
                     "timestamp": {
                       "from": "now/M",
                       "to": "now/M",
+                      "time_zone": "+09:00", 
                       "include_lower": true,
                       "include_upper": true,
                       "format": "epoch_millis",
