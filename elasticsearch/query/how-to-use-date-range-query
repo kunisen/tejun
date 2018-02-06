@@ -211,3 +211,171 @@ GET my_test/_search
     ]
   }
 }
+
+
+
+#------------------------------------
+# example of get last 7 days data
+#------------------------------------
+# suppose today is 2018/02/06 (YYmmdd)
+# put some data
+DELETE my_test
+POST my_test/doc
+{
+  "daytime": "2018-01-30T09:00:00.000Z"
+}
+POST my_test/doc
+{
+  "daytime": "2018-01-31T09:00:00.000Z"
+}
+POST my_test/doc
+{
+  "daytime": "2018-02-01T09:00:00.000Z"
+}
+POST my_test/doc
+{
+  "daytime": "2018-02-02T09:00:00.000Z"
+}
+POST my_test/doc
+{
+  "daytime": "2018-02-03T09:00:00.000Z"
+}
+POST my_test/doc
+{
+  "daytime": "2018-02-04T09:00:00.000Z"
+}
+POST my_test/doc
+{
+  "daytime": "2018-02-05T09:00:00.000Z"
+}
+POST my_test/doc
+{
+  "daytime": "2018-02-06T09:00:00.000Z"
+}
+POST my_test/doc
+{
+  "daytime": "2018-02-07T09:00:00.000Z"
+}
+
+# get all : 9 hits (we don't need to show the actual result, but only the total hits)
+GET my_test/_search?size=0
+
+# response
+{
+  "took": 6,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 9,
+    "max_score": 0,
+    "hits": []
+  }
+}
+
+# get the latest 7 days
+GET my_test/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "range": {
+            "daytime": {
+              "from": "now-6d/d",
+              "to": "now/d",
+              "time_zone": "+09:00", 
+              "include_lower": true,
+              "include_upper": true,
+              "format": "epoch_millis",
+              "boost": 1
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+#response
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 7,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "AWFrcSm8Y18UmPOm6YjK",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-01-31T09:00:00.000Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "AWFrcWQaY18UmPOm6Yjy",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-02-03T09:00:00.000Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "AWFrcW5wY18UmPOm6Yj0",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-02-04T09:00:00.000Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "AWFrcU6HY18UmPOm6Yjf",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-02-02T09:00:00.000Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "AWFrcTCHY18UmPOm6Yjd",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-02-01T09:00:00.000Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "AWFrcaVdY18UmPOm6Ykb",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-02-06T09:00:00.000Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "AWFrcYadY18UmPOm6YkH",
+        "_score": 1,
+        "_source": {
+          "daytime": "2018-02-05T09:00:00.000Z"
+        }
+      }
+    ]
+  }
+}
