@@ -393,6 +393,7 @@ GET .monitoring-es-2-2018*/_search
 
 
 
+# *** This is a complete solution ***
 # Step 5. Implement the above query in [Step 4.] to watcher
 #----------------------------------------------------------------------------
 # [Description] 
@@ -405,6 +406,10 @@ GET .monitoring-es-2-2018*/_search
 # 5. output content : 
 #    a. header : index_name, index_document_count, index_size
 #    b. each index info
+#
+# [The things you need to do]
+# 1. Adjust the mail account settings in elasticsearch.yml if you are not using gmail account
+# 2. Specify your "from" and "to" mail address in watcher
 
 
 PUT _xpack/watcher/watch/index_status_report
