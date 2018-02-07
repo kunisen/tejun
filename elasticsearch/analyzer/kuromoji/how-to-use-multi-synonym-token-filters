@@ -1,0 +1,190 @@
+#======================================================================
+# use multi synonym files with multi synonym token filters
+#======================================================================
+#----------------------------------------------------------------------
+# 0. prepare synonyms1.txt and synonyms2.txt
+#----------------------------------------------------------------------
+# [synonyms1.txt]
+# USA, アメリカ
+# [synonyms2.txt]
+# JP, 日本
+
+#----------------------------------------------
+# 1. how to use sysnonym in kuromoji analyzer
+#----------------------------------------------
+DELETE  my_test3
+PUT my_test3
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "my_analyzer": {
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": [
+              "synonym"
+            ]
+          }
+        },
+        "filter": {
+          "synonym": {
+            "type": "synonym",
+            "synonyms_path": "synonyms1.txt"
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "analyzer": "my_analyzer"
+        }
+      }
+    }
+  }
+}
+
+# analyze
+GET my_test3/_analyze
+{
+  "analyzer": "my_analyzer",
+  "text": "USA"
+}
+
+# response
+{
+  "tokens": [
+    {
+      "token": "USA",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "アメリカ",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "SYNONYM",
+      "position": 0
+    }
+  ]
+}
+
+
+#----------------------------------------------
+# 2. try multi synonym in one filter
+#----------------------------------------------
+# prepare index settings and mappings
+#----------------------------------------------
+DELETE  my_test3
+PUT my_test3
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "my_analyzer": {
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": [
+              "synonym1",
+              "synonym2"
+            ]
+          }
+        },
+        "filter": {
+          "synonym1": {
+            "type": "synonym",
+            "synonyms_path": "synonyms1.txt"
+          },
+          "synonym2": {
+            "type": "synonym",
+            "synonyms_path": "synonyms2.txt"
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "analyzer": "my_analyzer"
+        }
+      }
+    }
+  }
+}
+
+# resposne
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test3"
+}
+
+
+# analyze "USA" written in synonyms1.txt
+#----------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_analyzer",
+  "text": "USA"
+}
+
+# response
+{
+  "tokens": [
+    {
+      "token": "USA",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "アメリカ",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "SYNONYM",
+      "position": 0
+    }
+  ]
+}
+
+# analyze "JP" written in synonyms2.txt
+#----------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_analyzer",
+  "text": "JP"
+}
+
+# reponse
+{
+  "tokens": [
+    {
+      "token": "JP",
+      "start_offset": 0,
+      "end_offset": 2,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "日本",
+      "start_offset": 0,
+      "end_offset": 2,
+      "type": "SYNONYM",
+      "position": 0
+    }
+  ]
+}
+
+
+# conclusion
+#----------------------------------------------
+# Yes, we can
