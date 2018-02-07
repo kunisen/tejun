@@ -1,5 +1,5 @@
 #-----------------------------------
-# previleges for running curator
+# privileges for running curator
 # ES version : 5.6.7
 #-----------------------------------
 # prepare curator.yml
@@ -311,12 +311,11 @@ $curator ~/.curator/action.yml
 2018-02-07 15:55:15,609 ERROR     Failed to complete action: shrink.  <class 'curator.exceptions.FailedExecution'>: Exception encountered.  Rerun with loglevel DEBUG and/or check Elasticsearch logs for more information. Exception: TransportError(403, u'')
 
 
-# looks into the debug log
-# - it looks like we need some cluster level privileges to perform these actions
+# looks into the debug log. not so strange
 2018-02-07 15:56:32,389 DEBUG                curator.cli                    run:118  action_config: {'actions': {1: {'action': 'shrink', 'description': 'Shrink ldap indices. Delete each source index after successful shrink, then reroute the shrunk index with the provided parameters.', 'filters': [{'kind': 'prefix', 'filtertype': 'pattern', 'value': 'ldap-'}], 'options': {'number_of_replicas': 0, 'node_filters': {'permit_masters': True}, 'max_wait': -1, 'number_of_shards': 1, 'shrink_suffix': '', 'shrink_node': 'DETERMINISTIC', 'disable_action': False, 'ignore_empty_list': True, 'wait_interval': 9, 'wait_for_active_shards': 1, 'delete_after': True, 'shrink_prefix': 'shrink-', 'post_allocation': {'key': 'node_tag', 'value': 'cold', 'allocation_type': 'include'}, 'wait_for_completion': True}}}}
 
 
-# 403 usually means forbidden without enough privilege
+# think again, 403 usually means forbidden without enough privilege
 # it looks like we need to give privilege to access "shrink*" index
 # - set curator role again
 #-----------------------------------
