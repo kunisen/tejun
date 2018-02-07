@@ -1,0 +1,407 @@
+#-----------------------------------
+# previleges for running curator
+# ES version : 5.6.7
+#-----------------------------------
+# prepare curator.yml
+#-----------------------------------
+client:
+  hosts:
+    - localhost
+  port: 9200
+  url_prefix:
+  use_ssl: False
+  certificate:
+  client_cert:
+  client_key:
+  ssl_no_validate: False
+  http_auth: elastic:changeme
+  timeout: 30
+  master_only: False
+
+logging:
+  # only use this for debugging purpose
+  loglevel: INFO
+  logfile:
+  logformat: default
+  blacklist: 
+
+
+# prepare action.yml
+#-----------------------------------
+actions:
+  1:
+    action: shrink
+    description: >-
+      Shrink ldap indices.
+      Delete each source index after successful shrink, then reroute the shrunk
+      index with the provided parameters.
+    options:
+      disable_action: False
+      ignore_empty_list: True
+      shrink_node: DETERMINISTIC
+      node_filters:
+        permit_masters: True
+      number_of_shards: 1
+      number_of_replicas: 0
+      shrink_prefix: 'shrink-'
+      shrink_suffix: ''
+      delete_after: True
+      post_allocation:
+        allocation_type: include
+        key: node_tag
+        value: cold
+      wait_for_active_shards: 1
+      wait_for_completion: True
+      wait_interval: 9
+      max_wait: -1
+    filters:
+    - filtertype: pattern
+      kind: prefix
+      value: ldap-
+
+
+# save the above 2 files to ~/.curator/ folder
+
+# set curator role
+#-----------------------------------
+POST /_xpack/security/role/curator_role
+{
+  "cluster": [
+    "monitor"
+  ],
+  "indices": [
+    {
+      "names": [
+        "ldap-*"
+      ],
+      "privileges": [
+        "manage"
+      ]
+    }
+  ],
+  "run_as": [],
+  "metadata": {},
+  "transient_metadata": {
+    "enabled": true
+  }
+}
+
+
+# check the role
+#-----------------------------------
+GET /_xpack/security/role/curator_role
+
+# response
+{
+  "curator_role": {
+    "cluster": [
+      "monitor"
+    ],
+    "indices": [
+      {
+        "names": [
+          "ldap-*"
+        ],
+        "privileges": [
+          "manage"
+        ]
+      }
+    ],
+    "run_as": [],
+    "metadata": {},
+    "transient_metadata": {
+      "enabled": true
+    }
+  }
+}
+
+# set curator user
+POST /_xpack/security/user/curator_user
+{
+  "password" : "changeme",
+  "roles" : [ "curator_role" ]
+}
+
+# check curator user
+GET /_xpack/security/user/curator_user
+
+# response
+{
+  "curator_user": {
+    "username": "curator_user",
+    "roles": [
+      "curator_role"
+    ],
+    "full_name": null,
+    "email": null,
+    "metadata": {},
+    "enabled": true
+  }
+}
+
+# other preparation
+#-----------------------------------
+# we need to make cluster health green
+# so basically we need to use >= 2 nodes.
+# but in order to achieve a single node action, I did hardcore work here...
+
+# find unassigned shards use this command
+GET _cat/shards
+
+# disable .monitoring, watcher in elasticsearch.yml
+# - xpack.monitoring.enabled: false
+# - xpack.watcher.enabled: false
+# then restart elasticsearch
+
+# and delete the following indices (remember this is only for testing purpose!)
+DELETE .monitoring*
+DELETE .*watch*
+DELETE .kibana
+PUT .kibana
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "0"
+    }
+  }
+}
+
+
+# and check the cluster health
+GET _cluster/health
+
+# response
+# - its green now.
+{
+  "cluster_name": "monitor",
+  "status": "green",
+  "timed_out": false,
+  "number_of_nodes": 1,
+  "number_of_data_nodes": 1,
+  "active_primary_shards": 13,
+  "active_shards": 13,
+  "relocating_shards": 0,
+  "initializing_shards": 0,
+  "unassigned_shards": 0,
+  "delayed_unassigned_shards": 0,
+  "number_of_pending_tasks": 0,
+  "number_of_in_flight_fetch": 0,
+  "task_max_waiting_in_queue_millis": 0,
+  "active_shards_percent_as_number": 100
+}
+
+
+
+# now let's do curator shrink
+#---------------------------------
+# put some data here
+DELETE *ldap*
+PUT ldap-test
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "5",
+      "number_of_replicas": "0"
+    }
+  }
+}
+PUT ldap-test/doc/1
+{"title": "aaa"}
+
+GET ldap-test
+
+# check the shard number
+GET _cat/shards?v&index=ldap-test
+
+
+# resposne
+# index     shard prirep state   docs store ip        node
+# ldap-test 3     p      STARTED    1 3.2kb 127.0.0.1 p5AlYig
+# ldap-test 1     p      STARTED    0  162b 127.0.0.1 p5AlYig
+# ldap-test 2     p      STARTED    0    0b 127.0.0.1 p5AlYig
+# ldap-test 4     p      STARTED    0  162b 127.0.0.1 p5AlYig
+# ldap-test 0     p      STARTED    0  162b 127.0.0.1 p5AlYig
+
+
+#---------------------------------
+# *** run curator here ***
+#---------------------------------
+# result of superuser (remember we set elastic:changeme in curator.yml)
+#--------------------------------------------------------------------------------
+# $curator ~/.curator/action.yml 
+# 2018-02-07 15:46:46,241 INFO      Preparing Action ID: 1, "shrink"
+# 2018-02-07 15:46:46,245 INFO      Trying Action ID: 1, "shrink": Shrink ldap indices. Delete each source index after successful shrink, then reroute the shrunk index with the provided parameters.
+# 2018-02-07 15:46:46,254 INFO      Source index: ldap-test -- Target index: shrink-ldap-test
+# 2018-02-07 15:46:46,265 WARNING   Not skipping node "p5AlYig" which is a master node (not recommended), but permit_masters is True
+# 2018-02-07 15:46:46,270 INFO      Moving shards to shrink node: "p5AlYig"
+# 2018-02-07 15:46:46,279 INFO      Health Check for all provided keys passed.
+# 2018-02-07 15:46:46,290 INFO      Health Check for all provided keys passed.
+# 2018-02-07 15:46:46,290 INFO      Shrinking index "ldap-test" to "shrink-ldap-test" with settings: {'settings': {'index.number_of_replicas': 0, 'index.number_of_shards': 1}}, wait_for_active_shards=1
+# 2018-02-07 15:46:46,335 INFO      Health Check for all provided keys passed.
+# 2018-02-07 15:46:46,335 INFO      Index "ldap-test" successfully shrunk to "shrink-ldap-test"
+# 2018-02-07 15:46:46,344 INFO      Applying post-shrink allocation rule "index.routing.allocation.include.node_tag:cold" to index "shrink-ldap-test"
+# 2018-02-07 15:46:46,355 INFO      Health Check for all provided keys passed.
+# 2018-02-07 15:46:46,355 INFO      Deleting source index "ldap-test"
+# 2018-02-07 15:46:46,386 INFO      Action ID: 1, "shrink" completed.
+# 2018-02-07 15:46:46,386 INFO      Job completed.
+
+
+# check index again
+GET _cat/indices?v
+
+# response
+# - we can see shrink-ldap-test is up now
+# health status index            uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+# green  open   .security        q87TwADxTEKPqssxupdHpQ   1   0          1            0      4.5kb          4.5kb
+# green  open   .kibana          g0OpUvYiRO65cqiZJd3Zcg   1   0          1            0      3.8kb          3.8kb
+# green  open   ladp_test        rFKy9xCrRVioBht-oezpAA   5   0          0            0       955b           955b
+# green  open   shrink-ldap-test vqycX4eNQtaIz5J6rXvEvw   1   0          1            0      3.2kb          3.2kb
+
+
+
+# result of specific user (remember we set curator:changeme in curator.yml)
+#--------------------------------------------------------------------------------
+# put some data here
+DELETE *ldap*
+PUT ldap-test
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "5",
+      "number_of_replicas": "0"
+    }
+  }
+}
+PUT ldap-test/doc/1
+{"title": "aaa"}
+
+GET ldap-test
+
+# prepare curator.yml
+#-----------------------------------
+client:
+  hosts:
+    - localhost
+  port: 9200
+  url_prefix:
+  use_ssl: False
+  certificate:
+  client_cert:
+  client_key:
+  ssl_no_validate: False
+  http_auth: curator_user:changeme
+  timeout: 30
+  master_only: False
+
+logging:
+  # only use this for debugging purpose
+  loglevel: INFO
+  logfile:
+  logformat: default
+  blacklist: 
+
+# run curator again
+#------------------------------------
+# error happened
+$curator ~/.curator/action.yml 
+2018-02-07 15:55:15,584 INFO      Preparing Action ID: 1, "shrink"
+2018-02-07 15:55:15,587 INFO      Trying Action ID: 1, "shrink": Shrink ldap indices. Delete each source index after successful shrink, then reroute the shrunk index with the provided parameters.
+2018-02-07 15:55:15,596 INFO      Source index: ldap-test -- Target index: shrink-ldap-test
+2018-02-07 15:55:15,609 ERROR     Failed to complete action: shrink.  <class 'curator.exceptions.FailedExecution'>: Exception encountered.  Rerun with loglevel DEBUG and/or check Elasticsearch logs for more information. Exception: TransportError(403, u'')
+
+
+# looks into the debug log
+# - it looks like we need some cluster level privileges to perform these actions
+2018-02-07 15:56:32,389 DEBUG                curator.cli                    run:118  action_config: {'actions': {1: {'action': 'shrink', 'description': 'Shrink ldap indices. Delete each source index after successful shrink, then reroute the shrunk index with the provided parameters.', 'filters': [{'kind': 'prefix', 'filtertype': 'pattern', 'value': 'ldap-'}], 'options': {'number_of_replicas': 0, 'node_filters': {'permit_masters': True}, 'max_wait': -1, 'number_of_shards': 1, 'shrink_suffix': '', 'shrink_node': 'DETERMINISTIC', 'disable_action': False, 'ignore_empty_list': True, 'wait_interval': 9, 'wait_for_active_shards': 1, 'delete_after': True, 'shrink_prefix': 'shrink-', 'post_allocation': {'key': 'node_tag', 'value': 'cold', 'allocation_type': 'include'}, 'wait_for_completion': True}}}}
+
+
+# 403 usually means forbidden without enough privilege
+# it looks like we need to give privilege to access "shrink*" index
+# - set curator role again
+#-----------------------------------
+POST /_xpack/security/role/curator_role
+{
+  "cluster": [
+    "monitor"
+  ],
+  "indices": [
+    {
+      "names": [
+        "ldap-*",
+        "shrink*"
+      ],
+      "privileges": [
+        "manage"
+      ]
+    }
+  ],
+  "run_as": [],
+  "transient_metadata": {
+    "enabled": true
+  }
+}
+
+
+# check the role
+#-----------------------------------
+GET /_xpack/security/role/curator_role
+
+# response
+{
+  "curator_role": {
+    "cluster": [
+      "monitor"
+    ],
+    "indices": [
+      {
+        "names": [
+          "ldap-*",
+          "shrink*"
+        ],
+        "privileges": [
+          "manage"
+        ]
+      }
+    ],
+    "run_as": [],
+    "metadata": {},
+    "transient_metadata": {
+      "enabled": true
+    }
+  }
+}
+
+
+# run curator again
+# - now its ok
+#------------------------------------
+2018-02-07 16:23:46,378 INFO      Preparing Action ID: 1, "shrink"
+2018-02-07 16:23:46,383 INFO      Trying Action ID: 1, "shrink": Shrink ldap indices. Delete each source index after successful shrink, then reroute the shrunk index with the provided parameters.
+2018-02-07 16:23:46,389 INFO      Source index: ldap-test -- Target index: shrink-ldap-test
+2018-02-07 16:23:46,400 WARNING   Not skipping node "p5AlYig" which is a master node (not recommended), but permit_masters is True
+2018-02-07 16:23:46,404 INFO      Moving shards to shrink node: "p5AlYig"
+2018-02-07 16:23:46,420 INFO      Health Check for all provided keys passed.
+2018-02-07 16:23:46,430 INFO      Health Check for all provided keys passed.
+2018-02-07 16:23:46,430 INFO      Shrinking index "ldap-test" to "shrink-ldap-test" with settings: {'settings': {'index.number_of_replicas': 0, 'index.number_of_shards': 1}}, wait_for_active_shards=1
+2018-02-07 16:23:46,474 INFO      Health Check for all provided keys passed.
+2018-02-07 16:23:46,474 INFO      Index "ldap-test" successfully shrunk to "shrink-ldap-test"
+2018-02-07 16:23:46,482 INFO      Applying post-shrink allocation rule "index.routing.allocation.include.node_tag:cold" to index "shrink-ldap-test"
+2018-02-07 16:23:46,492 INFO      Health Check for all provided keys passed.
+2018-02-07 16:23:46,492 INFO      Deleting source index "ldap-test"
+2018-02-07 16:23:46,520 INFO      Action ID: 1, "shrink" completed.
+2018-02-07 16:23:46,520 INFO      Job completed.
+
+# check the shrink target index
+#------------------------------------
+GET _cat/indices?v
+
+
+# response
+health status index            uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+green  open   .security        q87TwADxTEKPqssxupdHpQ   1   0          3            0       20kb           20kb
+green  open   .kibana          g0OpUvYiRO65cqiZJd3Zcg   1   0          1            0      3.8kb          3.8kb
+green  open   ladp_test        rFKy9xCrRVioBht-oezpAA   5   0          0            0       955b           955b
+green  open   shrink-ldap-test 7-bO4DTpQ-uPyolQIkC6yg   1   0          1            0      3.2kb          3.2kb
+
+

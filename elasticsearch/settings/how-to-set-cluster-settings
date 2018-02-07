@@ -1,0 +1,18 @@
+# this is not cool
+PUT _cluster/settings
+{
+  "transient": {
+    "xpack.monitoring.exporters": null
+  }
+}
+
+# this is cool
+PUT _cluster/settings
+{
+  "persistent": {
+    "xpack.monitoring.exporters.cloud_monitoring.type": "http",
+    "xpack.monitoring.exporters.cloud_monitoring.host": "MONITORING_ELASTICSEARCH_URL",
+    "xpack.monitoring.exporters.cloud_monitoring.auth.username": "cloud_monitoring_agent",
+    "xpack.monitoring.exporters.cloud_monitoring.auth.password": "MONITORING_AGENT_PASSWORD"
+  }
+}
