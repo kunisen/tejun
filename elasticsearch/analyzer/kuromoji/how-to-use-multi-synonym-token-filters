@@ -76,7 +76,7 @@ GET my_test3/_analyze
 
 
 #----------------------------------------------
-# 2. try multi synonym in one filter
+# 2. try multi synonym filters in one analyzer
 #----------------------------------------------
 # prepare index settings and mappings
 #----------------------------------------------
