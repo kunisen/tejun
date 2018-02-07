@@ -188,3 +188,75 @@ GET my_test3/_analyze
 # conclusion
 #----------------------------------------------
 # Yes, we can
+
+
+
+
+#----------------------------------------------------------------------
+# 3. try to update synonym without restart elasticsearch instance
+#----------------------------------------------------------------------
+# add the following synonym to synonyms1.txt
+#----------------------------------------------------------------------
+# EU, ヨーロッパ
+
+# analyze "EU"
+#----------------------------------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_analyzer",
+  "text": "EU"
+}
+
+# response
+# - synonym is not reflected
+{
+  "tokens": [
+    {
+      "token": "EU",
+      "start_offset": 0,
+      "end_offset": 2,
+      "type": "word",
+      "position": 0
+    }
+  ]
+}
+
+# try close and open index
+#----------------------------------------------------------------------
+POST my_test3/_close
+POST my_test3/_open
+
+# analyze again
+#----------------------------------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_analyzer",
+  "text": "EU"
+}
+
+# response
+# - its there!
+{
+  "tokens": [
+    {
+      "token": "EU",
+      "start_offset": 0,
+      "end_offset": 2,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "ヨーロッパ",
+      "start_offset": 0,
+      "end_offset": 2,
+      "type": "SYNONYM",
+      "position": 0
+    }
+  ]
+}
+
+# conclusion
+#-------------------------------------------------------------------
+# 1. we can update synonym without restarting ES instance 
+# 2. but we need to close / open the index to let it get reflected
+
