@@ -1,0 +1,259 @@
+#===============================================================================
+# use multi synonym files with multi synonym token filters for search analyzer
+#===============================================================================
+#----------------------------------------------------------------------
+# 1. prepare synonyms1.txt and synonyms2.txt
+#----------------------------------------------------------------------
+# [synonyms1.txt]
+# USA, アメリカ
+# [synonyms2.txt]
+# JP, 日本
+
+
+#----------------------------------------------
+# 2. try multi synonym in one filter
+#----------------------------------------------
+# prepare index settings and mappings
+#----------------------------------------------
+DELETE  my_test3
+PUT my_test3
+{
+  "settings": {
+    "index": {
+      "analysis": {
+        "analyzer": {
+          "my_index_analyzer": {
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": []
+          },
+          "my_search_analyzer_1": {
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": [
+              "synonym1"
+            ]
+          },
+          "my_search_analyzer_2": {
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": []
+          },
+          "my_search_analyzer_3": {
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": [
+              "synonym2"
+            ]
+          },
+          "my_search_analyzer_4": {
+            "tokenizer": "kuromoji_tokenizer",
+            "filter": []
+          }
+        },
+        "filter": {
+          "synonym1": {
+            "type": "synonym",
+            "synonyms_path": "synonyms1.txt"
+          },
+          "synonym2": {
+            "type": "synonym",
+            "synonyms_path": "synonyms2.txt"
+          }
+        }
+      }
+    }
+  },
+  "mappings": {
+    "doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "fields": {
+            "field_for_search_analyzer_1": {
+              "type": "text",
+              "analyzer": "my_index_analyzer",
+              "search_analyzer": "my_search_analyzer_1"
+            },
+            "field_for_search_analyzer_2": {
+              "type": "text",
+              "analyzer": "my_index_analyzer",
+              "search_analyzer": "my_search_analyzer_2"
+            },
+            "field_for_search_analyzer_3": {
+              "type": "text",
+              "analyzer": "my_index_analyzer",
+              "search_analyzer": "my_search_analyzer_3"
+            },
+            "field_for_search_analyzer_4": {
+              "type": "text",
+              "analyzer": "my_index_analyzer",
+              "search_analyzer": "my_search_analyzer_4"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# resposne
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test3"
+}
+
+
+# analyze "USA" and "JP" using "my_index_analyzer"
+#---------------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_index_analyzer",
+  "text": ["USA", "JP"]
+}
+
+# response
+{
+  "tokens": [
+    {
+      "token": "USA",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "JP",
+      "start_offset": 4,
+      "end_offset": 6,
+      "type": "word",
+      "position": 101
+    }
+  ]
+}
+
+# analyze "USA" and "JP" using "my_search_analyzer_1"
+#---------------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_search_analyzer_1",
+  "text": ["USA", "JP"]
+}
+
+# response
+{
+  "tokens": [
+    {
+      "token": "USA",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "アメリカ",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "SYNONYM",
+      "position": 0
+    },
+    {
+      "token": "JP",
+      "start_offset": 4,
+      "end_offset": 6,
+      "type": "word",
+      "position": 101
+    }
+  ]
+}
+
+
+# analyze "USA" and "JP" using "my_search_analyzer_2"
+#---------------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_search_analyzer_2",
+  "text": ["USA", "JP"]
+}
+
+# response
+{
+  "tokens": [
+    {
+      "token": "USA",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "JP",
+      "start_offset": 4,
+      "end_offset": 6,
+      "type": "word",
+      "position": 101
+    }
+  ]
+}
+
+
+# analyze "USA" and "JP" using "my_search_analyzer_3"
+#---------------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_search_analyzer_3",
+  "text": ["USA", "JP"]
+}
+
+# response
+{
+  "tokens": [
+    {
+      "token": "USA",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "JP",
+      "start_offset": 4,
+      "end_offset": 6,
+      "type": "word",
+      "position": 101
+    },
+    {
+      "token": "日本",
+      "start_offset": 4,
+      "end_offset": 6,
+      "type": "SYNONYM",
+      "position": 101
+    }
+  ]
+}
+
+# analyze "USA" and "JP" using "my_search_analyzer_4"
+#---------------------------------------------------
+GET my_test3/_analyze
+{
+  "analyzer": "my_search_analyzer_4",
+  "text": ["USA", "JP"]
+}
+
+# response
+{
+  "tokens": [
+    {
+      "token": "USA",
+      "start_offset": 0,
+      "end_offset": 3,
+      "type": "word",
+      "position": 0
+    },
+    {
+      "token": "JP",
+      "start_offset": 4,
+      "end_offset": 6,
+      "type": "word",
+      "position": 101
+    }
+  ]
+}
+
