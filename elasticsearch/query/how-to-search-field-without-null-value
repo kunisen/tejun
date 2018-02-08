@@ -1,0 +1,85 @@
+#========================================
+# how-to-search-field-without-null-value
+#========================================
+#------------------------
+# Manual
+#------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/6.1/query-dsl-exists-query.html
+
+# set mappings
+#-----------------
+DELETE my_index
+PUT my_index
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "number_field" :{
+          "type": "long"
+        },
+        "text_field": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}
+
+# put data with both fields
+#----------------------------------
+PUT my_index/doc/1
+{
+  "text_field": "aaa",
+  "number_field": 111
+}
+
+# put data with only one fields
+#----------------------------------
+PUT my_index/doc/2
+{
+  "text_field": "bbb"
+}
+
+# use exists query to check the field
+#--------------------------------------
+GET /my_index/doc/_search
+{
+  "query": {
+    "bool": {
+      "must_not": [
+        {
+          "exists": {
+            "field": "number_field"
+          }
+        }
+      ]
+    }
+  }
+}
+
+# response
+{
+  "took": 15,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_index",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "text_field": "bbb"
+        }
+      }
+    ]
+  }
+}
