@@ -2,6 +2,13 @@
 # use multi synonym files with multi synonym token filters for search analyzer
 #===============================================================================
 #----------------------------------------------------------------------
+# Manual
+#----------------------------------------------------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html
+# https://www.elastic.co/guide/en/elasticsearch/reference/6.1/search-validate.html
+
+
+#----------------------------------------------------------------------
 # 1. prepare synonyms1.txt and synonyms2.txt
 #----------------------------------------------------------------------
 # [synonyms1.txt]
@@ -129,6 +136,40 @@ GET my_test3/_analyze
   ]
 }
 
+
+# validate query of searching "USA" and "JP" via "my_index_analyzer"
+#-----------------------------------------------------------------------
+GET my_test3/_validate/query?explain=true
+{
+  "query": {
+    "query_string": {
+      "query": "USA AND JP",
+      "fields": [
+        "title"
+      ]
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test3",
+      "valid": true,
+      "explanation": "+title:usa +title:jp"
+    }
+  ]
+}
+
+
+
 # analyze "USA" and "JP" using "my_search_analyzer_1"
 #---------------------------------------------------
 GET my_test3/_analyze
@@ -164,6 +205,37 @@ GET my_test3/_analyze
   ]
 }
 
+# validate query of searching "USA" and "JP" via "my_search_analyzer_1"
+#-----------------------------------------------------------------------
+GET my_test3/_validate/query?explain=true
+{
+  "query": {
+    "query_string": {
+      "query": "USA AND JP",
+      "fields": [
+        "title.field_for_search_analyzer_1"
+      ]
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test3",
+      "valid": true,
+      "explanation": "+Synonym(title.field_for_search_analyzer_1:USA title.field_for_search_analyzer_1:アメリカ) +title.field_for_search_analyzer_1:JP"
+    }
+  ]
+}
+
 
 # analyze "USA" and "JP" using "my_search_analyzer_2"
 #---------------------------------------------------
@@ -189,6 +261,37 @@ GET my_test3/_analyze
       "end_offset": 6,
       "type": "word",
       "position": 101
+    }
+  ]
+}
+
+# validate query of searching "USA" and "JP" via "my_search_analyzer_2"
+#-----------------------------------------------------------------------
+GET my_test3/_validate/query?explain=true
+{
+  "query": {
+    "query_string": {
+      "query": "USA AND JP",
+      "fields": [
+        "title.field_for_search_analyzer_2"
+      ]
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test3",
+      "valid": true,
+      "explanation": "+title.field_for_search_analyzer_2:USA +title.field_for_search_analyzer_2:JP"
     }
   ]
 }
@@ -229,6 +332,39 @@ GET my_test3/_analyze
   ]
 }
 
+
+# validate query of searching "USA" and "JP" via "my_search_analyzer_3"
+#-----------------------------------------------------------------------
+GET my_test3/_validate/query?explain=true
+{
+  "query": {
+    "query_string": {
+      "query": "USA AND JP",
+      "fields": [
+        "title.field_for_search_analyzer_3"
+      ]
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test3",
+      "valid": true,
+      "explanation": "+title.field_for_search_analyzer_3:USA +Synonym(title.field_for_search_analyzer_3:JP title.field_for_search_analyzer_3:日本)"
+    }
+  ]
+}
+
+
 # analyze "USA" and "JP" using "my_search_analyzer_4"
 #---------------------------------------------------
 GET my_test3/_analyze
@@ -257,3 +393,33 @@ GET my_test3/_analyze
   ]
 }
 
+# validate query of searching "USA" and "JP" via "my_search_analyzer_4"
+#-----------------------------------------------------------------------
+GET my_test3/_validate/query?explain=true
+{
+  "query": {
+    "query_string": {
+      "query": "USA AND JP",
+      "fields": [
+        "title.field_for_search_analyzer_4"
+      ]
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test3",
+      "valid": true,
+      "explanation": "+title.field_for_search_analyzer_4:USA +title.field_for_search_analyzer_4:JP"
+    }
+  ]
+}
