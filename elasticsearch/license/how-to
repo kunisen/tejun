@@ -1,6 +1,0 @@
-Update license
-———————
-curl -H "Content-Type: application/json" -XPUT -uelastic:changeme 'http://localhost:9200/_license?acknowledge=true' -d @platinum.json 
-
-Check license
-curl -H "Content-Type: application/json" -XGET -uelastic:changeme 'http://localhost:9200/_license?pretty'

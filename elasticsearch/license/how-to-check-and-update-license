@@ -1,0 +1,134 @@
+#================================================
+# How to check and update license on Linux
+#================================================
+# Check license
+#----------------------
+curl -H "Content-Type: application/json" -XGET -uelastic:changeme 'http://localhost:9200/_xpack/license?pretty'
+
+
+# Update license
+#--———————----------
+curl -H "Content-Type: application/json" -XPUT -uelastic:changeme 'http://localhost:9200/_xpack/license?acknowledge=true' -d @platinum.json 
+
+
+#================================================
+# How to check and update license on Windows
+#================================================
+# Update license using gc (Get-Content) and Invoke-WebRequest
+#--———————------------———————------------———————------------———————----
+> gc .\license.json |  Invoke-WebRequest -uri http://localhost:9200/_xpack/license -Credential elastic -Method Put -ContentType "application/json"
+
+
+# response
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"acknowledged":true,"license_status":"valid"}
+RawContent        : HTTP/1.1 200 OK
+                    Content-Length: 46
+                    Content-Type: application/json; charset=UTF-8
+
+                    {"acknowledged":true,"license_status":"valid"}
+Forms             : {}
+Headers           : {[Content-Length, 46], [Content-Type, application/json; charset=UTF-8]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 46
+
+
+# Check license status using Invoke-WebRequest
+#--———————------------——————-------------------------
+# set credentials
+> $credentials = Get-Credential
+
+# input your credential here (e.g. elastic / changeme)
+cmdlet Get-Credential at command pipeline position 1
+Supply values for the following parameters:
+Credential
+
+# use Invoke-WebRequest
+> Invoke-WebRequest -Uri http://localhost:9200/_xpack/license?pretty -Credential $credentials -Method Get
+
+# response
+StatusCode        : 200
+StatusDescription : OK
+Content           : {
+                      "license" : {
+					    (... 省略 ... )
+RawContent        : HTTP/1.1 200 OK
+                    Content-Length: 430
+                    Content-Type: application/json; charset=UTF-8
+
+                    {
+                      "license" : {
+					    (... 省略 ... )
+Forms             : {}
+Headers           : {[Content-Length, 430], [Content-Type, application/json; charset=UTF-8]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : mshtml.HTMLDocumentClass
+RawContentLength  : 430
+
+
+# check the raw content
+> $response = Invoke-WebRequest -Uri http://localhost:9200/_xpack/license?pretty -Credential $credentials -Method Get
+> $response.RawContent
+
+# response
+HTTP/1.1 200 OK
+Content-Length: 447
+Content-Type: application/json; charset=UTF-8
+
+{
+  "license" : {
+    (... 省略 ... )
+  }
+}
+
+
+
+
+#======================================================
+# How to check and update license on Kibana Dev Tools
+#======================================================
+
+
+# Check license status
+#--———————------------—————
+GET _xpack/license
+
+# response
+{
+  "license" : {
+    (... 省略 ... )
+  }
+}
+
+# Update license 
+# - Copy and paste your license json body here
+#--———————----------———————----------———————--------
+PUT _xpack/license?acknowledge=true
+{
+  "license": {
+    (... 省略 ... )
+  }
+}
+
+# response
+{
+  "acknowledged": true,
+  "license_status": "valid"
+}
+
+# check license again
+GET _xpack/license
+
+
+# response
+{
+  "license" : {
+    (... 省略 ... )
+  }
+}
