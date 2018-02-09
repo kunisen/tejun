@@ -1,0 +1,83 @@
+#-------------------------
+# how to use template
+#-------------------------
+
+# create a template
+PUT _template/my_template
+{
+  "order": 0,
+  "template": "*",
+  "settings": {
+    "index.number_of_shards": 1,
+    "index.number_of_replicas": 0,
+    "index.refresh_interval": "100s"
+  },
+  "mappings": {
+    "_default_": {
+      "_all": {
+        "enabled": false
+      }
+    }
+  }
+} 
+
+# it doesn't change the current indices
+GET _cat/shards?v
+
+# create a new one
+PUT my_test/doc/1
+{ "title" : "aaa" }
+
+# check the settings to see if template gets relected
+GET my_test/_settings
+
+# response
+# - yes, reflected
+{
+  "my_test": {
+    "settings": {
+      "index": {
+        "refresh_interval": "100s",
+        "number_of_shards": "1",
+        "provided_name": "my_test",
+        "creation_date": "1518139261099",
+        "number_of_replicas": "0",
+        "uuid": "rWI5jW-xTAuebVjkD0UXAw",
+        "version": {
+          "created": "5060799"
+        }
+      }
+    }
+  }
+}
+
+
+# delete template and see if the comming new index will not be reflected or not
+DELETE _template/my_template
+
+# create a new index called "my_test2", different from the previous one
+PUT my_test2/doc/1
+{ "title" : "bbb" }
+
+# check settings
+GET my_test2/_settings
+
+# response
+# - no, not reflected. looks good
+{
+  "my_test2": {
+    "settings": {
+      "index": {
+        "creation_date": "1518139489523",
+        "number_of_shards": "5",
+        "number_of_replicas": "1",
+        "uuid": "nZkBpBb9T4ulVjGIm2hZrA",
+        "version": {
+          "created": "5060799"
+        },
+        "provided_name": "my_test2"
+      }
+    }
+  }
+}
+

@@ -1,0 +1,93 @@
+#----------------------------------------------------------------------
+# how-to-reduce-security-audit-index-shard-number-via-index-template
+#----------------------------------------------------------------------
+
+# set this in elasticsearch.yml
+xpack.security.audit.enabled: true
+xpack.security.audit.outputs: [ index, logfile ]
+
+# restart elasticsearch
+# from the log, we can find security audit index auto-generated based on a "security_audit_log" template
+[2018-02-09T10:30:29,275][INFO ][o.e.c.m.MetaDataCreateIndexService] [R8a9qKi] [.security_audit_log-2018.02.09] creating index, cause [auto(bulk api)], templates [security_audit_log], shards [5]/[1], mappings [event]
+
+
+
+# check security audit index
+GET .security_audit_log-2018.02.09/_settings
+
+# response
+{
+  ".security_audit_log-2018.02.09": {
+    "settings": {
+      "index": {
+        "creation_date": "1518139829272",
+        "number_of_shards": "5",
+        "number_of_replicas": "1",
+        "uuid": "MIE7gOF5RtGDUSNV66ryUw",
+        "version": {
+          "created": "5060799"
+        },
+        "provided_name": ".security_audit_log-2018.02.09"
+      }
+    }
+  }
+}
+
+# then we set the template 
+PUT _template/my_template
+{
+  "order": 0,
+  "template": "*",
+  "settings": {
+    "index.number_of_shards": 1,
+    "index.number_of_replicas": 0,
+    "index.refresh_interval": "100s"
+  },
+  "mappings": {
+    "_default_": {
+      "_all": {
+        "enabled": false
+      }
+    }
+  }
+} 
+
+# but since today's security audit index is already created, it won't change
+# so we need to delete the index and make it auto-generate again.
+# *** remember this is only for testing purpose!! ***
+# *** don't do that if you already have important security audit index!! ***
+DELETE .security_audit_log-2018.02.09
+
+# from the console, we can see the index was deleted
+# and immediately a new one was auto-generated and use "security_audit_log" and "my_template".
+# since my_template is later created then security_audit_log
+# the latter template will be reflected
+[2018-02-09T10:34:33,546][INFO ][o.e.c.m.MetaDataDeleteIndexService] [R8a9qKi] [.security_audit_log-2018.02.09/MIE7gOF5RtGDUSNV66ryUw] deleting index
+[2018-02-09T10:34:34,058][INFO ][o.e.c.m.MetaDataCreateIndexService] [R8a9qKi] [.security_audit_log-2018.02.09] creating index, cause [auto(bulk api)], templates [security_audit_log, my_template], shards [1]/[0], mappings [_default_, event]
+
+
+# check the security audit index settings
+GET .security_audit_log-2018.02.09/_settings
+
+# response
+# yes. it's get reflected. looks good.
+{
+  ".security_audit_log-2018.02.09": {
+    "settings": {
+      "index": {
+        "refresh_interval": "100s",
+        "number_of_shards": "1",
+        "provided_name": ".security_audit_log-2018.02.09",
+        "creation_date": "1518140074055",
+        "number_of_replicas": "0",
+        "uuid": "Teu1ysdJQCSynMS2VSSGuw",
+        "version": {
+          "created": "5060799"
+        }
+      }
+    }
+  }
+}
+
+
+
