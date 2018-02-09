@@ -1,0 +1,111 @@
+#========================================
+# how-to-search-field-with-bool-query
+#========================================
+#------------------------
+# Manual
+#------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/6.1/query-dsl-exists-query.html
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/common-options.html#date-math
+
+# set mappings
+#-----------------
+DELETE my_index
+PUT my_index
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "text_field" :{
+          "type": "text"
+        },
+        "date_field": {
+          "type": "date"
+        }
+      }
+    }
+  }
+}
+
+# put data with both fields
+#----------------------------------
+PUT my_index/doc/1
+{
+  "date_field": "2018-02-09T10:00:00Z",
+  "text_field": "aaaa"
+}
+
+PUT my_index/doc/2
+{
+  "date_field": "2018-02-19T10:00:00Z",
+  "text_field": "bbbb"
+}
+
+# put data with only one fields
+#----------------------------------
+PUT my_index/doc/3
+{
+  "date_field": "2018-02-09T10:00:00Z"
+}
+
+PUT my_index/doc/4
+{
+  "date_field": "2018-02-19T10:00:00Z"
+}
+
+
+# use exists query to check the field
+# in this example, we get indices with "number_field" is not null
+#-------------------------------------------------------------------
+GET /my_index/doc/_search
+{
+  "query": {
+    "bool": {
+      "must_not": [
+        {
+          "exists": {
+            "field": "text_field"
+          }
+        }
+      ],
+      "must": [
+        {
+          "range": {
+            "date_field": {
+              "gte": "2018-02-08",
+              "lt": "2018-02-08||+8d"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+# response
+# only "text_field" null and date range "2018-02-08 ~ 2018-02-16" results returned
+#-----------------------------------------------------------------------------------
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_index",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "date_field": "2018-02-09T10:00:00Z"
+        }
+      }
+    ]
+  }
+}
