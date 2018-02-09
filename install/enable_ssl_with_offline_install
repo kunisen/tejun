@@ -1,0 +1,487 @@
+#==========================================================================
+# how to enable ssl with elasticsearch, kibana and xpack offline install
+#==========================================================================
+
+#----------------------------------------------------------------
+# Descriptions
+#----------------------------------------------------------------
+# OS : CentOS 7
+# General user name : sen
+# version : elasticsearch 6.1.3, kibana 6.1.3
+
+#-------------
+# documents
+#-------------
+https://www.elastic.co/guide/en/elasticsearch/reference/current/rpm.html
+https://www.elastic.co/blog/tls-elastic-stack-elasticsearch-kibana-logstash-filebeat
+
+#-----------------------------------------------------------------
+# step 0 
+# - remove elasticsearch folder just in case
+# - download elasticsearch and kibana and xpack
+#-----------------------------------------------------------------
+sudo rm -rf /usr/share/elasticsearch
+sudo rm -rf /etc/elasticsearch
+
+[sen@localhost ~]$ pwd
+/home/sen
+[sen@localhost ~]$ ll
+-rw-rw-r--. 1 sen sen  28411530 Feb  1 07:51 elasticsearch-6.1.3.rpm
+-rw-rw-r--. 1 sen sen  66438568 Feb  9 00:16 kibana-6.1.3-x86_64.rpm
+-rw-rw-r--. 1 sen sen 307242730 Feb  9 00:17 x-pack-6.1.3.zip
+
+
+#-----------------------------------------------------------------
+# step 1 - install elasticsearch 
+#-----------------------------------------------------------------
+[sen@localhost ~]$ sudo rpm --install -v  elasticsearch-6.1.3.rpm
+[sudo] password for sen: 
+Preparing packages...
+Creating elasticsearch group... OK
+Creating elasticsearch user... OK
+elasticsearch-0:6.1.3-1.noarch
+### NOT starting on installation, please execute the following statements to configure elasticsearch service to start automatically using systemd
+ sudo systemctl daemon-reload
+ sudo systemctl enable elasticsearch.service
+### You can start elasticsearch service by executing
+ sudo systemctl start elasticsearch.service
+
+
+#-----------------------------------------------------------------
+# step 2 - install x-pack
+#-----------------------------------------------------------------
+[sen@localhost ~]$ sudo /usr/share/elasticsearch/bin/elasticsearch-plugin install file:///home/sen/x-pack-6.1.3.zip 
+-> Downloading file:///home/sen/x-pack-6.1.3.zip
+[=================================================] 100%   
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@     WARNING: plugin requires additional permissions     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+* java.io.FilePermission \\.\pipe\* read,write
+* java.lang.RuntimePermission accessClassInPackage.com.sun.activation.registries
+* java.lang.RuntimePermission getClassLoader
+* java.lang.RuntimePermission setContextClassLoader
+* java.lang.RuntimePermission setFactory
+* java.net.SocketPermission * connect,accept,resolve
+* java.security.SecurityPermission createPolicy.JavaPolicy
+* java.security.SecurityPermission getPolicy
+* java.security.SecurityPermission putProviderProperty.BC
+* java.security.SecurityPermission setPolicy
+* java.util.PropertyPermission * read,write
+See http://docs.oracle.com/javase/8/docs/technotes/guides/security/permissions.html
+for descriptions of what these permissions allow and the associated risks.
+
+Continue with installation? [y/N]y
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@        WARNING: plugin forks a native controller        @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+This plugin launches a native controller that is not subject to the Java
+security manager nor to system call filters.
+
+Continue with installation? [y/N]y
+Elasticsearch keystore is required by plugin [x-pack], creating...
+-> Installed x-pack
+[sen@localhost ~]$ 
+
+
+
+#-----------------------------------------------------------------
+# step 3 - Create CA
+#-----------------------------------------------------------------
+
+## become root
+#-----------------------------------------------------------------
+[sen@localhost ~]$ sudo su -
+Last login: Thu Feb  8 19:47:07 EST 2018 on pts/1
+
+
+## set ES_HOME
+#-----------------------------------------------------------------
+[root@localhost ~]# ES_HOME=/usr/share/elasticsearch
+[root@localhost ~]# ES_PATH_CONF=/etc/elasticsearch
+
+
+## create tmp folder 
+#---------------------
+[root@localhost elasticsearch]# mkdir ~/tmp
+[root@localhost elasticsearch]# cd $_
+[root@localhost tmp]# pwd
+/root/tmp
+[root@localhost tmp]# mkdir cert_blog
+[root@localhost tmp]# ll | grep cert_blog
+drwxr-xr-x. 2 root          root               6 Feb  9 01:03 cert_blog
+[root@localhost tmp]# 
+
+
+
+# create CA
+#-------------
+[root@localhost tmp]# cd $ES_HOME
+[root@localhost elasticsearch]# bin/x-pack/certgen --dn 'CN=MyExample Global CA' --pass --days 3650 --keysize 4096 --out ~/tmp/cert_blog/MyExample_Global_CA.zip
+This tool assists you in the generation of X.509 certificates and certificate
+signing requests for use with SSL in the Elastic stack. Depending on the command
+line option specified, you may be prompted for the following:
+
+* The path to the output file
+    * The output file is a zip file containing the signed certificates and
+      private keys for each instance. If a Certificate Authority was generated,
+      the certificate and private key will also be included in the output file.
+* Information about each instance
+    * An instance is any piece of the Elastic Stack that requires a SSL certificate.
+      Depending on your configuration, Elasticsearch, Logstash, Kibana, and Beats
+      may all require a certificate and private key.
+    * The minimum required value for each instance is a name. This can simply be the
+      hostname, which will be used as the Common Name of the certificate. A full
+      distinguished name may also be used.
+    * A filename value may be required for each instance. This is necessary when the
+      name would result in an invalid file or directory name. The name provided here
+      is used as the directory name (within the zip) and the prefix for the key and
+      certificate files. The filename is required if you are prompted and the name
+      is not displayed in the prompt.
+    * IP addresses and DNS names are optional. Multiple values can be specified as a
+      comma separated string. If no IP addresses or DNS names are provided, you may
+      disable hostname verification in your SSL configuration.
+* Certificate Authority private key password
+    * The password may be left empty if desired.
+
+Let's get started...
+
+Enter password for CA private key: *** kuni : input your password here
+Enter instance name: *** kuni : just enter
+A name must be provided
+Would you like to specify another instance? Press 'y' to continue entering instance information: *** kuni : just enter
+Certificates written to /root/tmp/cert_blog/MyExample_Global_CA.zip
+
+This file should be properly secured as it contains the private keys for all
+instances and the certificate authority.
+
+After unzipping the file, there will be a directory for each instance containing
+the certificate and private key. Copy the certificate, key, and CA certificate
+to the configuration directory of the Elastic product that they will be used for
+and follow the SSL configuration instructions in the product guide.
+
+For client applications, you may only need to copy the CA certificate and
+configure the client to trust this certificate.
+[root@localhost elasticsearch]# 
+
+
+
+## unzip the certificate
+#--------------------------
+[root@localhost elasticsearch]# cd ~/tmp/cert_blog
+[root@localhost cert_blog]# unzip MyExample_Global_CA.zip
+Archive:  MyExample_Global_CA.zip
+   creating: ca/
+  inflating: ca/ca.crt               
+  inflating: ca/ca.key            
+    
+
+
+
+#-----------------------------------------------------------------
+# step 4 - Generate server certificates
+#-----------------------------------------------------------------
+## create instance yml file
+#-----------------------------------------------------------------
+[root@localhost cert_blog]# vi ~/tmp/cert_blog/certgen_example.yml
+
+
+## input instance info
+#-----------------------------------------------------------------
+instances:
+  - name: 'node1'
+    dns: [ 'node1.local' ]
+  - name: "node2"
+    dns: [ 'node2.local' ]
+  - name: 'my-kibana'
+    dns: [ 'kibana.local' ]
+  - name: 'logstash'
+    dns: [ 'logstash.local' ]
+
+
+
+## create server certificates for each instance
+#-----------------------------------------------------------------
+[root@localhost cert_blog]# cd $ES_HOME
+[root@localhost elasticsearch]# bin/x-pack/certgen --days 1095 --cert ~/tmp/cert_blog/ca/ca.crt --key ~/tmp/cert_blog/ca/ca.key --pass --in ~/tmp/cert_blog/certgen_example.yml --out ~/tmp/cert_blog/certs.zip
+This tool assists you in the generation of X.509 certificates and certificate
+signing requests for use with SSL in the Elastic stack. Depending on the command
+line option specified, you may be prompted for the following:
+
+* The path to the output file
+    * The output file is a zip file containing the signed certificates and
+      private keys for each instance. If a Certificate Authority was generated,
+      the certificate and private key will also be included in the output file.
+* Information about each instance
+    * An instance is any piece of the Elastic Stack that requires a SSL certificate.
+      Depending on your configuration, Elasticsearch, Logstash, Kibana, and Beats
+      may all require a certificate and private key.
+    * The minimum required value for each instance is a name. This can simply be the
+      hostname, which will be used as the Common Name of the certificate. A full
+      distinguished name may also be used.
+    * A filename value may be required for each instance. This is necessary when the
+      name would result in an invalid file or directory name. The name provided here
+      is used as the directory name (within the zip) and the prefix for the key and
+      certificate files. The filename is required if you are prompted and the name
+      is not displayed in the prompt.
+    * IP addresses and DNS names are optional. Multiple values can be specified as a
+      comma separated string. If no IP addresses or DNS names are provided, you may
+      disable hostname verification in your SSL configuration.
+* Certificate Authority private key password
+    * The password may be left empty if desired.
+
+Let's get started...
+
+Enter password for CA private key: *** kuni : enter password specified for CA
+Certificates written to /root/tmp/cert_blog/certs.zip
+
+This file should be properly secured as it contains the private keys for all
+instances and the certificate authority.
+
+After unzipping the file, there will be a directory for each instance containing
+the certificate and private key. Copy the certificate, key, and CA certificate
+to the configuration directory of the Elastic product that they will be used for
+and follow the SSL configuration instructions in the product guide.
+
+For client applications, you may only need to copy the CA certificate and
+configure the client to trust this certificate.
+
+
+## unzip server certificates 
+#-----------------------------------------------------------------
+[root@localhost elasticsearch]# cd ~/tmp/cert_blog
+[root@localhost cert_blog]# unzip certs.zip -d ./certs
+Archive:  certs.zip
+   creating: ./certs/node1/
+  inflating: ./certs/node1/node1.crt  
+  inflating: ./certs/node1/node1.key  
+   creating: ./certs/node2/
+  inflating: ./certs/node2/node2.crt  
+  inflating: ./certs/node2/node2.key  
+   creating: ./certs/my-kibana/
+  inflating: ./certs/my-kibana/my-kibana.crt  
+  inflating: ./certs/my-kibana/my-kibana.key  
+   creating: ./certs/logstash/
+  inflating: ./certs/logstash/logstash.crt  
+  inflating: ./certs/logstash/logstash.key  
+
+
+
+## edit hosts file
+#-----------------------------------------------------------------
+[root@localhost cert_blog]# vi /etc/hosts
+
+
+
+## edit hosts file like this
+#-----------------------------------------------------------------
+#127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+127.0.0.1 localhost node1.local node2.local kibana.local logstash.local
+
+
+
+#-----------------------------------------------------------------
+# step 5 - Elasticsearch TLS setup
+#-----------------------------------------------------------------
+## copy cert file to config folder
+## note: in Linux, there is no explicit config folder, and we can only use 1 node here if we install elasticsearch from rpm command
+#-----------------------------------------------------------------
+[root@localhost ~]# cd $ES_PATH_CONF
+[root@localhost elasticsearch]# pwd
+/etc/elasticsearch
+[root@localhost elasticsearch]# ll
+total 24
+-rw-rw----. 1 root elasticsearch  416 Feb  9 00:51 elasticsearch.keystore
+-rw-rw----. 1 root elasticsearch 2869 Jan 26 13:24 elasticsearch.yml
+-rw-rw----. 1 root elasticsearch 2896 Feb  8 19:49 elasticsearch.yml.rpmsave
+-rw-rw----. 1 root elasticsearch 2678 Jan 26 13:24 jvm.options
+-rw-rw----. 1 root elasticsearch 5091 Jan 26 13:24 log4j2.properties
+drwxr-x---. 2 root elasticsearch  104 Feb  7 11:09 x-pack
+[root@localhost elasticsearch]# mkdir certs
+[root@localhost elasticsearch]# cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/node1/* certs
+[root@localhost elasticsearch]# ll certs
+total 12
+-rw-r--r--. 1 root elasticsearch 1915 Feb  9 01:25 ca.crt
+-rw-r--r--. 1 root elasticsearch 1574 Feb  9 01:25 node1.crt
+-rw-r--r--. 1 root elasticsearch 1679 Feb  9 01:25 node1.key
+[root@localhost elasticsearch]# 
+
+
+## edit elasticsearch.yml
+#-----------------------------------------------------------------
+[root@localhost elasticsearch]# vi elasticsearch.yml 
+
+
+
+## add the following contents
+#-----------------------------------------------------------------
+node.name: node1
+network.host: node1.local
+xpack.ssl.key: certs/node1.key
+xpack.ssl.certificate: certs/node1.crt
+xpack.ssl.certificate_authorities: certs/ca.crt
+xpack.security.transport.ssl.enabled: true
+xpack.security.http.ssl.enabled: true
+discovery.zen.ping.unicast.hosts: [ 'node1.local', 'node2.local']
+node.max_local_storage_nodes: 2
+
+
+## start node
+#-----------------------------------------------------------------
+[root@localhost ~]# systemctl start elasticsearch.service
+[root@localhost ~]# systemctl status elasticsearch.service
+● elasticsearch.service - Elasticsearch
+   Loaded: loaded (/usr/lib/systemd/system/elasticsearch.service; disabled; vendor preset: disabled)
+   Active: active (running) since Fri 2018-02-09 01:26:53 EST; 1min 13s ago
+     Docs: http://www.elastic.co
+ Main PID: 7499 (java)
+   CGroup: /system.slice/elasticsearch.service
+           ├─7499 /bin/java -Xms1g -Xmx1g -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatin...
+           └─7544 /usr/share/elasticsearch/plugins/x-pack/platform/linux-x86_64/bin/controller
+
+Feb 09 01:26:53 10.0.2.15 systemd[1]: Started Elasticsearch.
+Feb 09 01:26:53 10.0.2.15 systemd[1]: Starting Elasticsearch...
+Feb 09 01:26:53 10.0.2.15 elasticsearch[7499]: OpenJDK 64-Bit Server VM warning: If the number of processors is expecte...ads=N
+Hint: Some lines were ellipsized, use -l to show in full.
+
+
+
+## since it's already become https, so this curl will return empty result
+#-----------------------------------------------------------------
+[root@localhost elasticsearch]# curl -XGET http://localhost:9200
+curl: (52) Empty reply from server
+
+
+## set built in user password
+#-----------------------------------------------------------------
+[root@localhost elasticsearch]# cd $ES_HOME
+[root@localhost elasticsearch]# bin/x-pack/setup-passwords auto -u "https://node1.local:9200"
+Initiating the setup of passwords for reserved users elastic,kibana,logstash_system.
+The passwords will be randomly generated and printed to the console.
+Please confirm that you would like to continue [y/N]y
+
+
+Changed password for user kibana
+PASSWORD kibana = *~SDy0?v3^~0Mk~LuXtD
+
+Changed password for user logstash_system
+PASSWORD logstash_system = Z?LjYPn=A?nHKS#qZNWO
+
+Changed password for user elastic
+PASSWORD elastic = @q$AM$Oy?FHce&AL56Z8
+
+
+
+## access _cat/nodes API via https
+#-----------------------------------------------------------------
+[root@localhost elasticsearch]# curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node1.local:9200/_cat/nodes'
+Enter host password for user 'elastic':
+127.0.0.1 10 90 4 0.02 0.29 0.62 mdi * node1
+
+
+
+
+#-----------------------------------------------------------------
+# step 6 - kibana install
+#-----------------------------------------------------------------
+# switch back to general user
+#-----------------------------------------------------------------
+[sen@localhost ~]$ sudo rpm --install -v kibana-6.1.3-x86_64.rpm 
+Preparing packages...
+kibana-6.1.3-1.x86_64
+
+
+#-----------------------------------------------------------------
+# step 2 - install x-pack
+#-----------------------------------------------------------------
+[sen@localhost ~]$ sudo /usr/share/kibana/bin/kibana-plugin install file:///home/sen/x-pack-6.1.3.zip 
+Attempting to transfer from file:///home/sen/x-pack-6.1.3.zip
+Transferring 307242730 bytes....................
+Transfer complete
+Retrieving metadata from plugin archive
+Extracting plugin archive
+Extraction complete
+Optimizing and caching browser bundles...
+Plugin installation complete
+
+
+# switch back to root
+#-----------------------------------------------------------------
+[sen@localhost ~]$ sudo su -
+[sudo] password for sen: 
+Last login: Fri Feb  9 01:00:02 EST 2018 on pts/0
+
+
+# set kibana home directory
+#-----------------------------------------------------------------
+KIBANA_HOME=/usr/share/kibana
+KIBANA_PATH_CONFIG=/etc/kibana
+
+
+
+## create config and config/certs folder and copy certs
+## ***kuni : in order not to change the description from blog, we need to create config and config/certs 2 folder here.
+#-----------------------------------------------------------------
+[root@localhost kibana]# cd $KIBANA_PATH_CONFIG
+[root@localhost kibana]# mkdir config
+[root@localhost kibana]# mkdir config/certs
+[root@localhost kibana]# cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/my-kibana/* config/certs
+[root@localhost kibana]# 
+
+
+
+## edit kibana.yml
+#-----------------------------------------------------------------
+[root@localhost kibana]# vi kibana.yml 
+
+
+## add the following contents to kibana.yml
+## *** kuni: remember to use the password generated for built-in user above
+## *** kuni: also here I 'd like to use the abs path.
+#-----------------------------------------------------------------
+server.name: "my-kibana"
+server.host: "kibana.local"
+server.ssl.enabled: true
+server.ssl.certificate: /etc/kibana/config/certs/my-kibana.crt
+server.ssl.key: /etc/kibana/config/certs/my-kibana.key
+elasticsearch.url: "https://node1.local:9200"
+elasticsearch.username: "kibana"
+elasticsearch.password: "*~SDy0?v3^~0Mk~LuXtD"
+elasticsearch.ssl.certificateAuthorities: [ "/etc/kibana/config/certs/ca.crt" ]
+
+
+
+
+## restart kibana
+#-----------------------------------------------------------------
+[root@localhost kibana]# service kibana start
+kibana started
+[root@localhost kibana]# service kibana status
+kibana is running
+
+
+## login to kibana
+#-----------------------------------------------------------------
+https://kibana.local:5601/
+
+
+## change password of elastic user to "changeme"
+## run this query in Dev Tools
+#-----------------------------------------------------------------
+POST _xpack/security/user/elastic/_password
+{
+  "password": "changeme"
+}
+
+
+## check _cat/nodes API via https again with new password
+## access _cat/nodes API via https
+#-----------------------------------------------------------------
+[root@localhost elasticsearch]# curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic:changeme 'https://node1.local:9200/_cat/nodes'
+127.0.0.1 9 94 14 1.43 0.83 0.75 mdi * node1
+
+
+
+
+
+
