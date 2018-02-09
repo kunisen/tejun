@@ -41,12 +41,13 @@ PUT my_index/doc/2
 }
 
 # use exists query to check the field
-#--------------------------------------
+# in this example, we get indices with "number_field" is not null
+#-------------------------------------------------------------------
 GET /my_index/doc/_search
 {
   "query": {
     "bool": {
-      "must_not": [
+      "must": [
         {
           "exists": {
             "field": "number_field"
@@ -59,7 +60,7 @@ GET /my_index/doc/_search
 
 # response
 {
-  "took": 15,
+  "took": 1,
   "timed_out": false,
   "_shards": {
     "total": 5,
@@ -74,10 +75,11 @@ GET /my_index/doc/_search
       {
         "_index": "my_index",
         "_type": "doc",
-        "_id": "2",
+        "_id": "1",
         "_score": 1,
         "_source": {
-          "text_field": "bbb"
+          "text_field": "aaa",
+          "number_field": 111
         }
       }
     ]
