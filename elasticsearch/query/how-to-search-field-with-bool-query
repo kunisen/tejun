@@ -54,7 +54,8 @@ PUT my_index/doc/4
 
 
 # use exists query to check the field
-# in this example, we get indices with "number_field" is not null
+# in this example, we get indices with "text_field" is null
+# and also with "date_field" starts from "2018-02-08" and have 8 days
 #-------------------------------------------------------------------
 GET /my_index/doc/_search
 {
