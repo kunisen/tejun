@@ -1,0 +1,438 @@
+License will expire in 30 days
+=================================
+senmac:elasticsearch-5.2.0 kuniyasu$./bin/elasticsearch
+[2018-03-12T15:28:17,064][INFO ][o.e.n.Node               ] [] initializing ...
+[2018-03-12T15:28:17,122][INFO ][o.e.e.NodeEnvironment    ] [cyZochJ] using [1] data paths, mounts [[/ (/dev/disk1)]], net usable_space [257.3gb], net total_space [464.6gb], spins? [unknown], types [hfs]
+[2018-03-12T15:28:17,123][INFO ][o.e.e.NodeEnvironment    ] [cyZochJ] heap size [1.9gb], compressed ordinary object pointers [true]
+[2018-03-12T15:28:17,153][INFO ][o.e.n.Node               ] node name [cyZochJ] derived from node ID [cyZochJTSGmMY55ZDC5ByQ]; set [node.name] to override
+[2018-03-12T15:28:17,156][INFO ][o.e.n.Node               ] version[5.2.0], pid[6992], build[24e05b9/2017-01-24T19:52:35.800Z], OS[Mac OS X/10.12.6/x86_64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[2018-03-12T15:28:18,114][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [aggs-matrix-stats]
+[2018-03-12T15:28:18,114][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [ingest-common]
+[2018-03-12T15:28:18,114][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [lang-expression]
+[2018-03-12T15:28:18,114][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [lang-groovy]
+[2018-03-12T15:28:18,115][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [lang-mustache]
+[2018-03-12T15:28:18,115][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [lang-painless]
+[2018-03-12T15:28:18,115][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [percolator]
+[2018-03-12T15:28:18,115][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [reindex]
+[2018-03-12T15:28:18,115][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [transport-netty3]
+[2018-03-12T15:28:18,115][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [transport-netty4]
+[2018-03-12T15:28:18,116][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded plugin [x-pack]
+[2018-03-12T15:28:19,357][DEBUG][o.e.a.ActionModule       ] Using REST wrapper from plugin org.elasticsearch.xpack.XPackPlugin
+[2018-03-12T15:28:20,224][INFO ][o.e.n.Node               ] initialized
+[2018-03-12T15:28:20,225][INFO ][o.e.n.Node               ] [cyZochJ] starting ...
+[2018-03-12T15:28:20,442][INFO ][o.e.t.TransportService   ] [cyZochJ] publish_address {127.0.0.1:9300}, bound_addresses {[fe80::1]:9300}, {[::1]:9300}, {127.0.0.1:9300}
+[2018-03-12T15:28:23,497][INFO ][o.e.c.s.ClusterService   ] [cyZochJ] new_master {cyZochJ}{cyZochJTSGmMY55ZDC5ByQ}{a7lZrGcWTzuGHG7qIqT3bQ}{127.0.0.1}{127.0.0.1:9300}, reason: zen-disco-elected-as-master ([0] nodes joined)
+[2018-03-12T15:28:23,515][INFO ][o.e.h.HttpServer         ] [cyZochJ] publish_address {127.0.0.1:9200}, bound_addresses {[fe80::1]:9200}, {[::1]:9200}, {127.0.0.1:9200}
+[2018-03-12T15:28:23,515][INFO ][o.e.n.Node               ] [cyZochJ] started
+[2018-03-12T15:28:23,874][INFO ][o.e.l.LicenseService     ] [cyZochJ] license [b64fdb24-d2ca-4807-8735-f589637589a4] mode [trial] - valid
+[2018-03-12T15:28:23,878][WARN ][o.e.l.LicenseService     ] [cyZochJ] 
+#
+# License [will expire] on [Friday, March 30, 2018]. If you have a new license, please update it.
+# Otherwise, please reach out to your support contact.
+# 
+# Commercial plugins operate with reduced functionality on license expiration:
+# - security
+#  - Cluster health, cluster stats and indices stats operations are blocked
+#  - All data operations (read and write) continue to work
+# - watcher
+#  - PUT / GET watch APIs are disabled, DELETE watch API continues to work
+#  - Watches execute and write to the history
+#  - The actions of the watches don't execute
+# - monitoring
+#  - The agent will stop collecting cluster and indices metrics
+#  - The agent will stop automatically cleaning indices older than [xpack.monitoring.history.duration]
+# - graph
+#  - Graph explore APIs are disabled
+[2018-03-12T15:28:23,878][WARN ][o.e.l.LicenseService     ] [cyZochJ] 
+#
+# License [will expire] on [Friday, March 30, 2018]. If you have a new license, please update it.
+# Otherwise, please reach out to your support contact.
+# 
+# Commercial plugins operate with reduced functionality on license expiration:
+# - security
+#  - Cluster health, cluster stats and indices stats operations are blocked
+#  - All data operations (read and write) continue to work
+# - watcher
+#  - PUT / GET watch APIs are disabled, DELETE watch API continues to work
+#  - Watches execute and write to the history
+#  - The actions of the watches don't execute
+# - monitoring
+#  - The agent will stop collecting cluster and indices metrics
+#  - The agent will stop automatically cleaning indices older than [xpack.monitoring.history.duration]
+# - graph
+#  - Graph explore APIs are disabled
+[2018-03-12T15:28:23,884][INFO ][o.e.g.GatewayService     ] [cyZochJ] recovered [8] indices into cluster_state
+[2018-03-12T15:28:24,250][INFO ][o.e.c.r.a.AllocationService] [cyZochJ] Cluster health status changed from [RED] to [YELLOW] (reason: [shards started [[.monitoring-kibana-2-2018.02.12][0], [.monitoring-es-2-2018.02.12][0], [.kibana][0], [.monitoring-data-2][0]] ...]).
+[2018-03-12T15:28:34,945][INFO ][o.e.c.m.MetaDataMappingService] [cyZochJ] [.monitoring-kibana-2-2018.03.12/20fSRvTgT5e0BD7hmNZm9w] update_mapping [kibana_stats]
+[2018-03-12T15:29:04,938][INFO ][o.e.c.m.MetaDataMappingService] [cyZochJ] [.monitoring-kibana-2-2018.03.12/20fSRvTgT5e0BD7hmNZm9w] update_mapping [kibana_stats]
+^C[2018-03-12T15:31:15,650][INFO ][o.e.n.Node               ] [cyZochJ] stopping ...
+[2018-03-12T15:31:15,717][INFO ][o.e.x.w.w.WatchStore     ] [cyZochJ] stopped watch store
+[2018-03-12T15:31:15,770][INFO ][o.e.n.Node               ] [cyZochJ] stopped
+[2018-03-12T15:31:15,771][INFO ][o.e.n.Node               ] [cyZochJ] closing ...
+[2018-03-12T15:31:15,780][INFO ][o.e.n.Node               ] [cyZochJ] closed
+
+
+
+
+License expired
+==================
+senmac:elasticsearch-5.2.0 kuniyasu$./bin/elasticsearch
+[2018-04-12T15:31:29,778][INFO ][o.e.n.Node               ] [] initializing ...
+[2018-04-12T15:31:29,851][INFO ][o.e.e.NodeEnvironment    ] [cyZochJ] using [1] data paths, mounts [[/ (/dev/disk1)]], net usable_space [257.3gb], net total_space [464.6gb], spins? [unknown], types [hfs]
+[2018-04-12T15:31:29,851][INFO ][o.e.e.NodeEnvironment    ] [cyZochJ] heap size [1.9gb], compressed ordinary object pointers [true]
+[2018-04-12T15:31:29,899][INFO ][o.e.n.Node               ] node name [cyZochJ] derived from node ID [cyZochJTSGmMY55ZDC5ByQ]; set [node.name] to override
+[2018-04-12T15:31:29,902][INFO ][o.e.n.Node               ] version[5.2.0], pid[7057], build[24e05b9/2017-01-24T19:52:35.800Z], OS[Mac OS X/10.12.6/x86_64], JVM[Oracle Corporation/Java HotSpot(TM) 64-Bit Server VM/1.8.0_144/25.144-b01]
+[2018-04-12T15:31:30,870][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [aggs-matrix-stats]
+[2018-04-12T15:31:30,870][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [ingest-common]
+[2018-04-12T15:31:30,871][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [lang-expression]
+[2018-04-12T15:31:30,871][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [lang-groovy]
+[2018-04-12T15:31:30,871][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [lang-mustache]
+[2018-04-12T15:31:30,871][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [lang-painless]
+[2018-04-12T15:31:30,871][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [percolator]
+[2018-04-12T15:31:30,871][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [reindex]
+[2018-04-12T15:31:30,871][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [transport-netty3]
+[2018-04-12T15:31:30,871][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded module [transport-netty4]
+[2018-04-12T15:31:30,872][INFO ][o.e.p.PluginsService     ] [cyZochJ] loaded plugin [x-pack]
+[2018-04-12T15:31:32,192][DEBUG][o.e.a.ActionModule       ] Using REST wrapper from plugin org.elasticsearch.xpack.XPackPlugin
+[2018-04-12T15:31:33,173][INFO ][o.e.n.Node               ] initialized
+[2018-04-12T15:31:33,173][INFO ][o.e.n.Node               ] [cyZochJ] starting ...
+[2018-04-12T15:31:33,410][INFO ][o.e.t.TransportService   ] [cyZochJ] publish_address {127.0.0.1:9300}, bound_addresses {[fe80::1]:9300}, {[::1]:9300}, {127.0.0.1:9300}
+[2018-04-12T15:31:36,458][INFO ][o.e.c.s.ClusterService   ] [cyZochJ] new_master {cyZochJ}{cyZochJTSGmMY55ZDC5ByQ}{04JAgeJsQQeBm-B_Ea2r3w}{127.0.0.1}{127.0.0.1:9300}, reason: zen-disco-elected-as-master ([0] nodes joined)
+[2018-04-12T15:31:36,477][INFO ][o.e.h.HttpServer         ] [cyZochJ] publish_address {127.0.0.1:9200}, bound_addresses {[fe80::1]:9200}, {[::1]:9200}, {127.0.0.1:9200}
+[2018-04-12T15:31:36,477][INFO ][o.e.n.Node               ] [cyZochJ] started
+[2018-04-12T15:31:36,891][INFO ][o.e.l.LicenseService     ] [cyZochJ] license [b64fdb24-d2ca-4807-8735-f589637589a4] mode [trial] - valid
+[2018-04-12T15:31:36,892][WARN ][o.e.l.LicenseService     ] [cyZochJ] license [b64fdb24-d2ca-4807-8735-f589637589a4] - expired
+[2018-04-12T15:31:36,895][WARN ][o.e.l.LicenseService     ] [cyZochJ] 
+#
+# LICENSE [EXPIRED] ON [FRIDAY, MARCH 30, 2018]. IF YOU HAVE A NEW LICENSE, PLEASE UPDATE IT.
+# OTHERWISE, PLEASE REACH OUT TO YOUR SUPPORT CONTACT.
+# 
+# COMMERCIAL PLUGINS OPERATING WITH REDUCED FUNCTIONALITY
+# - security
+#  - Cluster health, cluster stats and indices stats operations are blocked
+#  - All data operations (read and write) continue to work
+# - watcher
+#  - PUT / GET watch APIs are disabled, DELETE watch API continues to work
+#  - Watches execute and write to the history
+#  - The actions of the watches don't execute
+# - monitoring
+#  - The agent will stop collecting cluster and indices metrics
+#  - The agent will stop automatically cleaning indices older than [xpack.monitoring.history.duration]
+# - graph
+#  - Graph explore APIs are disabled
+[2018-04-12T15:31:36,896][WARN ][o.e.l.LicenseService     ] [cyZochJ] 
+#
+# LICENSE [EXPIRED] ON [FRIDAY, MARCH 30, 2018]. IF YOU HAVE A NEW LICENSE, PLEASE UPDATE IT.
+# OTHERWISE, PLEASE REACH OUT TO YOUR SUPPORT CONTACT.
+# 
+# COMMERCIAL PLUGINS OPERATING WITH REDUCED FUNCTIONALITY
+# - security
+#  - Cluster health, cluster stats and indices stats operations are blocked
+#  - All data operations (read and write) continue to work
+# - watcher
+#  - PUT / GET watch APIs are disabled, DELETE watch API continues to work
+#  - Watches execute and write to the history
+#  - The actions of the watches don't execute
+# - monitoring
+#  - The agent will stop collecting cluster and indices metrics
+#  - The agent will stop automatically cleaning indices older than [xpack.monitoring.history.duration]
+# - graph
+#  - Graph explore APIs are disabled
+[2018-04-12T15:31:36,903][INFO ][o.e.g.GatewayService     ] [cyZochJ] recovered [8] indices into cluster_state
+[2018-04-12T15:31:37,336][INFO ][o.e.c.r.a.AllocationService] [cyZochJ] Cluster health status changed from [RED] to [YELLOW] (reason: [shards started [[.monitoring-kibana-2-2018.02.12][0]] ...]).
+[2018-04-12T15:31:37,580][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:39,334][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:40,094][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:41,905][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:42,608][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:43,208][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/stats] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:43,210][ERROR][o.e.x.m.c.c.ClusterStatsCollector] [cyZochJ] collector [cluster-stats-collector] failed to collect data
+org.elasticsearch.ElasticsearchSecurityException: current license is non-compliant for [security]
+	at org.elasticsearch.license.LicenseUtils.newComplianceException(LicenseUtils.java:35) ~[?:?]
+	at org.elasticsearch.xpack.security.action.filter.SecurityActionFilter.apply(SecurityActionFilter.java:112) ~[?:?]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:171) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:145) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:87) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:75) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:64) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.FilterClient.doExecute(FilterClient.java:67) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.security.InternalClient.doExecute(InternalClient.java:93) ~[?:?]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:710) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:80) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:54) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:69) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStatsCollector.lambda$doCollect$0(ClusterStatsCollector.java:79) ~[x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStatsCollector.doCollect(ClusterStatsCollector.java:82) ~[x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.Collector.collect(Collector.java:83) [x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.AgentService$ExportingWorker.collect(AgentService.java:226) [x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.AgentService$ExportingWorker.run(AgentService.java:193) [x-pack-5.2.0.jar:5.2.0]
+	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_144]
+[2018-04-12T15:31:44,429][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:45,127][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:46,945][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:47,641][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:49,456][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:50,157][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:51,977][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:52,666][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:53,221][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/stats] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:53,222][ERROR][o.e.x.m.c.c.ClusterStatsCollector] [cyZochJ] collector [cluster-stats-collector] failed to collect data
+org.elasticsearch.ElasticsearchSecurityException: current license is non-compliant for [security]
+	at org.elasticsearch.license.LicenseUtils.newComplianceException(LicenseUtils.java:35) ~[?:?]
+	at org.elasticsearch.xpack.security.action.filter.SecurityActionFilter.apply(SecurityActionFilter.java:112) ~[?:?]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:171) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:145) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:87) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:75) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:64) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.FilterClient.doExecute(FilterClient.java:67) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.security.InternalClient.doExecute(InternalClient.java:93) ~[?:?]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:710) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:80) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:54) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:69) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStatsCollector.lambda$doCollect$0(ClusterStatsCollector.java:79) ~[x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStatsCollector.doCollect(ClusterStatsCollector.java:82) ~[x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.Collector.collect(Collector.java:83) [x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.AgentService$ExportingWorker.collect(AgentService.java:226) [x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.AgentService$ExportingWorker.run(AgentService.java:193) [x-pack-5.2.0.jar:5.2.0]
+	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_144]
+[2018-04-12T15:31:54,493][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:55,175][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:57,012][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:57,688][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:31:59,579][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:00,206][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:02,097][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:02,715][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:03,227][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/stats] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:03,227][ERROR][o.e.x.m.c.c.ClusterStatsCollector] [cyZochJ] collector [cluster-stats-collector] failed to collect data
+org.elasticsearch.ElasticsearchSecurityException: current license is non-compliant for [security]
+	at org.elasticsearch.license.LicenseUtils.newComplianceException(LicenseUtils.java:35) ~[?:?]
+	at org.elasticsearch.xpack.security.action.filter.SecurityActionFilter.apply(SecurityActionFilter.java:112) ~[?:?]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:171) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:145) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:87) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:75) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:64) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.FilterClient.doExecute(FilterClient.java:67) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.security.InternalClient.doExecute(InternalClient.java:93) ~[?:?]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:710) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:80) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:54) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:69) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStatsCollector.lambda$doCollect$0(ClusterStatsCollector.java:79) ~[x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStatsCollector.doCollect(ClusterStatsCollector.java:82) ~[x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.Collector.collect(Collector.java:83) [x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.AgentService$ExportingWorker.collect(AgentService.java:226) [x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.AgentService$ExportingWorker.run(AgentService.java:193) [x-pack-5.2.0.jar:5.2.0]
+	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_144]
+[2018-04-12T15:32:04,634][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:05,231][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:06,468][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/nodes/stats] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:06,469][WARN ][o.e.c.InternalClusterInfoService] [cyZochJ] Failed to execute NodeStatsAction for ClusterInfoUpdateJob
+org.elasticsearch.ElasticsearchSecurityException: current license is non-compliant for [security]
+	at org.elasticsearch.license.LicenseUtils.newComplianceException(LicenseUtils.java:35) ~[?:?]
+	at org.elasticsearch.xpack.security.action.filter.SecurityActionFilter.apply(SecurityActionFilter.java:112) ~[?:?]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:171) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:145) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:87) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:75) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:64) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:710) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.nodesStats(AbstractClient.java:806) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService.updateNodeStats(InternalClusterInfoService.java:256) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService.refresh(InternalClusterInfoService.java:292) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService.maybeRefresh(InternalClusterInfoService.java:277) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService.access$500(InternalClusterInfoService.java:67) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService$SubmitReschedulingClusterInfoUpdatedJob.lambda$run$0(InternalClusterInfoService.java:224) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.common.util.concurrent.ThreadContext$ContextPreservingRunnable.run(ThreadContext.java:527) [elasticsearch-5.2.0.jar:5.2.0]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) [?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) [?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_144]
+[2018-04-12T15:32:06,471][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [indices:monitor/stats] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:06,471][WARN ][o.e.c.InternalClusterInfoService] [cyZochJ] Failed to execute IndicesStatsAction for ClusterInfoUpdateJob
+org.elasticsearch.ElasticsearchSecurityException: current license is non-compliant for [security]
+	at org.elasticsearch.license.LicenseUtils.newComplianceException(LicenseUtils.java:35) ~[?:?]
+	at org.elasticsearch.xpack.security.action.filter.SecurityActionFilter.apply(SecurityActionFilter.java:112) ~[?:?]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:171) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:145) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:87) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:75) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:64) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient$IndicesAdmin.execute(AbstractClient.java:1226) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient$IndicesAdmin.stats(AbstractClient.java:1547) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService.updateIndicesStats(InternalClusterInfoService.java:270) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService.refresh(InternalClusterInfoService.java:321) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService.maybeRefresh(InternalClusterInfoService.java:277) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService.access$500(InternalClusterInfoService.java:67) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.cluster.InternalClusterInfoService$SubmitReschedulingClusterInfoUpdatedJob.lambda$run$0(InternalClusterInfoService.java:224) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.common.util.concurrent.ThreadContext$ContextPreservingRunnable.run(ThreadContext.java:527) [elasticsearch-5.2.0.jar:5.2.0]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149) [?:1.8.0_144]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624) [?:1.8.0_144]
+	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_144]
+[2018-04-12T15:32:07,148][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:07,742][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:09,713][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:10,253][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:12,228][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:12,767][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:13,234][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/stats] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:13,235][ERROR][o.e.x.m.c.c.ClusterStatsCollector] [cyZochJ] collector [cluster-stats-collector] failed to collect data
+org.elasticsearch.ElasticsearchSecurityException: current license is non-compliant for [security]
+	at org.elasticsearch.license.LicenseUtils.newComplianceException(LicenseUtils.java:35) ~[?:?]
+	at org.elasticsearch.xpack.security.action.filter.SecurityActionFilter.apply(SecurityActionFilter.java:112) ~[?:?]
+	at org.elasticsearch.action.support.TransportAction$RequestFilterChain.proceed(TransportAction.java:171) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:145) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.support.TransportAction.execute(TransportAction.java:87) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.executeLocally(NodeClient.java:75) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.node.NodeClient.doExecute(NodeClient.java:64) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.FilterClient.doExecute(FilterClient.java:67) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.security.InternalClient.doExecute(InternalClient.java:93) ~[?:?]
+	at org.elasticsearch.client.support.AbstractClient.execute(AbstractClient.java:403) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.client.support.AbstractClient$ClusterAdmin.execute(AbstractClient.java:710) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:80) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.execute(ActionRequestBuilder.java:54) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.action.ActionRequestBuilder.get(ActionRequestBuilder.java:69) ~[elasticsearch-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStatsCollector.lambda$doCollect$0(ClusterStatsCollector.java:79) ~[x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.cluster.ClusterStatsCollector.doCollect(ClusterStatsCollector.java:82) ~[x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.collector.Collector.collect(Collector.java:83) [x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.AgentService$ExportingWorker.collect(AgentService.java:226) [x-pack-5.2.0.jar:5.2.0]
+	at org.elasticsearch.xpack.monitoring.AgentService$ExportingWorker.run(AgentService.java:193) [x-pack-5.2.0.jar:5.2.0]
+	at java.lang.Thread.run(Thread.java:748) [?:1.8.0_144]
+[2018-04-12T15:32:14,785][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:15,278][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:17,300][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+[2018-04-12T15:32:17,788][ERROR][o.e.x.s.a.f.SecurityActionFilter] [cyZochJ] blocking [cluster:monitor/health] operation due to expired license. Cluster health, cluster stats and indices stats 
+operations are blocked on license expiration. All data operations (read and write) continue to work. 
+If you have a new license, please update it. Otherwise, please reach out to your support contact.
+
+
+
+
+But we can still do indexing and searching
+================================================
+senmac:platinum kuniyasu$curl -XPUT http://localhost:9200/my_testaaa/doc/1?pretty -d '{"title": "aaa"}' -uelastic:changeme
+{
+  "_index" : "my_testaaa",
+  "_type" : "doc",
+  "_id" : "1",
+  "_version" : 2,
+  "result" : "updated",
+  "_shards" : {
+    "total" : 2,
+    "successful" : 1,
+    "failed" : 0
+  },
+  "created" : false
+}
+senmac:platinum kuniyasu$curl -XGET http://localhost:9200/my_testaaa/_search?pretty -uelastic:changeme
+{
+  "took" : 1,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 5,
+    "successful" : 5,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : 1,
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "my_testaaa",
+        "_type" : "doc",
+        "_id" : "1",
+        "_score" : 1.0,
+        "_source" : {
+          "title" : "aaa"
+        }
+      }
+    ]
+  }
+}
