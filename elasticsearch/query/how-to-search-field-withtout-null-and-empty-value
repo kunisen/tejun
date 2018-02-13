@@ -1,0 +1,246 @@
+#========================================
+# how-to-search-field-without
+# - 1. null-value
+# - 2. "" value
+#========================================
+#------------------------
+# Manual
+#------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/6.1/query-dsl-exists-query.html
+
+# set mappings
+#-----------------
+DELETE my_index
+PUT my_index
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "number_field": {
+          "type": "long"
+        },
+        "text_field": {
+          "type": "text"
+        },
+        "keyword_field": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}
+
+# PUT some data
+#----------------------------------
+# text_field : "aaa"
+# keyword_field : "aaakeyword"
+PUT my_index/doc/1
+{
+  "number_field": 111,
+  "text_field": "aaa",
+  "keyword_field": "aaakeyword"
+}
+
+# text_field : null
+# keyword_field : null
+PUT my_index/doc/2
+{
+  "number_field": 222
+}
+
+
+# text_field : ""
+# keyword_field : ""
+PUT my_index/doc/3
+{
+  "number_field": 333,
+  "text_field": "",
+  "keyword_field": ""
+}
+
+
+# check all data
+#----------------------------------
+GET my_index/_search
+{"sort":[{"number_field":{"order":"asc"}}]}
+
+
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": null,
+    "hits": [
+      {
+        "_index": "my_index",
+        "_type": "doc",
+        "_id": "1",
+        "_score": null,
+        "_source": {
+          "number_field": 111,
+          "text_field": "aaa",
+          "keyword_field": "aaakeyword"
+        },
+        "sort": [
+          111
+        ]
+      },
+      {
+        "_index": "my_index",
+        "_type": "doc",
+        "_id": "2",
+        "_score": null,
+        "_source": {
+          "number_field": 222
+        },
+        "sort": [
+          222
+        ]
+      },
+      {
+        "_index": "my_index",
+        "_type": "doc",
+        "_id": "3",
+        "_score": null,
+        "_source": {
+          "number_field": 333,
+          "text_field": "",
+          "keyword_field": ""
+        },
+        "sort": [
+          333
+        ]
+      }
+    ]
+  }
+}
+
+
+# analyzer can not analyze if the field is an empty string or not
+# search for not null and not "" on keyword fields
+# refer doc : https://www.elastic.co/guide/en/elasticsearch/reference/6.1/query-dsl-exists-query.html
+#-------------------------------------------------------------------
+GET /my_index/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "exists": {
+            "field": "keyword_field"
+          }
+        }
+      ],
+      "must_not": [
+        {
+          "term": {
+            "keyword_field": {
+              "value": ""
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_index",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "number_field": 111,
+          "text_field": "aaa",
+          "keyword_field": "aaakeyword"
+        }
+      }
+    ]
+  }
+}
+
+
+
+# but we can use wildcard as a workaround for text field
+# refer doc : https://github.com/elastic/elasticsearch/issues/7515
+#-------------------------------------------------------------------
+GET /my_index/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "exists": {
+            "field": "text_field"
+          }
+        }
+      ],
+      "must_not": [
+        {
+          "bool": {
+            "must_not": [
+              {
+                "wildcard": {
+                  "text_field": {
+                    "value": "*"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_index",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "number_field": 111,
+          "text_field": "aaa",
+          "keyword_field": "aaakeyword"
+        }
+      }
+    ]
+  }
+}
+
