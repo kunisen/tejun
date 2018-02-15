@@ -1,0 +1,339 @@
+#--------------------------------------------------------------------------------------
+# how to restore snapshot from disk
+#--------------------------------------------------------------------------------------
+
+# 1. Set repo in elasticsearch.yml
+#--------------------------------------------------------------------------------------
+#path.repo: ["/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backup"]
+
+# 2. Setup locations for taking snapshot
+#--------------------------------------------------------------------------------------
+PUT /_snapshot/my_backup
+{
+  "type": "fs",
+  "settings": {
+    "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup"
+  }
+}
+
+# 3. Check settings
+#--------------------------------------------------------------------------------------
+GET _snapshot/my_backup
+
+# response
+{
+  "my_backup": {
+    "type": "fs",
+    "settings": {
+      "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup"
+    }
+  }
+}
+
+# 4. create some indices
+#--------------------------------------------------------------------------------------
+DELETE my_index_1, my_index_2
+PUT my_index_1/doc/1
+{"title": "aaaa"}
+
+PUT my_index_2/doc/1
+{"author": "bbbb"}
+
+# check search result
+GET my_index*/_search
+
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 10,
+    "successful": 10,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_index_1",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaaa"
+        }
+      },
+      {
+        "_index": "my_index_2",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "author": "bbbb"
+        }
+      }
+    ]
+  }
+}
+
+# 5. create snapshot
+#--------------------------------------------------------------------------------------
+DELETE /_snapshot/my_backup/snapshot_1
+PUT /_snapshot/my_backup/snapshot_1
+{
+  "indices": "my_index_1,my_index_2",
+  "ignore_unavailable": true,
+  "include_global_state": false
+}
+
+# response
+#{
+#  "accepted": true
+#}
+
+
+# check status
+GET /_snapshot/my_backup/snapshot_1
+
+# response
+{
+  "snapshots": [
+    {
+      "snapshot": "snapshot_1",
+      "uuid": "iHITQ0gISD-LbxB7raDkzw",
+      "version_id": 6000099,
+      "version": "6.0.0",
+      "indices": [
+        "my_index_1",
+        "my_index_2"
+      ],
+      "state": "SUCCESS",
+      "start_time": "2018-02-15T03:32:20.894Z",
+      "start_time_in_millis": 1518665540894,
+      "end_time": "2018-02-15T03:32:20.934Z",
+      "end_time_in_millis": 1518665540934,
+      "duration_in_millis": 40,
+      "failures": [],
+      "shards": {
+        "total": 10,
+        "failed": 0,
+        "successful": 10
+      }
+    }
+  ]
+}
+
+
+# 6. tar zip backup folder and move to a new folder
+# - run it in terminal console
+#--------------------------------------------------------------------------------------
+#senmac:backups kuniyasu$pwd
+#/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups
+
+#senmac:backups kuniyasu$tar cvzf my_backup.tar.gz my_backup
+#a my_backup
+#...
+#senmac:backups kuniyasu$ll
+#total 40
+#drwxr-xr-x  14 kuniyasu  staff    476  2 15 12:13 my_backup
+#-rw-r--r--   1 kuniyasu  staff  19224  2 15 12:15 my_backup.tar.gz
+
+
+# 7. Delete the old backup folder
+#--------------------------------------------------------------------------------------
+DELETE /_snapshot/my_backup/
+
+# response
+{
+  "acknowledged": true
+}
+
+
+# check backup is gone from clusster status
+GET _snapshot/my_backup
+
+# response
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "repository_missing_exception",
+        "reason": "[my_backup] missing"
+      }
+    ],
+    "type": "repository_missing_exception",
+    "reason": "[my_backup] missing"
+  },
+  "status": 404
+}
+
+
+# 8. check the folder status from terminal console
+# it still exists on disk
+#--------------------------------------------------------------------------------------
+senmac:backups kuniyasu$pwd
+/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups
+senmac:backups kuniyasu$ll
+total 40
+drwxr-xr-x  14 kuniyasu  staff    476  2 15 12:13 my_backup
+-rw-r--r--   1 kuniyasu  staff  19224  2 15 12:15 my_backup.tar.gz
+senmac:backups kuniyasu$ll my_backup
+total 80
+-rw-r--r--  1 kuniyasu  staff   29 12 26 14:37 incompatible-snapshots
+...
+senmac:backups kuniyasu$
+
+
+# 9. delete backup folder from terminal
+#--------------------------------------------------------------------------------------
+senmac:backups kuniyasu$pwd
+/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups
+senmac:backups kuniyasu$ll
+total 40
+drwxr-xr-x  14 kuniyasu  staff    476  2 15 12:13 my_backup
+-rw-r--r--   1 kuniyasu  staff  19224  2 15 12:15 my_backup.tar.gz
+senmac:backups kuniyasu$rm -r my_backup
+senmac:backups kuniyasu$ll
+total 40
+-rw-r--r--  1 kuniyasu  staff  19224  2 15 12:15 my_backup.tar.gz
+
+
+# 10. create the new backup folder
+# - here we use a new folder name : my_backup_new
+#--------------------------------------------------------------------------------------
+PUT /_snapshot/my_backup
+{
+  "type": "fs",
+  "settings": {
+    "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup_new"
+  }
+}
+
+# response
+{
+  "acknowledged": true
+}
+
+# 11. Check settings
+#--------------------------------------------------------------------------------------
+GET _snapshot/my_backup
+
+# response
+{
+  "my_backup": {
+    "type": "fs",
+    "settings": {
+      "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup_new"
+    }
+  }
+}
+
+
+# 12. unzip things from tar gz file and put it to new backup folder
+#--------------------------------------------------------------------------------------
+senmac:backups kuniyasu$pwd
+/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups
+senmac:backups kuniyasu$ll
+total 40
+-rw-r--r--  1 kuniyasu  staff  19224  2 15 12:15 my_backup.tar.gz
+drwxr-xr-x  2 kuniyasu  staff     68  2 15 12:25 my_backup_new
+senmac:backups kuniyasu$tar xvzf my_backup.tar.gz 
+x my_backup/
+x my_backup/incompatible-snapshots
+...
+
+senmac:backups kuniyasu$mv my_backup/* my_backup_new/.
+senmac:backups kuniyasu$ll
+total 40
+drwxr-xr-x   3 kuniyasu  staff    102  2 15 12:27 my_backup
+-rw-r--r--   1 kuniyasu  staff  19224  2 15 12:15 my_backup.tar.gz
+drwxr-xr-x  13 kuniyasu  staff    442  2 15 12:27 my_backup_new
+senmac:backups kuniyasu$ll my_backup_new/
+total 80
+-rw-r--r--  1 kuniyasu  staff   29 12 26 14:37 incompatible-snapshots
+...
+
+
+# 13. restore it into current cluster
+# remember our index name is "my_index_1,my_index_2",
+#--------------------------------------------------------------------------------------
+# close current one
+POST my_index_1,my_index_2/_close
+
+# response
+{
+  "accepted": true
+}
+
+
+# check status
+GET _cat/indices?v&index=my_index*
+
+# response
+health status index      uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+       close  my_index_1 D2uBbD8qSo26Ix3xr1zNyg                                                          
+       close  my_index_2 UELPMnWUT-ubp7YjdefIiA                                                          
+
+
+
+# restore
+POST _snapshot/my_backup/snapshot_1/_restore
+
+# response
+{
+  "accepted": true
+}
+
+# check result
+GET my*/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 10,
+    "successful": 10,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_index_1",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaaa"
+        }
+      },
+      {
+        "_index": "my_index_2",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "author": "bbbb"
+        }
+      }
+    ]
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
