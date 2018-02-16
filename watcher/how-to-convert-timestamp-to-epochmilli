@@ -1,0 +1,286 @@
+#----------------
+# how-to-convert-timestamp-to-epochmilli
+#----------------
+# put some data
+DELETE my_test
+PUT my_test/doc/1
+{"number": 1}
+
+PUT my_test/doc/2
+{"number": 2}
+
+PUT my_test/doc/3
+{"number": 3}
+
+# search 
+GET my_test/_search
+
+# result
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "number": 2
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "number": 1
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "number": 3
+        }
+      }
+    ]
+  }
+}
+
+
+DELETE _xpack/watcher/watch/my_test_watcher
+PUT _xpack/watcher/watch/my_test_watcher
+{
+  "trigger": {
+    "schedule": {
+      "interval": "1s"
+    }
+  },
+  "input": {
+    "search": {
+      "request": {
+        "indices": [
+          "my_test"
+        ],
+        "body": {
+          "query": {
+            "match_all": {}
+          }
+        }
+      }
+    }
+  },
+  "condition": {
+    "compare": {
+      "ctx.payload.hits.total": {
+        "gte": 0
+      }
+    }
+  },
+  "transform": {
+    "script": """
+          for (int i = 0; i < ctx.payload.hits.hits.length; ++i) {
+            // copy the source field to new index
+            ctx.payload.hits.hits[i] = ctx.payload.hits.hits[i]._source;
+            
+            // add alert_id with the following format
+            // <Unix epoch timestamp of triggered time>-0001-0001-0001-<i of ctx.payload.hits.hits[i] 
+            // (right justified, leading zeros, the number of characters is 4)> 
+
+            
+            ctx.payload.hits.hits[i].alert_id = i;
+            ctx.payload.hits.hits[i].triggered_time = ctx.trigger.triggered_time;
+          }  
+
+
+      // how to do SimpleDateFormat parse - e.g. '2018-02-16 01:23:45';
+      String pattern = 'yyyy-MM-dd HH:mm:ss';
+      String timestamp = '2018-02-16 01:23:45';
+      SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+      Date date = simpleDateFormat.parse(timestamp);
+      long unixTime1 = (long)date.getTime()/1000;
+      
+      // how to do OffsetDateTime parse - e.g. '2018-02-16T06:50:14.611Z'
+      String triggered_time = '2018-02-16T06:50:14.611Z';
+      OffsetDateTime odt = OffsetDateTime.parse(triggered_time); 
+      long unixTime = odt.toEpochSecond();
+      
+      return [ 'my_test' : unixTime]
+"""
+  },
+  "actions": {
+    "log_error": {
+      "logging": {
+        "text": "ctx.payload - {{ctx.payload}}"
+      }
+    }
+  }
+}
+
+
+PUT _xpack/watcher/watch/my_test_watcher/_execute
+
+
+# response
+{
+  "_id": "my_test_watcher_d7404704-13c6-42d7-a2c9-a6b72f7881a8-2018-02-16T07:02:40.843Z",
+  "watch_record": {
+    "watch_id": "my_test_watcher",
+    "node": "KYPM2tTvTlGE5nLSLNwbUA",
+    "state": "throttled",
+    "status": {
+      "state": {
+        "active": true,
+        "timestamp": "2018-02-16T07:02:39.348Z"
+      },
+      "last_checked": "2018-02-16T07:02:40.843Z",
+      "last_met_condition": "2018-02-16T07:02:40.843Z",
+      "actions": {
+        "log_error": {
+          "ack": {
+            "timestamp": "2018-02-16T07:02:40.436Z",
+            "state": "ackable"
+          },
+          "last_execution": {
+            "timestamp": "2018-02-16T07:02:40.436Z",
+            "successful": true
+          },
+          "last_successful_execution": {
+            "timestamp": "2018-02-16T07:02:40.436Z",
+            "successful": true
+          },
+          "last_throttle": {
+            "timestamp": "2018-02-16T07:02:40.843Z",
+            "reason": "throttling interval is set to [5 seconds] but time elapsed since last execution is [407 milliseconds]"
+          }
+        }
+      },
+      "version": 2778
+    },
+    "trigger_event": {
+      "type": "manual",
+      "triggered_time": "2018-02-16T07:02:40.843Z",
+      "manual": {
+        "schedule": {
+          "scheduled_time": "2018-02-16T07:02:40.843Z"
+        }
+      }
+    },
+    "input": {
+      "search": {
+        "request": {
+          "search_type": "query_then_fetch",
+          "indices": [
+            "my_test"
+          ],
+          "types": [],
+          "body": {
+            "query": {
+              "match_all": {}
+            }
+          }
+        }
+      }
+    },
+    "condition": {
+      "compare": {
+        "ctx.payload.hits.total": {
+          "gte": 0
+        }
+      }
+    },
+    "result": {
+      "execution_time": "2018-02-16T07:02:40.843Z",
+      "execution_duration": 1,
+      "input": {
+        "type": "search",
+        "status": "success",
+        "payload": {
+          "_shards": {
+            "total": 5,
+            "failed": 0,
+            "successful": 5,
+            "skipped": 0
+          },
+          "hits": {
+            "hits": [
+              {
+                "number": 2,
+                "triggered_time": "2018-02-16T07:02:40.843Z",
+                "alert_id": 0
+              },
+              {
+                "number": 1,
+                "triggered_time": "2018-02-16T07:02:40.843Z",
+                "alert_id": 1
+              },
+              {
+                "number": 3,
+                "triggered_time": "2018-02-16T07:02:40.843Z",
+                "alert_id": 2
+              }
+            ],
+            "total": 3,
+            "max_score": 1
+          },
+          "took": 0,
+          "timed_out": false
+        },
+        "search": {
+          "request": {
+            "search_type": "query_then_fetch",
+            "indices": [
+              "my_test"
+            ],
+            "types": [],
+            "body": {
+              "query": {
+                "match_all": {}
+              }
+            }
+          }
+        }
+      },
+      "condition": {
+        "type": "compare",
+        "status": "success",
+        "met": true,
+        "compare": {
+          "resolved_values": {
+            "ctx.payload.hits.total": 3
+          }
+        }
+      },
+      "transform": {
+        "type": "script",
+        "status": "success",
+        "payload": {
+          "my_test": 1518763814
+        }
+      },
+      "actions": [
+        {
+          "id": "log_error",
+          "type": "logging",
+          "status": "throttled",
+          "reason": "throttling interval is set to [5 seconds] but time elapsed since last execution is [407 milliseconds]"
+        }
+      ]
+    },
+    "messages": []
+  }
+}
+
