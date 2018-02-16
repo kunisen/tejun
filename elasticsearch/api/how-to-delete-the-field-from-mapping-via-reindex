@@ -4,9 +4,9 @@
 # 主な流れ
 #-----------------------------------------------------
 # 1. 既存の index の mappings と settings を取得
-# 2. 一時的に別の名前で index を退避
+# 2. 既存の index の mappings と settings を元に、reindex で一時的に別の名前で index を退避
 # 3. 既存の index を削除
-# 4. 一時退避の index を元に、既存の index に戻す
+# 4. 一時退避の index を元に、既存の index に戻す。ただし、事前に既存の index の settings を利用すること
 # 5. 一時退避の index を削除
 
 # docs
