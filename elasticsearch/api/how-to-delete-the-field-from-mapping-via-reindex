@@ -1,0 +1,350 @@
+#-----------------------------------------------------
+# how to delete the field from mapping via _reindex
+#-----------------------------------------------------
+# 主な流れ
+#-----------------------------------------------------
+# 1. 既存の index の mappings と settings を取得
+# 2. 一時的に別の名前で index を退避
+# 3. 既存の index を削除
+# 4. 一時退避の index を元に、既存の index に戻す
+# 5. 一時退避の index を削除
+
+# docs
+#-----------------------------------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html
+# quotes : Reindex does not attempt to set up the destination index. It does not copy the settings of the source index. You should set up the destination index prior to running a _reindex action, including setting up mappings, shard counts, replicas, etc.
+
+
+# put some data
+#-----------------------------------------------------
+DELETE  my_test1,my_test1_tmp
+PUT my_test1/doc/1
+{
+  "test_field": "aaa"
+}
+
+PUT my_test1/doc/2
+{
+  "test_field": "bbb"
+}
+
+
+# 1. 既存の index の mappings と settings を取得
+# check mappings and settings
+# because of dynamic mapping, we can see 2 fields
+# one is 'test_field', the other is 'test_field.keyword'
+#---------------------------------------------------------
+GET my_test1/
+
+# response
+{
+  "my_test1": {
+    "aliases": {},
+    "mappings": {
+      "doc": {
+        "properties": {
+          "test_field": {
+            "type": "text",
+            "fields": {
+              "field1": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          }
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "creation_date": "1518771218391",
+        "number_of_shards": "5",
+        "number_of_replicas": "1",
+        "uuid": "gBRA0pfcSpCA8lh7ZZGxqg",
+        "version": {
+          "created": "6000099"
+        },
+        "provided_name": "my_test1"
+      }
+    }
+  }
+}
+
+
+# 2. 一時的に別の名前で index を退避
+# put the settings and mappings without 'keyword' field for temp index
+# note that use smaller shards number and less replica will make reindex faster
+# 少ない shard 数と replica を利用することで、reindex 処理を加速できる
+#----------------------------------------------------------------------
+PUT my_test1_tmp
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "test_field": {
+          "type": "text"
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "0"
+    }
+  }
+}
+
+#response
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test1_tmp"
+}
+
+
+# perform a reindex
+#---------------------------------------------------------
+POST _reindex
+{
+  "source": {
+    "index": "my_test1"
+  },
+  "dest": {
+    "index": "my_test1_tmp"
+  }
+}
+
+# check the temp index mapping
+# now we will get the mapping without keyword field
+#---------------------------------------------------------
+GET my_test1_tmp/_mapping
+
+# response
+{
+  "my_test1_tmp": {
+    "mappings": {
+      "doc": {
+        "properties": {
+          "test_field": {
+            "type": "text"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+# also check the search result
+# the temp index should have all indices of the original one
+#---------------------------------------------------------
+GET my_test1_tmp/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test1_tmp",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "test_field": "bbb"
+        }
+      },
+      {
+        "_index": "my_test1_tmp",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "test_field": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+# 3. 既存の index を削除
+# Delete the old index
+# after delete the old one, we could use reindex to restore it back
+#--------------------------------------------------------------------
+DELETE my_test1
+
+# response
+{
+  "acknowledged": true
+}
+
+
+# 4. 一時退避の index を元に、既存の index に戻す
+# Reindex from the temp index back to original one
+#--------------------------------------------------------------------
+# put the settings and mappings before doing reindex
+# remember we need to use the same settings as before
+# 既存の index と同じ settings (shard number と replica) を利用すること
+PUT my_test1
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "test_field": {
+          "type": "text"
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "number_of_shards": "5",
+      "number_of_replicas": "1"
+    }
+  }
+}
+
+
+# response
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test1"
+}
+
+
+# perform reindex
+POST _reindex
+{
+  "source": {
+    "index": "my_test1_tmp"
+  },
+  "dest": {
+    "index": "my_test1"
+  }
+}
+
+
+# response
+{
+  "took": 9,
+  "timed_out": false,
+  "total": 2,
+  "updated": 0,
+  "created": 2,
+  "deleted": 0,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1,
+  "throttled_until_millis": 0,
+  "failures": []
+}
+
+
+
+# check the original index settings and mappings
+# we can see no 'keyword' field anymore
+# 既存の index の mapping を確認し、keyword field が存在しないことを確認
+GET my_test1
+
+# response
+{
+  "my_test1": {
+    "aliases": {},
+    "mappings": {
+      "doc": {
+        "properties": {
+          "test_field": {
+            "type": "text"
+          }
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "creation_date": "1518772376389",
+        "number_of_shards": "5",
+        "number_of_replicas": "1",
+        "uuid": "UMlgm7FaRzO5SHNBllEhxw",
+        "version": {
+          "created": "6000099"
+        },
+        "provided_name": "my_test1"
+      }
+    }
+  }
+}
+
+
+# also check the search result
+# 検索結果も確認し、元の index と同様なデータが存在していることを確認
+GET my_test1/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test1",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "test_field": "bbb"
+        }
+      },
+      {
+        "_index": "my_test1",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "test_field": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+# 5. 一時退避の index を削除
+#--------------------------------------------------------------------
+DELETE my_test1_tmp
+
+# response
+{
+  "acknowledged": true
+}
+
+
+
+
+
+
