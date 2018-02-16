@@ -92,20 +92,6 @@ PUT _xpack/watcher/watch/my_test_watcher
   },
   "transform": {
     "script": """
-          for (int i = 0; i < ctx.payload.hits.hits.length; ++i) {
-            // copy the source field to new index
-            ctx.payload.hits.hits[i] = ctx.payload.hits.hits[i]._source;
-            
-            // add alert_id with the following format
-            // <Unix epoch timestamp of triggered time>-0001-0001-0001-<i of ctx.payload.hits.hits[i] 
-            // (right justified, leading zeros, the number of characters is 4)> 
-
-            
-            ctx.payload.hits.hits[i].alert_id = i;
-            ctx.payload.hits.hits[i].triggered_time = ctx.trigger.triggered_time;
-          }  
-
-
       // how to do SimpleDateFormat parse - e.g. '2018-02-16 01:23:45';
       String pattern = 'yyyy-MM-dd HH:mm:ss';
       String timestamp = '2018-02-16 01:23:45';
