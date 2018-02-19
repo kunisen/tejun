@@ -1,0 +1,163 @@
+#-----------------------------------------------------------
+# how-to-calculate-date-difference-by-using-scripted-fields
+#-----------------------------------------------------------
+
+# docs
+#-----------------------------------------------------------
+# https://www.elastic.co/guide/en/kibana/5.5/scripted-fields.html
+# https://www.elastic.co/jp/blog/using-painless-kibana-scripted-fields
+# https://youtu.be/oMmLNbJPF-M
+
+
+
+# flow
+#-----------------------------------------------------------
+# 1. create some data with 'update_date' field
+# 2. create index pattern and scripted field
+# 3. use it in query
+
+# 1. create some data with 'update_date' field
+#-----------------------------------------------------------
+# put data
+DELETE my_test
+PUT my_test/doc/1
+{
+  "author": "aaa",
+  "update_date": "2018-02-18T00:00:00Z"
+}
+PUT my_test/doc/2
+{
+  "author": "bbb",
+  "update_date": "2018-01-19T00:00:00Z"
+}
+PUT my_test/doc/3
+{
+  "author": "bbb",
+  "update_date": "2017-01-19T00:00:00Z"
+}
+
+# check the result
+GET my_test/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "author": "bbb",
+          "update_date": "2018-01-19T00:00:00Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "author": "aaa",
+          "update_date": "2018-02-18T00:00:00Z"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "author": "bbb",
+          "update_date": "2017-01-19T00:00:00Z"
+        }
+      }
+    ]
+  }
+}
+
+
+# 2. create index pattern and scripted field
+#-----------------------------------------------------------
+# a. goto kibana - management - Index Patterns
+# b. "+Create Index Pattern" - add "my_test"
+# c. In "scripted fields" tab, click "Add Scripted Field" button
+# d. create the scripted field with the following descriptions
+# Name   : diff_date
+# type   : date
+# Format : Date
+# moment.js format patter : default pattern
+# Script : (copy and paste the following lines)
+
+// prepare the date
+def _current_date = new SimpleDateFormat('yyyy-MM-dd').format(new Date()); 
+def _update_date  = new SimpleDateFormat('yyyy-MM-dd').format(new Date(doc['update_date'].value)); 
+def current_date  = LocalDate.parse(_current_date); 
+def update_date   = LocalDate.parse(_update_date);
+
+// calculate the time difference
+def diff_days = ChronoUnit.DAYS.between(update_date, current_date); 
+def diff_months = ChronoUnit.MONTHS.between(update_date, current_date); 
+def diff_years = ChronoUnit.YEARS.between(update_date, current_date); 
+        
+// create the return 
+def diff = 'Diff year [' + diff_years + ']; Diff month [' + diff_months + ']; Diff days [' + diff_days + ']';
+
+return diff;
+
+
+# 3. result from kibana - Discover
+#-----------------------------------------------------------
+	Time 	_source 
+	February 18th 2018, 09:00:00.000	author:aaa update_date:February 18th 2018, 09:00:00.000 _id:1 _type:doc _index:my_test _score: - diff_date:Diff year [0]; Diff month [0]; Diff days [1]
+	January 19th 2018, 09:00:00.000	author:bbb update_date:January 19th 2018, 09:00:00.000 _id:2 _type:doc _index:my_test _score: - diff_date:Diff year [0]; Diff month [1]; Diff days [31]
+	January 19th 2017, 09:00:00.000	author:bbb update_date:January 19th 2017, 09:00:00.000 _id:3 _type:doc _index:my_test _score: - diff_date:Diff year [1]; Diff month [13]; Diff days [396]
+	
+
+
+
+# additional info: use it in search query
+#-----------------------------------------------------------
+# a. open kibana - Discover
+# b. select the ""
+
+
+GET my_test/_search
+{
+  "_source": "*", 
+  "script_fields": {
+    "test1": {
+      "script": {
+        "lang": "painless", 
+        "inline": """
+        // prepare the date
+        def _current_date = new SimpleDateFormat('yyyy-MM-dd').format(new Date()); 
+        def _update_date  = new SimpleDateFormat('yyyy-MM-dd').format(new Date(doc['update_date'].value)); 
+        def current_date  = LocalDate.parse(_current_date); 
+        def update_date   = LocalDate.parse(_update_date); 
+        
+        // calculate the time difference
+        def diff_days = ChronoUnit.DAYS.between(update_date, current_date); 
+        def diff_months = ChronoUnit.MONTHS.between(update_date, current_date); 
+        def diff_years = ChronoUnit.YEARS.between(update_date, current_date); 
+        
+        // create the return string
+        def diff = 'Diff year [' + diff_years + ']; Diff month [' + diff_months + ']; Diff days [' + diff_days + ']';
+
+        return diff;
+        """
+      }
+    }
+  }
+}
+
