@@ -1,5 +1,7 @@
 #-----------------------------------------------------------
 # how-to-calculate-date-difference-by-using-scripted-fields
+# this sample includes the difference of 
+# "years", "months", "days", "hours", "minutes" and "seconds"
 #-----------------------------------------------------------
 
 # docs
@@ -9,6 +11,10 @@
 # https://youtu.be/oMmLNbJPF-M
 
 
+# tested version
+#-----------------------------------------------------------
+# elasticsearch : 5.5.3
+# kibana        : 5.5.3 
 
 # flow
 #-----------------------------------------------------------
@@ -100,38 +106,44 @@ GET my_test/_search
 # Script : (copy and paste the following lines)
 
 // prepare the date
-def _current_date = new SimpleDateFormat('yyyy-MM-dd').format(new Date()); 
-def _update_date  = new SimpleDateFormat('yyyy-MM-dd').format(new Date(doc['update_date'].value)); 
-def current_date  = LocalDate.parse(_current_date); 
-def update_date   = LocalDate.parse(_update_date);
+def _current_date   = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date());
+def _update_date    = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date(doc['update_date'].value)); 
+DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+def current_date    = LocalDateTime.parse(_current_date, f);
+def update_date     = LocalDateTime.parse(_update_date, f);
 
 // calculate the time difference
-def diff_days = ChronoUnit.DAYS.between(update_date, current_date); 
-def diff_months = ChronoUnit.MONTHS.between(update_date, current_date); 
-def diff_years = ChronoUnit.YEARS.between(update_date, current_date); 
-        
-// create the return 
-def diff = 'Diff year [' + diff_years + ']; Diff month [' + diff_months + ']; Diff days [' + diff_days + ']';
+def diff_seconds    = ChronoUnit.SECONDS.between(update_date, current_date); 
+def diff_minutes    = ChronoUnit.MINUTES.between(update_date, current_date); 
+def diff_hours      = ChronoUnit.HOURS.between(update_date, current_date); 
+def diff_days       = ChronoUnit.DAYS.between(update_date, current_date); 
+def diff_months     = ChronoUnit.MONTHS.between(update_date, current_date); 
+def diff_years      = ChronoUnit.YEARS.between(update_date, current_date); 
+
+// create the return string
+def diff =   'Diff year ['     + diff_years 
++ ']; Diff month ['    + diff_months 
++ ']; Diff days ['     + diff_days 
++ ']; Diff hours ['    + diff_hours 
++ ']; Diff minutes ['  + diff_minutes 
++ ']; Diff seconds ['  + diff_seconds 
++ ']';
 
 return diff;
 
 
 # 3. result from kibana - Discover
 #-----------------------------------------------------------
-	Time 	_source 
-	February 18th 2018, 09:00:00.000	author:aaa update_date:February 18th 2018, 09:00:00.000 _id:1 _type:doc _index:my_test _score: - diff_date:Diff year [0]; Diff month [0]; Diff days [1]
-	January 19th 2018, 09:00:00.000	author:bbb update_date:January 19th 2018, 09:00:00.000 _id:2 _type:doc _index:my_test _score: - diff_date:Diff year [0]; Diff month [1]; Diff days [31]
-	January 19th 2017, 09:00:00.000	author:bbb update_date:January 19th 2017, 09:00:00.000 _id:3 _type:doc _index:my_test _score: - diff_date:Diff year [1]; Diff month [13]; Diff days [396]
-	
+  Time  _source 
+  February 18th 2018, 09:00:00.000  author:aaa update_date:February 18th 2018, 09:00:00.000 _id:1 _type:doc _index:my_test _score: - diff_date:Diff year [0]; Diff month [0]; Diff days [1]; Diff hours [40]; Diff minutes [2410]; Diff seconds [144607]
+  January 19th 2018, 09:00:00.000 author:bbb update_date:January 19th 2018, 09:00:00.000 _id:2 _type:doc _index:my_test _score: - diff_date:Diff year [0]; Diff month [1]; Diff days [31]; Diff hours [760]; Diff minutes [45610]; Diff seconds [2736607]
+  January 19th 2017, 09:00:00.000 author:bbb update_date:January 19th 2017, 09:00:00.000 _id:3 _type:doc _index:my_test _score: - diff_date:Diff year [1]; Diff month [13]; Diff days [396]; Diff hours [9520]; Diff minutes [571210]; Diff seconds [34272615]
 
 
 
 # additional info: use it in search query
+# - this is also a complete solution
 #-----------------------------------------------------------
-# a. open kibana - Discover
-# b. select the ""
-
-
 GET my_test/_search
 {
   "_source": "*", 
@@ -141,18 +153,28 @@ GET my_test/_search
         "lang": "painless", 
         "inline": """
         // prepare the date
-        def _current_date = new SimpleDateFormat('yyyy-MM-dd').format(new Date()); 
-        def _update_date  = new SimpleDateFormat('yyyy-MM-dd').format(new Date(doc['update_date'].value)); 
-        def current_date  = LocalDate.parse(_current_date); 
-        def update_date   = LocalDate.parse(_update_date); 
+        def _current_date   = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date());
+        def _update_date    = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date(doc['update_date'].value)); 
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        def current_date    = LocalDateTime.parse(_current_date, f);
+        def update_date     = LocalDateTime.parse(_update_date, f);
         
         // calculate the time difference
-        def diff_days = ChronoUnit.DAYS.between(update_date, current_date); 
-        def diff_months = ChronoUnit.MONTHS.between(update_date, current_date); 
-        def diff_years = ChronoUnit.YEARS.between(update_date, current_date); 
+        def diff_seconds    = ChronoUnit.SECONDS.between(update_date, current_date); 
+        def diff_minutes    = ChronoUnit.MINUTES.between(update_date, current_date); 
+        def diff_hours      = ChronoUnit.HOURS.between(update_date, current_date); 
+        def diff_days       = ChronoUnit.DAYS.between(update_date, current_date); 
+        def diff_months     = ChronoUnit.MONTHS.between(update_date, current_date); 
+        def diff_years      = ChronoUnit.YEARS.between(update_date, current_date); 
         
         // create the return string
-        def diff = 'Diff year [' + diff_years + ']; Diff month [' + diff_months + ']; Diff days [' + diff_days + ']';
+        def diff =   'Diff year ['     + diff_years 
+                + ']; Diff month ['    + diff_months 
+                + ']; Diff days ['     + diff_days 
+                + ']; Diff hours ['    + diff_hours 
+                + ']; Diff minutes ['  + diff_minutes 
+                + ']; Diff seconds ['  + diff_seconds 
+                + ']';
 
         return diff;
         """
@@ -161,3 +183,65 @@ GET my_test/_search
   }
 }
 
+
+# response
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "author": "bbb",
+          "update_date": "2018-01-19T00:00:00Z"
+        },
+        "fields": {
+          "test1": [
+            "Diff year [0]; Diff month [1]; Diff days [31]; Diff hours [760]; Diff minutes [45607]; Diff seconds [2736444]"
+          ]
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "author": "aaa",
+          "update_date": "2018-02-18T00:00:00Z"
+        },
+        "fields": {
+          "test1": [
+            "Diff year [0]; Diff month [0]; Diff days [1]; Diff hours [40]; Diff minutes [2407]; Diff seconds [144444]"
+          ]
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "author": "bbb",
+          "update_date": "2017-01-19T00:00:00Z"
+        },
+        "fields": {
+          "test1": [
+            "Diff year [1]; Diff month [13]; Diff days [396]; Diff hours [9520]; Diff minutes [571207]; Diff seconds [34272444]"
+          ]
+        }
+      }
+    ]
+  }
+}
