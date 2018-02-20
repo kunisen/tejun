@@ -1,0 +1,194 @@
+#--------------------------------------
+# how to export and import dashboard via API
+# tested in ES/Kibana 5.6.3
+#--------------------------------------
+
+# 流れ
+#--------------------------------------
+# 1. put some data with timestamp
+# 2. create index pattern in kibana - Management
+# 3. create visualization in kibana - Visualize
+# 4. create dashboard in kibana - Dashboard
+# 5. export dashboard via API
+# 6. change the 'timeFrom' and 'timeTo' based on the search requestment
+# 7. import dashboard via API
+
+
+# 1. put some data with timestamp
+#--------------------------------------
+# remember when we put data, the default timezone is UTC
+# so we put it with local timezone (JP : +0900)
+DELETE  my_test_date
+
+PUT my_test_date
+{"mappings":{"doc":{"properties":{"my_date":{"type":"date"}}}}}
+
+POST my_test_date/doc
+{"my_date": "2018-02-20T01:00:00+0900", "title": "aaa"}
+
+POST my_test_date/doc
+{"my_date": "2018-02-20T04:00:00+0900", "title": "bbb"}
+
+POST my_test_date/doc
+{"my_date": "2018-02-20T07:00:00+0900", "title": "ccc"}
+
+POST my_test_date/doc
+{"my_date": "2018-02-20T10:00:00+0900", "title": "ddd"}
+
+
+# check data
+GET my_test_date/_search
+{"sort":[{"my_date":{"order":"desc"}}]}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 4,
+    "max_score": null,
+    "hits": [
+      {
+        "_index": "my_test_date",
+        "_type": "doc",
+        "_id": "AWGz74gviiBFsY2h-ZIo",
+        "_score": null,
+        "_source": {
+          "my_date": "2018-02-20T10:00:00+0900",
+          "title": "ddd"
+        },
+        "sort": [
+          1519088400000
+        ]
+      },
+      {
+        "_index": "my_test_date",
+        "_type": "doc",
+        "_id": "AWGz74VoiiBFsY2h-ZIn",
+        "_score": null,
+        "_source": {
+          "my_date": "2018-02-20T07:00:00+0900",
+          "title": "ccc"
+        },
+        "sort": [
+          1519077600000
+        ]
+      },
+      {
+        "_index": "my_test_date",
+        "_type": "doc",
+        "_id": "AWGz74KkiiBFsY2h-ZGT",
+        "_score": null,
+        "_source": {
+          "my_date": "2018-02-20T04:00:00+0900",
+          "title": "bbb"
+        },
+        "sort": [
+          1519066800000
+        ]
+      },
+      {
+        "_index": "my_test_date",
+        "_type": "doc",
+        "_id": "AWGz735riiBFsY2h-ZGS",
+        "_score": null,
+        "_source": {
+          "my_date": "2018-02-20T01:00:00+0900",
+          "title": "aaa"
+        },
+        "sort": [
+          1519056000000
+        ]
+      }
+    ]
+  }
+}
+
+# 2. create index pattern in kibana - Management
+#--------------------------------------
+# kibana - Management - Index Patterns
+# set the index pattern name to "my_test_date"
+
+# 3. create visualization in kibana - Visualize
+#--------------------------------------
+# set the visualization to any type (e.g. tagcloud)
+# save it with the name "my_test_date"
+
+# 4. create dashboard in kibana - Dashboard
+#--------------------------------------
+# add the visualizations we set in 3. 
+# save the dashboard with the name "my_test_date"
+# remember to check 'timeRestore' checkbox
+
+# 5. export dashboard via API
+#--------------------------------------
+# get dashboard by id
+# - run the following query in terminal console
+$curl -XGET "http://localhost:5601/api/saved_objects/dashboard/dashboard:f8a69970-1651-11e8-a531-e33de2f3df40" -H "Content-Type: application/json" -H "kbn-xsrf: true" -uelastic:changeme | jq . > kore1
+
+# check the export result
+# - we can see 'timeFrom' is set to "Tue Feb 20 2018 00:00:00 GMT+0900"
+# - and 'timeTo' is set to "Tue Feb 20 2018 12:00:00 GMT+0900"
+$cat kore1
+{
+  "id": "f8a69970-1651-11e8-a531-e33de2f3df40",
+  "type": "dashboard",
+  "version": 3,
+  "attributes": {
+    "title": "my_test_date",
+    "hits": 0,
+    "description": "",
+    "panelsJSON": "[{\"col\":1,\"id\":\"7a4c84f0-1650-11e8-a531-e33de2f3df40\",\"panelIndex\":1,\"row\":1,\"size_x\":9,\"size_y\":4,\"type\":\"visualization\"}]",
+    "optionsJSON": "{\"darkTheme\":false}",
+    "uiStateJSON": "{}",
+    "version": 1,
+    "timeRestore": true,
+    "timeTo": "Tue Feb 20 2018 12:00:00 GMT+0900",
+    "timeFrom": "Tue Feb 20 2018 00:00:00 GMT+0900",
+    "refreshInterval": {
+      "display": "Off",
+      "pause": false,
+      "value": 0
+    },
+    "kibanaSavedObjectMeta": {
+      "searchSourceJSON": "{\"filter\":[{\"query\":{\"match_all\":{}}}],\"highlightAll\":true,\"version\":true}"
+    }
+  }
+}
+
+
+# 6. change the 'timeFrom' and 'timeTo' based on the search requestment
+#--------------------------------------
+# suppose we change 'timeTo' to "Tue Feb 20 2018 06:00:00 GMT+0900"
+
+# 7. import dashboard via API
+#--------------------------------------
+# update dashboard by id
+# - run the following query in terminal console
+$curl -XPUT http://localhost:5601/api/saved_objects/dashboard/f8a69970-1651-11e8-a531-e33de2f3df40?pretty -H "Content-Type: application/json" -H "kbn-xsrf: true" -uelastic:changeme -i  -d '{ "attributes": { "timeFrom": "Tue Feb 20 2018 00:00:00 GMT+0900", "timeTo": "Tue Feb 20 2018 06:00:00 GMT+0900" } }'
+
+
+# response
+HTTP/1.1 200 OK
+kbn-name: kibana
+kbn-version: 5.6.3
+kbn-xpack-sig: 904ff59ed869b4ba2aa27443bf9ef3e9
+content-type: application/json; charset=utf-8
+cache-control: no-cache
+content-length: 183
+Date: Tue, 20 Feb 2018 15:54:01 GMT
+Connection: keep-alive
+
+{"id":"f8a69970-1651-11e8-a531-e33de2f3df40","type":"dashboard","version":5,"attributes":{"timeFrom":"Tue Feb 20 2018 00:00:00 GMT+0900","timeTo":"Tue Feb 20 2018 06:00:00 GMT+0900"}}
+
+
+# check the import result in kibana - Dashboard
+# - we can see the search range is updated
+
+
