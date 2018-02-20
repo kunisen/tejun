@@ -1,0 +1,443 @@
+#--------------------------------------------------------------------
+# how to use multi_match query and operators
+#--------------------------------------------------------------------
+
+# 0. docs
+#--------------------------------------------------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html#operator-min
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/search-validate.html
+
+
+# 1. put some data
+#--------------------------------------------------------------------
+DELETE my_test
+PUT my_test/doc/1
+{
+  "title": "aaa bbb ccc",
+  "author": "ddd eee"
+}
+
+PUT my_test/doc/2
+{
+  "title": "aaa ccc bbb",
+  "author": "ddd eee"
+}
+
+PUT my_test/doc/3
+{
+  "title": "aaa ccc",
+  "author": "ddd eee"
+}
+
+
+# check result
+GET my_test/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "title": "aaa ccc bbb",
+          "author": "ddd eee"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaa bbb ccc",
+          "author": "ddd eee"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "title": "aaa ccc",
+          "author": "ddd eee"
+        }
+      }
+    ]
+  }
+}
+
+
+# 2. use multi-match query with "phrase" type
+#--------------------------------------------------------------------
+# search request
+GET my_test/_search
+{
+  "query": {
+    "multi_match" : {
+      "query":      "aaa bbb",
+      "type":       "phrase",
+      "fields":     [ "title" ]
+    }
+  }
+}
+
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.5753642,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 0.5753642,
+        "_source": {
+          "title": "aaa bbb ccc",
+          "author": "ddd eee"
+        }
+      }
+    ]
+  }
+}
+
+
+# validate the query
+# we can see its searching a phrase "aaa bbb" in title field
+GET my_test/_validate/query?explain=true
+{
+  "query": {
+    "multi_match" : {
+      "query":      "aaa bbb",
+      "type":       "phrase",
+      "fields":     [ "title" ]
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test",
+      "valid": true,
+      "explanation": """title:"aaa bbb""""
+    }
+  ]
+}
+
+
+# 3. use multi-match query with "best_fields" type (default) and "AND" operator
+#---------------------------------------------------------------------------------
+# search request
+GET my_test/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "aaa bbb",
+      "fields": [ "title" ],
+      "operator": "and"
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 0.5753642,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 0.5753642,
+        "_source": {
+          "title": "aaa ccc bbb",
+          "author": "ddd eee"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 0.5753642,
+        "_source": {
+          "title": "aaa bbb ccc",
+          "author": "ddd eee"
+        }
+      }
+    ]
+  }
+}
+
+# validate query
+# we can see its "aaa" AND "bbb"
+GET my_test/_validate/query?explain=true
+{
+  "query": {
+    "multi_match": {
+      "query": "aaa bbb",
+      "fields": [ "title" ],
+      "operator": "and"
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test",
+      "valid": true,
+      "explanation": "+title:aaa +title:bbb"
+    }
+  ]
+}
+
+# conclusion : AND operator means "All terms must be present", but it doesn't guarantee the presence order.
+# 結論 : AND operator は全ての term が存在しなければならないを表すが、順序は保証しない
+
+
+
+# 4. use multi-match query with "best_fields" type (default) and "OR" operator
+#---------------------------------------------------------------------------------
+# search request
+GET my_test/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "aaa bbb",
+      "fields": [ "title" ],
+      "operator": "or"
+    }
+  }
+}
+
+# response
+{
+  "took": 3,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 0.5753642,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 0.5753642,
+        "_source": {
+          "title": "aaa ccc bbb",
+          "author": "ddd eee"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 0.5753642,
+        "_source": {
+          "title": "aaa bbb ccc",
+          "author": "ddd eee"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 0.2876821,
+        "_source": {
+          "title": "aaa ccc",
+          "author": "ddd eee"
+        }
+      }
+    ]
+  }
+}
+
+
+# validate query
+# we can see its "aaa" or "bbb"
+GET my_test/_validate/query?explain=true
+{
+  "query": {
+    "multi_match": {
+      "query": "aaa bbb",
+      "fields": [ "title" ],
+      "operator": "or"
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test",
+      "valid": true,
+      "explanation": "title:aaa title:bbb"
+    }
+  ]
+}
+
+
+# additional info. 
+# 1. use match query with "AND" operator
+#    we can see the result is the same with one using "multi_match" query
+# 2. use match_phrase query
+#    we can see the result is the same with one using "multi_match" + "phrase" type
+# multi_match query の結果と同じであることは確認できる
+# 結論: 
+# 1. multi_match は multi field で検索可能であるが、match は single field
+# 2. 
+#---------------------------------------------------------------------------------
+# search request 1 : use match query with "AND" operator
+GET my_test/_search
+{
+  "query": {
+    "match": {
+      "title": {
+        "query": "aaa bbb",
+        "operator": "AND"
+      }
+    }
+  }
+}
+
+# response
+{
+  "took": 5,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 0.5753642,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 0.5753642,
+        "_source": {
+          "title": "aaa ccc bbb",
+          "author": "ddd eee"
+        }
+      },
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 0.5753642,
+        "_source": {
+          "title": "aaa bbb ccc",
+          "author": "ddd eee"
+        }
+      }
+    ]
+  }
+}
+
+
+# search request 2 : use match_phrase query
+GET my_test/_search
+{
+  "query": {
+    "match_phrase": {
+      "title": {
+        "query": "aaa bbb"
+      }
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.5753642,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 0.5753642,
+        "_source": {
+          "title": "aaa bbb ccc",
+          "author": "ddd eee"
+        }
+      }
+    ]
+  }
+}
+
+
