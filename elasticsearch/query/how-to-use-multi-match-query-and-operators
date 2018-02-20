@@ -346,8 +346,10 @@ GET my_test/_validate/query?explain=true
 #    we can see the result is the same with one using "multi_match" + "phrase" type
 # multi_match query の結果と同じであることは確認できる
 # 結論: 
-# 1. multi_match は multi field で検索可能であるが、match は single field
-# 2. 
+# 1. multi_match は multi field で検索可能であるが、match は single field。
+#    ただ、operator の使い方は基本的には一緒。
+# 2. multi_match + phrase type は multi field で phrase 検索可能であるが、match_phrase は single field。
+#    single field のみの検索では、multi_match + phrase type は match_phrase の検索結果と一緒
 #---------------------------------------------------------------------------------
 # search request 1 : use match query with "AND" operator
 GET my_test/_search
