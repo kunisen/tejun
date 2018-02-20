@@ -1,0 +1,287 @@
+#--------------------------------------------------------------------
+# how to use ingesting pipeline between logstash and elasticsearch
+# - tested on 
+#   ES, Kibana 6.0.0
+#   Logstash 6.1.3
+#--------------------------------------------------------------------
+
+# 流れ
+#--------------------------------------------------------------------
+# 1. set mappings and settings
+# 2. prepare the ingest pipeline and do the simulation
+# 3. set the pipeline
+# 4. configure the logstash conf file to call the pipeline in elasticsearch output plugin
+# 5. run logstash
+# 6. check the result
+
+
+# 1. set mappings and settings
+#--------------------------------------------------------------------
+# put mapping and settings
+DELETE my_test_logstash
+PUT my_test_logstash
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "@version": {
+          "type": "keyword"
+        },
+        "host": {
+          "type": "keyword"
+        },
+        "mail": {
+          "type": "keyword"
+        },
+        "other": {
+          "type": "boolean"
+        },
+        "test_mail": {
+          "type": "keyword"
+        },
+        "timestamp": {
+          "type": "keyword"
+        },
+        "年齢": {
+          "type": "long"
+        },
+        "性別": {
+          "type": "keyword"
+        },
+        "職業": {
+          "type": "keyword"
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "1"
+    }
+  }
+}
+
+# response
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test_logstash"
+}
+
+# check mapping
+GET my_test_logstash/_mapping
+
+# response
+{
+  "my_test_logstash": {
+    "mappings": {
+      "doc": {
+        "properties": {
+          "@timestamp": {
+            "type": "date"
+          },
+          "@version": {
+            "type": "keyword"
+          },
+          "host": {
+            "type": "keyword"
+          },
+          "mail": {
+            "type": "keyword"
+          },
+          "other": {
+            "type": "boolean"
+          },
+          "test_mail": {
+            "type": "keyword"
+          },
+          "timestamp": {
+            "type": "keyword"
+          },
+          "年齢": {
+            "type": "long"
+          },
+          "性別": {
+            "type": "keyword"
+          },
+          "職業": {
+            "type": "keyword"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
+# 2. prepare the ingest pipeline and do the simulation
+#--------------------------------------------------------------------
+# ingest pipeline simulation
+POST _ingest/pipeline/_simulate
+{
+  "pipeline" : {
+    "processors" : [
+      {
+        "rename" : {
+          "field" : "mail",
+          "target_field" : "テストメール"
+        }
+      }
+    ]
+  },
+  "docs" : [
+    {
+      "_source" : {
+        "mail" : "aa@a"
+      }
+    }
+  ]
+}
+
+# response
+{
+  "docs": [
+    {
+      "doc": {
+        "_index": "_index",
+        "_type": "_type",
+        "_id": "_id",
+        "_source": {
+          "テストメール": "aa@a"
+        },
+        "_ingest": {
+          "timestamp": "2018-02-20T04:53:06.772Z"
+        }
+      }
+    }
+  ]
+}
+
+# 補足 : we can see the field "mail" is converted to "テストメール"
+
+
+# 3. set the pipeline
+#--------------------------------------------------------------------
+# put the pipeline
+DELETE _ingest/pipeline/my_test_pipeline
+PUT _ingest/pipeline/my_test_pipeline
+{
+  "description": "pipeline for 文字化け対策",
+  "processors": [
+    {
+      "rename": {
+        "field": "mail",
+        "target_field": "テストメール"
+      }
+    }
+  ]
+}
+
+# response
+{
+  "acknowledged": true
+}
+
+
+
+# 4. configure the logstash conf file to call the pipeline in elasticsearch output plugin
+#-----------------------------------------------------------------------------------------
+# copy and past the following content and save file as 'logstash-std-input-json.conf'
+# put 'logstash-std-input-json.conf' under <logstash install path>/config directory
+input { stdin { codec => json } }
+
+filter {
+  grok { match => { "message" => "%{GREEDYDATA}"} }
+}
+
+output {
+  elasticsearch {
+    hosts => [ "localhost:9200" ]
+    index => "my_test_logstash"  
+    pipeline => "my_test_pipeline"
+  }
+}
+
+
+
+
+# 5. run logstash
+#--------------------------------------------------------------------
+# copy and paste the following command into terminal console
+cd /path/to/logstash
+echo '{"timestamp": "2018-01-01 01:23:45 +0000 UTC","mail": "aaa@aa","性別": "男性","年齢": 40,"職業": "エンジニア","other": [false,true]}' | ./bin/logstash -f config/logstash-std-input-json.conf
+
+
+# response from console
+senmac:logstash-6.1.3 kuniyasu$echo '{"timestamp": "2018-01-01 01:23:45 +0000 UTC","mail": "aaa@aa","性別": "男性","年齢": 40,"職業": "エンジニア","other": [false,true]}' | ./bin/logstash -f config/logstash-std-input-json.conf
+Sending Logstash's logs to /Users/kuniyasu/Work/installer/logstash/logstash-6.1.3/logs which is now configured via log4j2.properties
+[2018-02-20T14:00:42,458][INFO ][logstash.modules.scaffold] Initializing module {:module_name=>"fb_apache", :directory=>"/Users/kuniyasu/Work/installer/logstash/logstash-6.1.3/modules/fb_apache/configuration"}
+[2018-02-20T14:00:42,473][INFO ][logstash.modules.scaffold] Initializing module {:module_name=>"netflow", :directory=>"/Users/kuniyasu/Work/installer/logstash/logstash-6.1.3/modules/netflow/configuration"}
+[2018-02-20T14:00:42,703][WARN ][logstash.config.source.multilocal] Ignoring the 'pipelines.yml' file because modules or command line options are specified
+[2018-02-20T14:00:43,277][INFO ][logstash.runner          ] Starting Logstash {"logstash.version"=>"6.1.3"}
+[2018-02-20T14:00:43,602][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600}
+[2018-02-20T14:00:46,076][INFO ][logstash.outputs.elasticsearch] Elasticsearch pool URLs updated {:changes=>{:removed=>[], :added=>[http://localhost:9200/]}}
+[2018-02-20T14:00:46,086][INFO ][logstash.outputs.elasticsearch] Running health check to see if an Elasticsearch connection is working {:healthcheck_url=>http://localhost:9200/, :path=>"/"}
+[2018-02-20T14:00:46,275][WARN ][logstash.outputs.elasticsearch] Restored connection to ES instance {:url=>"http://localhost:9200/"}
+[2018-02-20T14:00:46,365][INFO ][logstash.outputs.elasticsearch] ES Output version determined {:es_version=>nil}
+[2018-02-20T14:00:46,368][WARN ][logstash.outputs.elasticsearch] Detected a 6.x and above cluster: the `type` event field won't be used to determine the document _type {:es_version=>6}
+[2018-02-20T14:00:46,382][INFO ][logstash.outputs.elasticsearch] Using mapping template from {:path=>nil}
+[2018-02-20T14:00:46,399][INFO ][logstash.outputs.elasticsearch] Attempting to install template {:manage_template=>{"template"=>"logstash-*", "version"=>60001, "settings"=>{"index.refresh_interval"=>"5s"}, "mappings"=>{"_default_"=>{"dynamic_templates"=>[{"message_field"=>{"path_match"=>"message", "match_mapping_type"=>"string", "mapping"=>{"type"=>"text", "norms"=>false}}}, {"string_fields"=>{"match"=>"*", "match_mapping_type"=>"string", "mapping"=>{"type"=>"text", "norms"=>false, "fields"=>{"keyword"=>{"type"=>"keyword", "ignore_above"=>256}}}}}], "properties"=>{"@timestamp"=>{"type"=>"date"}, "@version"=>{"type"=>"keyword"}, "geoip"=>{"dynamic"=>true, "properties"=>{"ip"=>{"type"=>"ip"}, "location"=>{"type"=>"geo_point"}, "latitude"=>{"type"=>"half_float"}, "longitude"=>{"type"=>"half_float"}}}}}}}}
+[2018-02-20T14:00:46,450][INFO ][logstash.outputs.elasticsearch] New Elasticsearch output {:class=>"LogStash::Outputs::ElasticSearch", :hosts=>["//localhost:9200"]}
+[2018-02-20T14:00:46,639][INFO ][logstash.pipeline        ] Starting pipeline {:pipeline_id=>"main", "pipeline.workers"=>8, "pipeline.batch.size"=>125, "pipeline.batch.delay"=>5, "pipeline.max_inflight"=>1000, :thread=>"#<Thread:0xcf68b20 run>"}
+[2018-02-20T14:00:46,697][INFO ][logstash.inputs.stdin    ] Automatically switching from json to json_lines codec {:plugin=>"stdin"}
+[2018-02-20T14:00:46,728][INFO ][logstash.pipeline        ] Pipeline started {"pipeline.id"=>"main"}
+[2018-02-20T14:00:46,833][INFO ][logstash.agent           ] Pipelines running {:count=>1, :pipelines=>["main"]}
+[2018-02-20T14:00:47,520][INFO ][logstash.pipeline        ] Pipeline terminated {"pipeline.id"=>"main"}
+
+
+# 6. check the result from Kibana - Dev tools
+#--------------------------------------------------------------------
+# request
+GET my_test_logstash/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_logstash",
+        "_type": "doc",
+        "_id": "OziVsWEB6g5gItZl6B90",
+        "_score": 1,
+        "_source": {
+          "年齢": 40,
+          "other": [
+            false,
+            true
+          ],
+          "@timestamp": "2018-02-20T05:00:46.865Z",
+          "性別": "男性",
+          "テストメール": "aaa@aa",
+          "host": "senmac",
+          "@version": "1",
+          "職業": "エンジニア",
+          "timestamp": "2018-01-01 01:23:45 +0000 UTC"
+        }
+      }
+    ]
+  }
+}
+
+
+# 結論 : we can see "mail" field is converted to "テストメール" via ingest pipeline.
