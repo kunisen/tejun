@@ -1,0 +1,302 @@
+#--------------------------------------
+# how to use highlight
+# tested on ES 6.0.0
+#--------------------------------------
+
+# docs
+#--------------------------------------
+# https://www.elastic.co/guide/en/elasticsearch//reference/current/search-request-highlighting.html
+
+# put mappings and settings
+#--------------------------------------
+DELETE my_test_highlight
+PUT my_test_highlight
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "body": {
+          "type": "text",
+          "analyzer": "kuromoji"
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "0"
+    }
+  }
+}
+
+# response
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test_highlight"
+}
+
+
+# put some data
+#--------------------------------------
+POST my_test_highlight/doc
+{
+   "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+  "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 東京 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 東京 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 東京 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 東京 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+}
+
+# response
+{
+  "_index": "my_test_highlight",
+  "_type": "doc",
+  "_id": "Bd9ds2EB2mxOLBXdbD0-",
+  "_version": 1,
+  "result": "created",
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "_seq_no": 0,
+  "_primary_term": 1
+}
+
+
+# search all
+#--------------------------------------
+GET my_test_highlight/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_highlight",
+        "_type": "doc",
+        "_id": "Bd9ds2EB2mxOLBXdbD0-",
+        "_score": 1,
+        "_source": {
+          "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 東京 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 東京 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 東京 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 東京 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+        }
+      }
+    ]
+  }
+}
+
+# search highlight
+#--------------------------------------
+GET my_test_highlight/_search
+{
+    "query" : {
+        "match": { "body": "東京" }
+    },
+    "highlight" : {
+        "fields" : {
+            "body" : {}
+        }
+    }
+}
+
+# response
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.52950734,
+    "hits": [
+      {
+        "_index": "my_test_highlight",
+        "_type": "doc",
+        "_id": "Bd9ds2EB2mxOLBXdbD0-",
+        "_score": 0.52950734,
+        "_source": {
+          "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 東京 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 東京 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 東京 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 東京 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+        },
+        "highlight": {
+          "body": [
+            "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB <em>東京</em>",
+            "BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC <em>東京</em>",
+            "CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD <em>東京</em>",
+            "DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE <em>東京</em>",
+            "EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF <em>東京</em>"
+          ]
+        }
+      }
+    ]
+  }
+}
+
+# additional
+# - highlight 指定したフィールドに合致する単語がない場合
+# - when highlight field term doesn't exist
+#--------------------------------------
+GET my_test_highlight/_search
+{
+    "query" : {
+        "match": { "body": "東京" }
+    },
+    "highlight" : {
+        "fields" : {
+            "title" : {}
+        }
+    }
+}
+
+# [result] no highlight shows up
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.52950734,
+    "hits": [
+      {
+        "_index": "my_test_highlight",
+        "_type": "doc",
+        "_id": "Bd9ds2EB2mxOLBXdbD0-",
+        "_score": 0.52950734,
+        "_source": {
+          "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 東京 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 東京 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 東京 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 東京 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+        }
+      }
+    ]
+  }
+}
+
+
+# additional
+# - 先頭 ○ byte を Highlight タグ無しで返却
+# - return initial x byte with no tag
+#--------------------------------------
+# no_match_size
+# - The amount of text you want to return from the beginning of the field if there are no matching fragments to highlight. Defaults to 0 (nothing is returned).
+
+# use 'no_match_size' parameter and set it to 10
+GET my_test_highlight/_search
+{
+  "query": {
+    "match": {
+      "body": "東京"
+    }
+  },
+  "highlight": {
+    "fields": {
+      "title": {
+        "no_match_size": 10
+      }
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.52950734,
+    "hits": [
+      {
+        "_index": "my_test_highlight",
+        "_type": "doc",
+        "_id": "Bd9ds2EB2mxOLBXdbD0-",
+        "_score": 0.52950734,
+        "_source": {
+          "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 東京 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 東京 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 東京 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 東京 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+        },
+        "highlight": {
+          "title": [
+            "highlight search"
+          ]
+        }
+      }
+    ]
+  }
+}
+
+
+# use 'no_match_size' parameter and set it to 100
+GET my_test_highlight/_search
+{
+  "query": {
+    "match": {
+      "body": "東京"
+    }
+  },
+  "highlight": {
+    "fields": {
+      "title": {
+        "no_match_size": 100
+      }
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.52950734,
+    "hits": [
+      {
+        "_index": "my_test_highlight",
+        "_type": "doc",
+        "_id": "Bd9ds2EB2mxOLBXdbD0-",
+        "_score": 0.52950734,
+        "_source": {
+          "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 東京 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 東京 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 東京 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 東京 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+        },
+        "highlight": {
+          "title": [
+            "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy"
+          ]
+        }
+      }
+    ]
+  }
+}
+
