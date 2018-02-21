@@ -1,0 +1,83 @@
+#--------------------------------------------
+# how-filter-shows-its-pulldown
+#--------------------------------------------
+# API
+kibana/src/core_plugins/kibana/server/routes/api/suggestions/index.js
+1:import { registerValueSuggestions } from './register_value_suggestions';
+4:  registerValueSuggestions(server);
+
+kibana/src/core_plugins/kibana/server/routes/api/suggestions/register_value_suggestions.js
+3:export function registerValueSuggestions(server) {
+
+
+
+# query
+GET my_test/_search
+{
+  "size": 0,
+  "timeout": "1s",
+  "terminate_after": 100000,
+  "aggregations": {
+    "suggestions": {
+      "terms": {
+        "field": "title.keyword",
+        "size": 10,
+        "shard_size": 10,
+        "min_doc_count": 1,
+        "shard_min_doc_count": 0,
+        "show_term_doc_count_error": false,
+        "execution_hint": "map",
+        "order": [
+          {
+            "_count": "desc"
+          },
+          {
+            "_key": "asc"
+          }
+        ],
+        "include": ".*"
+      }
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 16,
+    "max_score": 0,
+    "hits": []
+  },
+  "aggregations": {
+    "suggestions": {
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": [
+        {
+          "key": "ddd",
+          "doc_count": 11
+        },
+        {
+          "key": "aaa",
+          "doc_count": 2
+        },
+        {
+          "key": "bbb",
+          "doc_count": 2
+        },
+        {
+          "key": "ccc",
+          "doc_count": 1
+        }
+      ]
+    }
+  }
+}
