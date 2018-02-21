@@ -1,0 +1,436 @@
+#----------------------------------------------------------
+# how to reindex with the same doc id
+# tested in ES/Kibana 6.0.0
+#----------------------------------------------------------
+
+# docs
+#----------------------------------------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html
+
+# 流れ
+# 1. put some data
+# 2. prepare dest index settings and mapping
+# 3. perform reindex
+# 4. search the dest index after reindex
+# 5. delete the original index
+# 6. prepare the original index mappings and settings
+# 7. reindex from dest to original index
+# 8. search the original index
+# 9. delete the dest index
+#----------------------------------------------------------
+
+# 1. put some data
+#----------------------------------------------------------
+# put mappings
+DELETE  my_test_reindex
+PUT my_test_reindex
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# put some data with random id
+POST my_test_reindex/doc/
+{"title":"aaa"}
+
+# response
+{
+  "_index": "my_test_reindex",
+  "_type": "doc",
+  "_id": "9Eg4tmEBOTaIw17k4il7",
+  "_version": 1,
+  "result": "created",
+  "_shards": {
+    "total": 2,
+    "successful": 1,
+    "failed": 0
+  },
+  "_seq_no": 0,
+  "_primary_term": 1
+}
+
+
+# put some data with our own id
+PUT my_test_reindex/doc/1
+{"title":"aaa"}
+
+
+# response
+{
+  "_index": "my_test_reindex",
+  "_type": "doc",
+  "_id": "1",
+  "_version": 1,
+  "result": "created",
+  "_shards": {
+    "total": 2,
+    "successful": 1,
+    "failed": 0
+  },
+  "_seq_no": 0,
+  "_primary_term": 1
+}
+
+
+# check the search result
+GET my_test_reindex/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_reindex",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      },
+      {
+        "_index": "my_test_reindex",
+        "_type": "doc",
+        "_id": "9Eg4tmEBOTaIw17k4il7",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+
+# 2. prepare dest index settings and mapping
+#----------------------------------------------------------
+DELETE my_test_reindex_dest
+PUT my_test_reindex_dest
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "number_of_shards": 5,
+    "number_of_replicas": 1
+  }
+}
+
+
+# 3. perform reindex
+#----------------------------------------------------------
+POST _reindex
+{
+  "source": {
+    "index": "my_test_reindex"
+  },
+  "dest": {
+    "index": "my_test_reindex_dest"
+  }
+}
+
+# response
+{
+  "took": 20,
+  "timed_out": false,
+  "total": 2,
+  "updated": 0,
+  "created": 2,
+  "deleted": 0,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1,
+  "throttled_until_millis": 0,
+  "failures": []
+}
+
+
+# 4. search the dest index after reindex
+# - we can see no _id changes during reindexing
+# - _id は変更しないことを確認
+#----------------------------------------------------------
+GET my_test_reindex_dest/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_reindex_dest",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      },
+      {
+        "_index": "my_test_reindex_dest",
+        "_type": "doc",
+        "_id": "9Eg4tmEBOTaIw17k4il7",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+# additional - change id during reindex process
+# - just for a temp purpose, so we use my_test_reindex_dest_tmp
+# - _id を変更することもできます。
+#----------------------------------------------------------
+POST _reindex
+{
+  "source": {
+    "index": "my_test_reindex"
+  },
+  "dest": {
+    "index": "my_test_reindex_dest_tmp"
+  },
+  "script": {
+    "source": """
+    ctx._id = 'aaa' + ctx._id;
+    """
+  }
+}
+
+
+# response
+{
+  "took": 28,
+  "timed_out": false,
+  "total": 2,
+  "updated": 0,
+  "created": 2,
+  "deleted": 0,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1,
+  "throttled_until_millis": 0,
+  "failures": []
+}
+
+
+# search 
+GET my_test_reindex_dest_tmp/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_reindex_dest_tmp",
+        "_type": "doc",
+        "_id": "aaa1",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      },
+      {
+        "_index": "my_test_reindex_dest_tmp",
+        "_type": "doc",
+        "_id": "aaa9Eg4tmEBOTaIw17k4il7",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+
+# 5. delete the original index
+#----------------------------------------------------------
+DELETE  my_test_reindex
+
+# response
+{
+  "acknowledged": true
+}
+
+
+# 6. prepare the original index mappings and settings
+#----------------------------------------------------------
+PUT my_test_reindex
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  },
+  "settings": {
+    "number_of_shards": 5, 
+    "number_of_replicas": 1
+  }
+}
+
+
+# 7. reindex from dest to original index
+#----------------------------------------------------------
+POST _reindex
+{
+  "source": {
+    "index": "my_test_reindex_dest"
+  },
+  "dest": {
+    "index": "my_test_reindex"
+  }
+}
+
+# response
+{
+  "took": 10,
+  "timed_out": false,
+  "total": 2,
+  "updated": 0,
+  "created": 2,
+  "deleted": 0,
+  "batches": 1,
+  "version_conflicts": 0,
+  "noops": 0,
+  "retries": {
+    "bulk": 0,
+    "search": 0
+  },
+  "throttled_millis": 0,
+  "requests_per_second": -1,
+  "throttled_until_millis": 0,
+  "failures": []
+}
+
+
+# 8. search the original index
+# - we can see no changes happen in _id
+#----------------------------------------------------------
+GET my_test_reindex/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_reindex",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      },
+      {
+        "_index": "my_test_reindex",
+        "_type": "doc",
+        "_id": "9Eg4tmEBOTaIw17k4il7",
+        "_score": 1,
+        "_source": {
+          "title": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+# 9. delete the dest index
+#----------------------------------------------------------
+DELETE  my_test_reindex_dest
+
+# response
+{
+  "acknowledged": true
+}
+
