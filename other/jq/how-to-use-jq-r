@@ -1,0 +1,1 @@
+jq -r '.nodes[] | "\(.name)\t \(.os.timestamp / 1000 | strftime("%H:%M:%S\t%Y-%m-%d"))"' nodes_stats.json
