@@ -1,0 +1,185 @@
+#-------------------------------------------------------------------------
+# check the behavior of delete snapshot repository
+#-------------------------------------------------------------------------
+
+# docs
+#-------------------------------------------------------------------------
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/modules-snapshots.html
+# https://qiita.com/knaka/items/fb1087f7a52098f77981
+
+
+# initial status
+#-------------------------------------------------------------------------
+DELETE _snapshot/*
+
+# check snapshot status
+GET _snapshot/
+
+# response
+{}
+
+
+# put repository
+#-------------------------------------------------------------------------
+PUT /_snapshot/my_backup
+{
+  "type": "fs",
+  "settings": {
+    "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup"
+  }
+}
+
+# response
+{
+  "acknowledged": true
+}
+
+# console output
+senmac:elasticsearch-6.0.0 kuniyasu$fswatch -0 ./ | xargs -0 -n 1 echo d:
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/_state/global-139.st.tmp
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/_state/global-139.st
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/_state/global-138.st
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/tests-IkxEzI8eQcSb0qatEY8IHQ/master.dat-temp
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/tests-IkxEzI8eQcSb0qatEY8IHQ/data-KYPM2tTvTlGE5nLSLNwbUA.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/tests-IkxEzI8eQcSb0qatEY8IHQ/master.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/tests-IkxEzI8eQcSb0qatEY8IHQ
+
+
+
+# put snapshot
+#-------------------------------------------------------------------------
+# put index data
+DELETE my_test
+PUT my_test/doc/1
+{"title": "aaa"}
+
+# check index
+GET _cat/indices?v&index=my_test
+
+# response
+health status index   uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   my_test xFEJFGbWSduzbYOhS09V6g   5   1          1            0      4.4kb          4.4kb
+
+
+# take a snapshot
+PUT /_snapshot/my_backup/my_snapshot_1
+{
+  "indices": "my_test",
+  "ignore_unavailable": true,
+  "include_global_state": false
+}
+
+# response
+{
+  "accepted": true
+}
+
+# console output
+senmac:elasticsearch-6.0.0 kuniyasu$fswatch -0 ./ | xargs -0 -n 1 echo d:
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/meta-pcYAs8h2QHyEiAlBzzND_g.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/meta-pcYAs8h2QHyEiAlBzzND_g.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/1
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/2
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/indices/xFEJFGbWSduzbYOhS09V6g/3/translog/translog-1.ckp
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/indices/xFEJFGbWSduzbYOhS09V6g/3/translog/translog-2.tlog
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/0/__0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/1/__0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/2/__0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/indices/xFEJFGbWSduzbYOhS09V6g/3/translog/translog.ckp
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/1/snap-pcYAs8h2QHyEiAlBzzND_g.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/0/snap-pcYAs8h2QHyEiAlBzzND_g.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/2/snap-pcYAs8h2QHyEiAlBzzND_g.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/1/pending-index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/1/index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/2/pending-index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/2/index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/indices/xFEJFGbWSduzbYOhS09V6g/3/index/pending_segments_2
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/indices/xFEJFGbWSduzbYOhS09V6g/3/index/segments_2
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/0/pending-index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/0/index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/4
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/indices/xFEJFGbWSduzbYOhS09V6g/3/index/segments_1
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/4/__0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/3
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/4/snap-pcYAs8h2QHyEiAlBzzND_g.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/4/pending-index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/4/index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/3/__0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/3/__1
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/3/__2
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/3/__3
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/3/snap-pcYAs8h2QHyEiAlBzzND_g.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/3/pending-index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/indices/hdfXg8D5SAmSs4kExSBejA/3/index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/snap-pcYAs8h2QHyEiAlBzzND_g.dat
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/pending-index-0-a8vrsOyAQlCW2xCkKzpr2w
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/index-0
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/pending-index.latest-kFu38oytTzeQ4Z8doJCRHg
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup/index.latest
+
+
+
+# delete repository
+#-------------------------------------------------------------------------
+# check status before delete
+GET _snapshot/
+
+# response
+{
+  "my_backup": {
+    "type": "fs",
+    "settings": {
+      "location": "/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/backups/my_backup"
+    }
+  }
+}
+
+# check the directory in console
+senmac:elasticsearch-6.0.0 kuniyasu$pwd
+/Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0
+senmac:elasticsearch-6.0.0 kuniyasu$ll backups/my_backup/
+total 32
+-rw-r--r--  1 kuniyasu  staff  175  2 21 14:16 index-0
+-rw-r--r--  1 kuniyasu  staff    8  2 21 14:16 index.latest
+drwxr-xr-x  3 kuniyasu  staff  102  2 21 14:16 indices
+-rw-r--r--  1 kuniyasu  staff   90  2 21 14:16 meta-pcYAs8h2QHyEiAlBzzND_g.dat
+-rw-r--r--  1 kuniyasu  staff  225  2 21 14:16 snap-pcYAs8h2QHyEiAlBzzND_g.dat
+
+
+# delete repository
+DELETE /_snapshot/my_backup
+
+# response
+{
+  "acknowledged": true
+}
+
+
+# check after delete
+#-------------------------------------------------------------------------
+GET _snapshot/
+
+# response
+{}
+
+
+# console output
+senmac:elasticsearch-6.0.0 kuniyasu$fswatch -0 ./ | xargs -0 -n 1 echo d:
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/_state/global-141.st.tmp
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/_state/global-141.st
+d: /Users/kuniyasu/Work/installer/elastic/elasticsearch-6.0.0/data/nodes/0/_state/global-140.st
+
+
+# check directory
+senmac:elasticsearch-6.0.0 kuniyasu$ll backups/my_backup/
+total 32
+-rw-r--r--  1 kuniyasu  staff  175  2 21 14:16 index-0
+-rw-r--r--  1 kuniyasu  staff    8  2 21 14:16 index.latest
+drwxr-xr-x  3 kuniyasu  staff  102  2 21 14:16 indices
+-rw-r--r--  1 kuniyasu  staff   90  2 21 14:16 meta-pcYAs8h2QHyEiAlBzzND_g.dat
+-rw-r--r--  1 kuniyasu  staff  225  2 21 14:16 snap-pcYAs8h2QHyEiAlBzzND_g.dat
+
+
