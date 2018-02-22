@@ -306,7 +306,7 @@ GET my_test_analyzer/_validate/query?explain=true
 }
 
 # note : 
-# my_analyzer_kuromoji3 により、"東京都" が "東京" と "都" に分割されることを確認出来る
+# my_analyzer_kuromoji2 により、"東京都" が "東京" と "都" に分割されることを確認出来る
 
 
 
