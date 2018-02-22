@@ -1,0 +1,85 @@
+#------------------------------------------------------------------
+# How to use logstash input plugin elasticsearch
+# tested on 
+# - ES / Kibana 6.0.0
+# - Logstash    6.1.3
+#------------------------------------------------------------------
+
+# 1. put some data
+#------------------------------------------------------------------
+DELETE my_test
+PUT my_test/doc/1
+{"title": "aaa"}
+
+# check the query
+GET my_test/_search
+{"query":{"match":{"title":"aaa"}}}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.2876821,
+    "hits": [
+      {
+        "_index": "my_test",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 0.2876821,
+        "_source": {
+          "title": "aaa"
+        }
+      }
+    ]
+  }
+}
+
+
+# 2. create the logstash config
+#------------------------------------------------------------------
+# let's name is as 'logstash-es-input-std-output.conf'
+# copy and paste the following contents
+input {
+  elasticsearch {
+    hosts => "localhost"
+    query => '{"query":{"match":{"title":"aaa"}}}'
+    index => 'my_test'
+  }
+}
+
+filter { }
+
+output {
+  stdout { codec => rubydebug }
+}
+
+
+# 3. run logstash and get the result
+#------------------------------------------------------------------
+senmac:logstash-6.1.3 kuniyasu$./bin/logstash -f config/logstash-es-input-std-output.conf 
+Sending Logstash's logs to /Users/kuniyasu/Work/installer/logstash/logstash-6.1.3/logs which is now configured via log4j2.properties
+[2018-02-22T11:36:37,078][INFO ][logstash.modules.scaffold] Initializing module {:module_name=>"fb_apache", :directory=>"/Users/kuniyasu/Work/installer/logstash/logstash-6.1.3/modules/fb_apache/configuration"}
+[2018-02-22T11:36:37,091][INFO ][logstash.modules.scaffold] Initializing module {:module_name=>"netflow", :directory=>"/Users/kuniyasu/Work/installer/logstash/logstash-6.1.3/modules/netflow/configuration"}
+[2018-02-22T11:36:37,275][WARN ][logstash.config.source.multilocal] Ignoring the 'pipelines.yml' file because modules or command line options are specified
+[2018-02-22T11:36:37,848][INFO ][logstash.runner          ] Starting Logstash {"logstash.version"=>"6.1.3"}
+[2018-02-22T11:36:38,167][INFO ][logstash.agent           ] Successfully started Logstash API endpoint {:port=>9600}
+[2018-02-22T11:36:40,817][INFO ][logstash.pipeline        ] Starting pipeline {:pipeline_id=>"main", "pipeline.workers"=>8, "pipeline.batch.size"=>125, "pipeline.batch.delay"=>5, "pipeline.max_inflight"=>1000, :thread=>"#<Thread:0x7cec918f run>"}
+[2018-02-22T11:36:41,325][INFO ][logstash.pipeline        ] Pipeline started {"pipeline.id"=>"main"}
+[2018-02-22T11:36:41,425][INFO ][logstash.agent           ] Pipelines running {:count=>1, :pipelines=>["main"]}
+{
+      "@version" => "1",
+    "@timestamp" => 2018-02-22T02:36:42.227Z,
+         "title" => "aaa"
+}
+[2018-02-22T11:36:43,149][INFO ][logstash.pipeline        ] Pipeline terminated {"pipeline.id"=>"main"}
+
+
+
