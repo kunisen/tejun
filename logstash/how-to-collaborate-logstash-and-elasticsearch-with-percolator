@@ -1,0 +1,353 @@
+#=========================================================================
+# How to collabborate logstash input plugin elasticsearch with percolator
+# tested on 
+# - ES / Kibana 6.0.0
+# - Logstash    6.1.3
+#=========================================================================
+
+#------------------------------------------------------------------
+# doc
+#------------------------------------------------------------------
+# https://www.elastic.co/blog/elasticsearch-percolator-continues-to-evolve
+
+
+#------------------------------------------------------------------
+# 流れ
+#------------------------------------------------------------------
+# 日本語
+# 1. percolator query を準備
+# 2. logstash 1 台目 : percolator query 検索用のドキュメント データを投入
+# 3. logstash 2 台目 : percolator query を検索
+#
+# English
+# 1. prepare percolator query
+# 2. logstash server 1 : ingest document for searching percolator query
+# 3. logstash server 2 : search percolator
+
+
+
+#------------------------------------------------------------------
+# 1. percolator query を準備
+# 1. prepare percolator query
+#------------------------------------------------------------------
+
+# put mappings
+#------------------------------------------------------------------
+DELETE  my_test_percolator
+PUT my_test_percolator
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "message": {
+          "type": "text"
+        },
+        "query": {
+          "type": "percolator"
+        }
+      }
+    }
+  }
+}
+
+
+# register percolators
+#------------------------------------------------------------------
+# percolator 1
+PUT my_test_percolator/doc/1?refresh
+{
+  "query": {
+    "match": {
+      "message": "pen"
+    }
+  }
+}
+
+# percolator 2
+PUT my_test_percolator/doc/2?refresh
+{
+  "query": {
+    "match": {
+      "message": "abc"
+    }
+  }
+}
+
+# check percolator behavior
+#------------------------------------------------------------------
+# percolator 1
+GET my_test_percolator/_search
+{
+  "query": {
+    "percolate": {
+      "field": "query",
+      "document": {
+        "message": "this is a pen"
+      }
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.2876821,
+    "hits": [
+      {
+        "_index": "my_test_percolator",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 0.2876821,
+        "_source": {
+          "query": {
+            "match": {
+              "message": "pen"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+
+# percolator 2
+GET my_test_percolator/_search
+{"query":{"percolate":{"field":"query","document":{"message":"abc"}}}}
+
+
+GET my_test_document/_search
+
+# response
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.2876821,
+    "hits": [
+      {
+        "_index": "my_test_percolator",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 0.2876821,
+        "_source": {
+          "query": {
+            "match": {
+              "message": "abc"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
+
+GET kore/_search
+{"query": {"match_all": {}}}
+
+
+
+#------------------------------------------------------------------
+# 2. logstash 1 台目 : percolator query 検索用のドキュメント データを投入
+# 2. logstash server 1 : ingest document for searching percolator query
+# - we use another index "my_test_document" here
+#------------------------------------------------------------------
+DELETE my_test_document
+
+# create logstash config
+#------------------------------------------------------------------
+# let's name it as 'logstash-std-input-json-es-output.conf'
+# copy and paste the following contents
+
+input { 
+    stdin { codec => json } 
+}
+
+filter {
+    grok { 
+        match => { "message" => "%{GREEDYDATA}"} 
+    }
+}
+
+output {
+    stdout {
+        codec => rubydebug
+    }
+    
+    elasticsearch {
+        hosts => [ "localhost:9200" ]
+        index => "my_test_document"  
+        document_type => "doc"
+    }
+}
+
+
+# ingest data via logstash
+# - ingest following data
+#   "message":"aaaaaaaa"
+#   "message":"abcdefg"
+#   "message":"abc"
+#------------------------------------------------------------------
+$echo '[{"message":"aaaaaaaa"},{"message":"abcdefg"},{"message":"abc"}]' | ./bin/logstash -f config/logstash-std-input-json-es-output.conf 
+
+
+# terminal console output
+senmac:logstash-6.1.3 kuniyasu$echo '[{"message":"aaaaaaaa"},{"message":"abcdefg"},{"message":"abc"}]' | ./bin/logstash -f config/logstash-std-input-json-es-output.conf 
+(... 省略 ...)
+[2018-02-23T23:50:00,790][INFO ][logstash.pipeline        ] Pipeline started {"pipeline.id"=>"main"}
+[2018-02-23T23:50:00,952][INFO ][logstash.agent           ] Pipelines running {:count=>1, :pipelines=>["main"]}
+{
+      "@version" => "1",
+       "message" => "aaaaaaaa",
+          "host" => "senmac",
+    "@timestamp" => 2018-02-23T14:50:00.981Z
+}
+{
+      "@version" => "1",
+       "message" => "abc",
+          "host" => "senmac",
+    "@timestamp" => 2018-02-23T14:50:00.982Z
+}
+{
+      "@version" => "1",
+       "message" => "abcdefg",
+          "host" => "senmac",
+    "@timestamp" => 2018-02-23T14:50:00.982Z
+}
+[2018-02-23T23:50:01,806][INFO ][logstash.pipeline        ] Pipeline terminated {"pipeline.id"=>"main"}
+
+
+# check ingest result
+GET my_test_document/_search
+
+GET my_test_percolator/_search
+{"query":{"percolate":{"field":"query","document":{"message":"this is a pen"}}}}
+
+DELETE my_test
+PUT my_test/doc/1
+{
+  "message": "pen"
+}
+GET my_test/_search
+{"query":{"match":{"message":"pen"}}}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_document",
+        "_type": "doc",
+        "_id": "KnEkw2EBT3moZyRLdMto",
+        "_score": 1,
+        "_source": {
+          "@version": "1",
+          "message": "abc",
+          "host": "senmac",
+          "@timestamp": "2018-02-23T14:50:00.982Z"
+        }
+      },
+      {
+        "_index": "my_test_document",
+        "_type": "doc",
+        "_id": "KXEkw2EBT3moZyRLdMtm",
+        "_score": 1,
+        "_source": {
+          "@version": "1",
+          "message": "aaaaaaaa",
+          "host": "senmac",
+          "@timestamp": "2018-02-23T14:50:00.981Z"
+        }
+      },
+      {
+        "_index": "my_test_document",
+        "_type": "doc",
+        "_id": "K3Ekw2EBT3moZyRLdMt-",
+        "_score": 1,
+        "_source": {
+          "@version": "1",
+          "message": "abcdefg",
+          "host": "senmac",
+          "@timestamp": "2018-02-23T14:50:00.982Z"
+        }
+      }
+    ]
+  }
+}
+
+
+#------------------------------------------------------------------
+# 3. logstash 2 台目 : percolator query を検索
+# 3. logstash server 2 : search percolator (in index : my_test_percolator) 
+#   via document (in index : my_test_document)
+#   from logstash
+#------------------------------------------------------------------
+
+# create logstash config
+#------------------------------------------------------------------
+# let's name it as 'logstash-es-input-std-output.conf'
+# copy and paste the following contents
+
+input {
+  elasticsearch {
+    hosts => "localhost"
+    query => '{"query":{"percolate":{"field":"query","document":{"message":"abc"}}}}'
+    index => 'my_test_percolator'
+  }
+}
+
+filter { 
+}
+
+output {
+  stdout { codec => rubydebug }
+}
+
+
+
+
+# run logstash to get percolator search result (terminal console)
+#------------------------------------------------------------------
+$./bin/logstash -f config/logstash-es-input-std-output.conf
+(... 省略 ...)
+[2018-02-24T01:47:36,928][INFO ][logstash.pipeline        ] Pipeline started {"pipeline.id"=>"main"}
+[2018-02-24T01:47:37,059][INFO ][logstash.agent           ] Pipelines running {:count=>1, :pipelines=>["main"]}
+{
+         "query" => {
+        "match" => {
+            "message" => "abc"
+        }
+    },
+      "@version" => "1",
+    "@timestamp" => 2018-02-23T16:47:37.993Z
+}
+[2018-02-24T01:47:38,816][INFO ][logstash.pipeline        ] Pipeline terminated {"pipeline.id"=>"main"}
+
+
+
