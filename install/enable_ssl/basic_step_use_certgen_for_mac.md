@@ -110,7 +110,8 @@ cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/node1/* config/certs
 cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/node2/* config2/certs
 ```
 
-# edit config/elasticsearch.yml (add the follow lines to the end of the yml file)
+edit config/elasticsearch.yml (add the follow lines to the end of the yml file)
+
 ```
 node.name: node1
 network.host: node1.local
@@ -123,7 +124,8 @@ discovery.zen.ping.unicast.hosts: [ 'node1.local', 'node2.local']
 node.max_local_storage_nodes: 2
 ```
 
-# edit config2/elasticsearch.yml (add the follow lines to the end of the yml file)
+edit config2/elasticsearch.yml (add the follow lines to the end of the yml file)
+
 ```
 node.name: node2
 network.host: node2.local
@@ -136,8 +138,8 @@ discovery.zen.ping.unicast.hosts: [ 'node1.local', 'node2.local']
 node.max_local_storage_nodes: 2
 ```
 
-# startup the first node
-#-------------------------
+startup the first node
+
 $ES_PATH_CONF=config ./bin/elasticsearch
 (...)
 [2018-01-25T15:26:29,434][INFO ][o.e.n.Node               ] [node1] started
