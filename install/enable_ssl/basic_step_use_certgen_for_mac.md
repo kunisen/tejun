@@ -1,15 +1,12 @@
-#============================================================
-# Basic steps to enable SSL in elasticsearch 6.1.2 by using certgen
-#============================================================
+## Basic steps to enable SSL in elasticsearch 6.1.2 by using certgen
 
-#-------------
-# documents
-#-------------
+
+### documents
 https://www.elastic.co/blog/tls-elastic-stack-elasticsearch-kibana-logstash-filebeat
 
-#-----------------------------------------------------------------
-# step 1 - download and install elasticsearch and kibana
-#-----------------------------------------------------------------
+
+### step 1 - download and install elasticsearch and kibana
+
 https://www.elastic.co/jp/downloads/elasticsearch
 https://www.elastic.co/jp/downloads/kibana
 
@@ -27,12 +24,10 @@ $cd /Users/kuniyasu/tmp/cert_blog/kibana-6.1.2-darwin-x86_64-ssl
 $./bin/kibana-plugin install x-pack
 
 
-#-----------------------------------------------------------------
+
 # step 3 - Create CA
-#-----------------------------------------------------------------
 # create CA
-#-------------
-$cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl
+`$cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl`
 
 `$bin/x-pack/certgen --dn 'CN=MyExample Global CA' --pass --days 3650 --keysize 4096 --out ~/tmp/cert_blog/MyExample_Global_CA.zip`
 This tool assists you in the generation of X.509 certificates and certificate
