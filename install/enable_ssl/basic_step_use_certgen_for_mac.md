@@ -12,7 +12,8 @@ https://www.elastic.co/blog/tls-elastic-stack-elasticsearch-kibana-logstash-file
 
 
 ### step 2 - install x-pack plugin
-# put elasticsearch and kibana into ~/tmp/cert_blog and install x-pack
+
+put elasticsearch and kibana into ~/tmp/cert_blog and install x-pack
 
 ```
 $mkdir ~/tmp/cert_blog/
@@ -25,8 +26,8 @@ $./bin/kibana-plugin install x-pack
 ```
 
 
-# step 3 - Create CA
-# create CA
+### step 3 - Create CA
+#### create CA
 `$cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl`
 
 `$bin/x-pack/certgen --dn 'CN=MyExample Global CA' --pass --days 3650 --keysize 4096 --out ~/tmp/cert_blog/MyExample_Global_CA.zip`
