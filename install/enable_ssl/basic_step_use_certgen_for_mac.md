@@ -68,10 +68,10 @@ $cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
 bin/x-pack/certgen --days 1095 --cert ~/tmp/cert_blog/ca/ca.crt --key ~/tmp/cert_blog/ca/ca.key --pass --in ~/tmp/cert_blog/certgen_example.yml --out ~/tmp/cert_blog/certs.zip
 ```
 
+Unzip the created file
 
 
-# unzip
-#------------
+```
 $cd ~/tmp/cert_blog
 $unzip certs.zip -d ./certs
 Archive:  certs.zip
@@ -87,7 +87,7 @@ Archive:  certs.zip
    creating: ./certs/logstash/
   inflating: ./certs/logstash/logstash.crt  
   inflating: ./certs/logstash/logstash.key  
-
+```
 
 # modify the 127.0.0.1 line in /etc/hosts to the following line
 #------------------------------------------------------------------------
