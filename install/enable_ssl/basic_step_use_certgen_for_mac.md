@@ -7,14 +7,14 @@ https://www.elastic.co/blog/tls-elastic-stack-elasticsearch-kibana-logstash-file
 
 ### step 1 - download and install elasticsearch and kibana
 
-https://www.elastic.co/jp/downloads/elasticsearch
-https://www.elastic.co/jp/downloads/kibana
+- https://www.elastic.co/jp/downloads/elasticsearch
+- https://www.elastic.co/jp/downloads/kibana
 
-#-----------------------------------------------------------------
-# step 2 - install x-pack plugin
-#-----------------------------------------------------------------
+
+### step 2 - install x-pack plugin
 # put elasticsearch and kibana into ~/tmp/cert_blog and install x-pack
 
+```
 $mkdir ~/tmp/cert_blog/
 
 $cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl
@@ -22,7 +22,7 @@ $./bin/elasticsearch-plugin install x-pack
 
 $cd /Users/kuniyasu/tmp/cert_blog/kibana-6.1.2-darwin-x86_64-ssl
 $./bin/kibana-plugin install x-pack
-
+```
 
 
 # step 3 - Create CA
