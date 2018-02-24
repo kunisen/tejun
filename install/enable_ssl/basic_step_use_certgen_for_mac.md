@@ -95,7 +95,7 @@ Archive:  certs.zip
 
 ### step 5 - Elasticsearch TLS setup
 
-# create and copy certs to config and config2 folder
+#### create and copy certs to config and config2 folder
 
 ```
 cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
@@ -149,7 +149,8 @@ open a new terminal and start the second node
 
 
 
-# set built-in role password
+###### set built-in role password
+
 ```
 $cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl
 $bin/x-pack/setup-passwords auto -u "https://node1.local:9200"
@@ -158,9 +159,9 @@ The passwords will be randomly generated and printed to the console.
 Please confirm that you would like to continue [y/N]y
 ```
 
-save the password
+##### save the password
 
-# check _cat/nodes on node1 (port : 9200)
+##### check _cat/nodes on node1 (port : 9200)
 ```
 curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node1.local:9200/_cat/nodes'
 Enter host password for user 'elastic':
@@ -168,7 +169,7 @@ Enter host password for user 'elastic':
 127.0.0.1 38 99 10 1.77   mdi - node2
 ```
 
-# check _cat/nodes on node2 (port : 9201)
+##### check _cat/nodes on node2 (port : 9201)
 ```
 curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node2.local:9201/_cat/nodes'
 Enter host password for user 'elastic':
@@ -178,7 +179,7 @@ Enter host password for user 'elastic':
 
 ### step 6 - Kibana TLS setup
 
-# create config folder and copy certs
+#### create config folder and copy certs
 ```
 cd ~/tmp/cert_blog/kibana-6.1.2-darwin-x86_64-ssl
 mkdir config/certs
@@ -186,7 +187,7 @@ cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/my-kibana/* config/certs
 ```
 
 
-# edit config/kibana.yml (add the following lines to kibana.yml)
+##### edit config/kibana.yml (add the following lines to kibana.yml)
 ```
 server.name: "my-kibana"
 server.host: "kibana.local"
@@ -199,18 +200,18 @@ elasticsearch.password: "#naKN?N2XreJa?K_5C8G"
 elasticsearch.ssl.certificateAuthorities: [ "config/certs/ca.crt" ]
 ```
 
-# startup kibana
+#### startup kibana
 
 `./bin/kibana`
 
 
 
-# open browser and access kibana
+##### open browser and access kibana
 
 `open https://kibana.local:5601/`
 
-# also change my elastic user password to "changeme"
-# and access again
+##### also change my elastic user password to "changeme"
+##### and access again
 
 ```
 cd /Users/kuniyasu/tmp/cert_blog
