@@ -150,31 +150,23 @@ open a new terminal and start the second node
 
 
 # set built-in role password
-#-----------------------------
+```
 $cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl
 $bin/x-pack/setup-passwords auto -u "https://node1.local:9200"
 Initiating the setup of passwords for reserved users elastic,kibana,logstash_system.
 The passwords will be randomly generated and printed to the console.
 Please confirm that you would like to continue [y/N]y
+```
 
-
-Changed password for user kibana
-PASSWORD kibana = #naKN?N2XreJa?K_5C8G
-
-Changed password for user logstash_system
-PASSWORD logstash_system = t?lmM0euaO4u2QpqdacW
-
-Changed password for user elastic
-PASSWORD elastic = cix&7~_Vi6O4PtA%uYf5
-
+save the password
 
 # check _cat/nodes on node1 (port : 9200)
-#------------------------------------------
+```
 $curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node1.local:9200/_cat/nodes'
 Enter host password for user 'elastic':
 127.0.0.1 38 99 13 1.77   mdi * node1
 127.0.0.1 38 99 10 1.77   mdi - node2
-
+```
 
 # check _cat/nodes on node2 (port : 9201)
 #----------------------------------------
