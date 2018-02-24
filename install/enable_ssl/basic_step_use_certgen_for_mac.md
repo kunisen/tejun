@@ -51,8 +51,6 @@ and follow the SSL configuration instructions in the product guide.
 For client applications, you may only need to copy the CA certificate and
 configure the client to trust this certificate.
 
-
-# unzip 
 ```
 $cd ~/tmp/cert_blog
 $unzip MyExample_Global_CA.zip
