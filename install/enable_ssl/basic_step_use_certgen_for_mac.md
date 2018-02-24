@@ -13,24 +13,28 @@ https://www.elastic.co/blog/tls-elastic-stack-elasticsearch-kibana-logstash-file
 
 ### step 2 - install x-pack plugin
 
-put elasticsearch and kibana into ~/tmp/cert_blog and install x-pack
+put elasticsearch and kibana into `~/tmp/cert_blog` and install x-pack
 
 ```
-$mkdir ~/tmp/cert_blog/
+mkdir ~/tmp/cert_blog/
 
-$cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl
-$./bin/elasticsearch-plugin install x-pack
+cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
+./bin/elasticsearch-plugin install x-pack
 
-$cd /Users/kuniyasu/tmp/cert_blog/kibana-6.1.2-darwin-x86_64-ssl
-$./bin/kibana-plugin install x-pack
+cd ~/tmp/cert_blog/kibana-6.1.2-darwin-x86_64-ssl
+./bin/kibana-plugin install x-pack
 ```
 
 
 ### step 3 - Create CA
 #### create CA
-`$cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl`
 
-`$bin/x-pack/certgen --dn 'CN=MyExample Global CA' --pass --days 3650 --keysize 4096 --out ~/tmp/cert_blog/MyExample_Global_CA.zip`
+```
+cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
+
+./bin/x-pack/certgen --dn 'CN=MyExample Global CA' --pass --days 3650 --keysize 4096 --out ~/tmp/cert_blog/MyExample_Global_CA.zip
+```
+
 This tool assists you in the generation of X.509 certificates and certificate
 signing requests for use with SSL in the Elastic stack. Depending on the command
 line option specified, you may be prompted for the following:
