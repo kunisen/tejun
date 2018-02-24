@@ -35,21 +35,6 @@ cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
 ./bin/x-pack/certgen --dn 'CN=MyExample Global CA' --pass --days 3650 --keysize 4096 --out ~/tmp/cert_blog/MyExample_Global_CA.zip
 ```
 
-This tool assists you in the generation of X.509 certificates and certificate
-signing requests for use with SSL in the Elastic stack. Depending on the command
-line option specified, you may be prompted for the following:
-
-
-This file should be properly secured as it contains the private keys for all
-instances and the certificate authority.
-
-After unzipping the file, there will be a directory for each instance containing
-the certificate and private key. Copy the certificate, key, and CA certificate
-to the configuration directory of the Elastic product that they will be used for
-and follow the SSL configuration instructions in the product guide.
-
-For client applications, you may only need to copy the CA certificate and
-configure the client to trust this certificate.
 
 ```
 $cd ~/tmp/cert_blog
@@ -64,7 +49,6 @@ Archive:  MyExample_Global_CA.zip
 
 ### step 4 - Generate server certificates
 
-#### create instance yml file
 ```
 $echo 'instances:
 >   - name: 'node1'
@@ -78,50 +62,12 @@ $echo 'instances:
 ```
 
 ### create server certificates for each instance
-$cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl
+```
+$cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
 
-$bin/x-pack/certgen --days 1095 --cert ~/tmp/cert_blog/ca/ca.crt --key ~/tmp/cert_blog/ca/ca.key --pass --in ~/tmp/cert_blog/certgen_example.yml --out ~/tmp/cert_blog/certs.zip
-This tool assists you in the generation of X.509 certificates and certificate
-signing requests for use with SSL in the Elastic stack. Depending on the command
-line option specified, you may be prompted for the following:
+bin/x-pack/certgen --days 1095 --cert ~/tmp/cert_blog/ca/ca.crt --key ~/tmp/cert_blog/ca/ca.key --pass --in ~/tmp/cert_blog/certgen_example.yml --out ~/tmp/cert_blog/certs.zip
+```
 
-* The path to the output file
-    * The output file is a zip file containing the signed certificates and
-      private keys for each instance. If a Certificate Authority was generated,
-      the certificate and private key will also be included in the output file.
-* Information about each instance
-    * An instance is any piece of the Elastic Stack that requires a SSL certificate.
-      Depending on your configuration, Elasticsearch, Logstash, Kibana, and Beats
-      may all require a certificate and private key.
-    * The minimum required value for each instance is a name. This can simply be the
-      hostname, which will be used as the Common Name of the certificate. A full
-      distinguished name may also be used.
-    * A filename value may be required for each instance. This is necessary when the
-      name would result in an invalid file or directory name. The name provided here
-      is used as the directory name (within the zip) and the prefix for the key and
-      certificate files. The filename is required if you are prompted and the name
-      is not displayed in the prompt.
-    * IP addresses and DNS names are optional. Multiple values can be specified as a
-      comma separated string. If no IP addresses or DNS names are provided, you may
-      disable hostname verification in your SSL configuration.
-* Certificate Authority private key password
-    * The password may be left empty if desired.
-
-Let's get started...
-
-Enter password for CA private key: 
-Certificates written to /Users/kuniyasu/tmp/cert_blog/certs.zip
-
-This file should be properly secured as it contains the private keys for all
-instances and the certificate authority.
-
-After unzipping the file, there will be a directory for each instance containing
-the certificate and private key. Copy the certificate, key, and CA certificate
-to the configuration directory of the Elastic product that they will be used for
-and follow the SSL configuration instructions in the product guide.
-
-For client applications, you may only need to copy the CA certificate and
-configure the client to trust this certificate.
 
 
 # unzip
