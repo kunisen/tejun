@@ -89,29 +89,29 @@ Archive:  certs.zip
   inflating: ./certs/logstash/logstash.key  
 ```
 
-# modify the 127.0.0.1 line in /etc/hosts to the following line
-#------------------------------------------------------------------------
-127.0.0.1 localhost node1.local node2.local kibana.local logstash.local
+### modify the 127.0.0.1 line in /etc/hosts to the following line
+
+`127.0.0.1 localhost node1.local node2.local kibana.local logstash.local`
 
 
-#-----------------------------------------------------------------
-# step 5 - Elasticsearch TLS setup
-#-----------------------------------------------------------------
+### step 5 - Elasticsearch TLS setup
+
 # create and copy certs to config and config2 folder
-#--------------------------------------------------------
-$cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl
 
-$mkdir config/certs
+```
+cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
 
-$cp -r config config2
+mkdir config/certs
 
-$cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/node1/* config/certs
+cp -r config config2
 
-$cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/node2/* config2/certs
+cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/node1/* config/certs
 
+cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/node2/* config2/certs
+```
 
 # edit config/elasticsearch.yml (add the follow lines to the end of the yml file)
-#----------------------------------------------------------------------------------
+```
 node.name: node1
 network.host: node1.local
 xpack.ssl.key: certs/node1.key
@@ -121,10 +121,10 @@ xpack.security.transport.ssl.enabled: true
 xpack.security.http.ssl.enabled: true
 discovery.zen.ping.unicast.hosts: [ 'node1.local', 'node2.local']
 node.max_local_storage_nodes: 2
-
+```
 
 # edit config2/elasticsearch.yml (add the follow lines to the end of the yml file)
-#----------------------------------------------------------------------------------
+```
 node.name: node2
 network.host: node2.local
 xpack.ssl.key: certs/node2.key
@@ -134,6 +134,7 @@ xpack.security.transport.ssl.enabled: true
 xpack.security.http.ssl.enabled: true
 discovery.zen.ping.unicast.hosts: [ 'node1.local', 'node2.local']
 node.max_local_storage_nodes: 2
+```
 
 # startup the first node
 #-------------------------
