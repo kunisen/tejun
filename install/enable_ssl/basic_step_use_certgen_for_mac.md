@@ -162,34 +162,32 @@ save the password
 
 # check _cat/nodes on node1 (port : 9200)
 ```
-$curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node1.local:9200/_cat/nodes'
+curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node1.local:9200/_cat/nodes'
 Enter host password for user 'elastic':
 127.0.0.1 38 99 13 1.77   mdi * node1
 127.0.0.1 38 99 10 1.77   mdi - node2
 ```
 
 # check _cat/nodes on node2 (port : 9201)
-#----------------------------------------
-$curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node2.local:9201/_cat/nodes'
+```
+curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic 'https://node2.local:9201/_cat/nodes'
 Enter host password for user 'elastic':
 127.0.0.1 46 99 58 3.89   mdi - node2
 127.0.0.1 36 99 54 3.89   mdi * node1
+```
 
+### step 6 - Kibana TLS setup
 
-
-#-----------------------------------------------------------------
-# step 6 - Kibana TLS setup
-#-----------------------------------------------------------------
 # create config folder and copy certs
-#--------------------------------------
-$cd /Users/kuniyasu/tmp/cert_blog/kibana-6.1.2-darwin-x86_64-ssl
-$mkdir config/certs
-$cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/my-kibana/* config/certs
-$
+```
+cd ~/tmp/cert_blog/kibana-6.1.2-darwin-x86_64-ssl
+mkdir config/certs
+cp ~/tmp/cert_blog/ca/ca.crt ~/tmp/cert_blog/certs/my-kibana/* config/certs
+```
 
 
 # edit config/kibana.yml (add the following lines to kibana.yml)
-#----------------------------------------------------------------
+```
 server.name: "my-kibana"
 server.host: "kibana.local"
 server.ssl.enabled: true
@@ -199,24 +197,25 @@ elasticsearch.url: "https://node1.local:9200"
 elasticsearch.username: "kibana"
 elasticsearch.password: "#naKN?N2XreJa?K_5C8G"
 elasticsearch.ssl.certificateAuthorities: [ "config/certs/ca.crt" ]
-
+```
 
 # startup kibana
-#------------------
-$./bin/kibana
-(...)
-  log   [06:35:45.427] [info][listening] Server running at https://kibana.local:5601
+
+`./bin/kibana`
+
 
 
 # open browser and access kibana
-#----------------------------------
-https://kibana.local:5601/
+
+`open https://kibana.local:5601/`
 
 # also change my elastic user password to "changeme"
 # and access again
-#----------------------
-$cd /Users/kuniyasu/tmp/cert_blog
-$curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic:changeme 'https://node1.local:9200/_cat/nodes'
+
+```
+cd /Users/kuniyasu/tmp/cert_blog
+curl --cacert ~/tmp/cert_blog/ca/ca.crt -u elastic:changeme 'https://node1.local:9200/_cat/nodes'
 Enter host password for user 'elastic':
 127.0.0.1 32 99 5 1.46   mdi * node1
 127.0.0.1 21 99 4 1.46   mdi - node2
+```
