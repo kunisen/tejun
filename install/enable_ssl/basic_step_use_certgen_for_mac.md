@@ -39,35 +39,6 @@ This tool assists you in the generation of X.509 certificates and certificate
 signing requests for use with SSL in the Elastic stack. Depending on the command
 line option specified, you may be prompted for the following:
 
-* The path to the output file
-    * The output file is a zip file containing the signed certificates and
-      private keys for each instance. If a Certificate Authority was generated,
-      the certificate and private key will also be included in the output file.
-* Information about each instance
-    * An instance is any piece of the Elastic Stack that requires a SSL certificate.
-      Depending on your configuration, Elasticsearch, Logstash, Kibana, and Beats
-      may all require a certificate and private key.
-    * The minimum required value for each instance is a name. This can simply be the
-      hostname, which will be used as the Common Name of the certificate. A full
-      distinguished name may also be used.
-    * A filename value may be required for each instance. This is necessary when the
-      name would result in an invalid file or directory name. The name provided here
-      is used as the directory name (within the zip) and the prefix for the key and
-      certificate files. The filename is required if you are prompted and the name
-      is not displayed in the prompt.
-    * IP addresses and DNS names are optional. Multiple values can be specified as a
-      comma separated string. If no IP addresses or DNS names are provided, you may
-      disable hostname verification in your SSL configuration.
-* Certificate Authority private key password
-    * The password may be left empty if desired.
-
-Let's get started...
-
-Enter password for CA private key: 
-Enter instance name: 
-A name must be provided
-Would you like to specify another instance? Press 'y' to continue entering instance information: 
-Certificates written to /Users/kuniyasu/tmp/cert_blog/MyExample_Global_CA.zip
 
 This file should be properly secured as it contains the private keys for all
 instances and the certificate authority.
@@ -82,21 +53,21 @@ configure the client to trust this certificate.
 
 
 # unzip 
-#-------------
+```
 $cd ~/tmp/cert_blog
 $unzip MyExample_Global_CA.zip
 Archive:  MyExample_Global_CA.zip
    creating: ca/
   inflating: ca/ca.crt               
   inflating: ca/ca.key         
+```
 
 
 
-#-----------------------------------------------------------------
-# step 4 - Generate server certificates
-#-----------------------------------------------------------------
-# create instance yml file
-#---------------------------
+### step 4 - Generate server certificates
+
+#### create instance yml file
+```
 $echo 'instances:
 >   - name: 'node1'
 >     dns: [ 'node1.local' ]
@@ -106,10 +77,9 @@ $echo 'instances:
 >     dns: [ 'kibana.local' ]
 >   - name: 'logstash'
 >     dns: [ 'logstash.local' ]' > certgen_example.yml
+```
 
-
-# create server certificates for each instance
-#-----------------------------------------------
+### create server certificates for each instance
 $cd /Users/kuniyasu/tmp/cert_blog/elasticsearch-6.1.2-ssl
 
 $bin/x-pack/certgen --days 1095 --cert ~/tmp/cert_blog/ca/ca.crt --key ~/tmp/cert_blog/ca/ca.key --pass --in ~/tmp/cert_blog/certgen_example.yml --out ~/tmp/cert_blog/certs.zip
