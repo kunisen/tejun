@@ -27,7 +27,6 @@ cd ~/tmp/cert_blog/kibana-6.1.2-darwin-x86_64-ssl
 
 
 ### step 3 - Create CA
-#### create CA
 
 ```
 cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
@@ -61,7 +60,7 @@ $echo 'instances:
 >     dns: [ 'logstash.local' ]' > certgen_example.yml
 ```
 
-### create server certificates for each instance
+#### create server certificates for each instance
 ```
 $cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
 
@@ -140,16 +139,14 @@ node.max_local_storage_nodes: 2
 
 startup the first node
 
-$ES_PATH_CONF=config ./bin/elasticsearch
-(...)
-[2018-01-25T15:26:29,434][INFO ][o.e.n.Node               ] [node1] started
+`ES_PATH_CONF=config ./bin/elasticsearch`
 
 
-# open a new terminal and start the second node
-#------------------------------------------------
-$ES_PATH_CONF=config2 ./bin/elasticsearch
-(...)
-[2018-01-25T15:26:52,540][INFO ][o.e.n.Node               ] [node2] started
+
+open a new terminal and start the second node
+
+`ES_PATH_CONF=config2 ./bin/elasticsearch`
+
 
 
 # set built-in role password
