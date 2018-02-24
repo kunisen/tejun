@@ -16,7 +16,7 @@ https://www.elastic.co/blog/tls-elastic-stack-elasticsearch-kibana-logstash-file
 put elasticsearch and kibana into `~/tmp/cert_blog` and install x-pack
 
 ```
-mkdir ~/tmp/cert_blog/
+mkdir -p ~/tmp/cert_blog
 
 cd ~/tmp/cert_blog/elasticsearch-6.1.2-ssl
 ./bin/elasticsearch-plugin install x-pack
