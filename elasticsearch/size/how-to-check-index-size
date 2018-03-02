@@ -1,0 +1,65 @@
+#--------------------------
+# how to check index size
+#--------------------------
+
+# prepare data
+#--------------------------
+DELETE my_test
+PUT my_test/doc/1
+{
+  "title": "aaa"
+}
+
+
+# run get cat indices API
+#--------------------------
+GET _cat/indices?v&index=my_test
+
+# response
+health status index   uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   my_test g9n97HD5T2qcG66L3hc2pQ   5   1          1            0      4.4kb          4.4kb
+
+# -> we can see index size is 4.4kb now.
+
+
+# add some data (doc id 1)
+#--------------------------
+PUT my_test/doc/1
+{
+  "title": "aaa",
+  "telephone": 123456789
+}
+
+
+# check size again
+# run get cat indices API
+#-------------------------------
+GET _cat/indices?v&index=my_test
+
+# response
+health status index   uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   my_test g9n97HD5T2qcG66L3hc2pQ   5   1          1            0      4.7kb          4.7kb
+
+
+# -> we can see index size is 4.7kb now
+
+
+# add some more data (doc id 2)
+#-------------------------------
+PUT my_test/doc/2
+{
+  "title": "bbb",
+  "telephone": 999999999
+}
+
+
+# check the size again
+#-------------------------------
+# run get cat indices API
+GET _cat/indices?v&index=my_test
+
+# response
+health status index   uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   my_test g9n97HD5T2qcG66L3hc2pQ   5   1          2            0      8.3kb          8.3kb
+
+
