@@ -1,0 +1,234 @@
+#--------------------------------------
+# how to use highlight for multiple occurence
+# tested on ES 6.0.0
+#--------------------------------------
+
+# docs
+#--------------------------------------
+# https://www.elastic.co/guide/en/elasticsearch//reference/current/search-request-highlighting.html
+
+# put mappings and settings
+#--------------------------------------
+DELETE my_test_highlight
+PUT my_test_highlight
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "body": {
+          "type": "text",
+          "analyzer": "kuromoji"
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "0"
+    }
+  }
+}
+
+# response
+{
+  "acknowledged": true,
+  "shards_acknowledged": true,
+  "index": "my_test_highlight"
+}
+
+
+# put some data
+# - "東京", "大阪", "京都" occur multiple times
+#------------------------------------------------
+POST my_test_highlight/doc
+{
+   "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+  "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 大阪 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 京都 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 大阪 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 京都 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+}
+
+# response
+{
+  "_index": "my_test_highlight",
+  "_type": "doc",
+  "_id": "yxiH82EBccO3l0AbzRjm",
+  "_version": 1,
+  "result": "created",
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "_seq_no": 0,
+  "_primary_term": 1
+}
+
+
+# search all
+#--------------------------------------
+GET my_test_highlight/_search
+
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_highlight",
+        "_type": "doc",
+        "_id": "yxiH82EBccO3l0AbzRjm",
+        "_score": 1,
+        "_source": {
+          "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 大阪 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 京都 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 大阪 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 京都 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+        }
+      }
+    ]
+  }
+}
+
+
+# search highlight
+# 1 - how about the multiple hit
+#--------------------------------------
+GET my_test_highlight/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "body": "東京"
+          }
+        },
+        {
+          "match": {
+            "body": "大阪"
+          }
+        }
+      ]
+    }
+  },
+  "highlight": {
+    "fields": {
+      "body": {
+      }
+    }
+  }
+}
+
+
+# response
+# 1. multiple return
+{
+  "took": 4,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.79821515,
+    "hits": [
+      {
+        "_index": "my_test_highlight",
+        "_type": "doc",
+        "_id": "yxiH82EBccO3l0AbzRjm",
+        "_score": 0.79821515,
+        "_source": {
+          "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 大阪 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 京都 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 大阪 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 京都 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+        },
+        "highlight": {
+          "body": [
+            "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB <em>東京</em>",
+            "BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC <em>大阪</em>",
+            "DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE <em>東京</em>",
+            "EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF <em>大阪</em>"
+          ]
+        }
+      }
+    ]
+  }
+}
+
+
+
+# search highlight
+# 2 - how to set the offset
+#--------------------------------------
+GET my_test_highlight/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "body": "東京"
+          }
+        },
+        {
+          "match": {
+            "body": "大阪"
+          }
+        }
+      ]
+    }
+  },
+  "highlight": {
+    "fields": {
+      "body": {
+        "fragment_size": 20,
+        "number_of_fragments": 2
+      }
+    }
+  }
+}
+
+# response
+# 2 - we can use fragment_size and number_of_fragments to adjust
+{
+  "took": 2,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 0.79821515,
+    "hits": [
+      {
+        "_index": "my_test_highlight",
+        "_type": "doc",
+        "_id": "yxiH82EBccO3l0AbzRjm",
+        "_score": 0.79821515,
+        "_source": {
+          "title": "highlight search test dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy dummy",
+          "body": "AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA AAAA BBBB 東京 BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB BBBB CCCC CCCC 大阪 CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC CCCC DDDD DDDD DDDD 京都 DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD DDDD EEEE EEEE EEEE EEEE 東京 EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE EEEE FFFF FFFF FFFF FFFF FFFF 大阪 FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF FFFF GGGG GGGG GGGG GGGG GGGG GGGG 京都 GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG GGGG HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH HHHH IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII IIII"
+        },
+        "highlight": {
+          "body": [
+            "AAAA AAAA AAAA BBBB <em>東京</em>",
+            "BBBB BBBB CCCC CCCC <em>大阪</em>"
+          ]
+        }
+      }
+    ]
+  }
+}
+
+
