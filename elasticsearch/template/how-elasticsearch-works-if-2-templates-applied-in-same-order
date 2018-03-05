@@ -1,0 +1,244 @@
+#----------------------------------------------------------------
+# how elasticsearch works if 2 templates applied in same order
+#----------------------------------------------------------------
+
+# 1. create 2 templates with same order but different settings
+#----------------------------------------------------------------
+# template 1
+PUT _template/my_template1
+{
+  "order": 0,
+  "template": "my_test",
+  "settings": {
+    "index.number_of_shards": 1,
+    "index.number_of_replicas": 0,
+    "index.refresh_interval": "100s"
+  },
+  "mappings": {
+    "_default_": {
+      "_all": {
+        "enabled": false
+      }
+    }
+  }
+} 
+
+# response - executed successfully
+{
+  "acknowledged": true
+}
+
+# template 2
+PUT _template/my_template2
+{
+  "order": 0,
+  "template": "my_test",
+  "settings": {
+    "index.number_of_shards": 10,
+    "index.number_of_replicas": 1,
+    "index.refresh_interval": "1s"
+  },
+  "mappings": {
+    "_default_": {
+      "_all": {
+        "enabled": false
+      }
+    }
+  }
+} 
+
+# response - executed successfully
+{
+  "acknowledged": true
+}
+
+
+# 2. put data and let template get applied
+#----------------------------------------------------------------
+DELETE  my_test
+PUT my_test/doc/1
+{ "title" : "aaa" }
+
+# response - created successfully
+{
+  "_index": "my_test",
+  "_type": "doc",
+  "_id": "1",
+  "_version": 1,
+  "result": "created",
+  "_shards": {
+    "total": 2,
+    "successful": 1,
+    "failed": 0
+  },
+  "created": true
+}
+
+
+# 3. check the index settings
+#----------------------------------------------------------------
+GET my_test/_settings
+
+
+# response - the secondly created template get applied
+{
+  "my_test": {
+    "settings": {
+      "index": {
+        "refresh_interval": "1s",
+        "number_of_shards": "10",
+        "provided_name": "my_test",
+        "creation_date": "1520222912563",
+        "number_of_replicas": "1",
+        "uuid": "nta04IQQS_qxLCtzYLK9Qg",
+        "version": {
+          "created": "5040399"
+        }
+      }
+    }
+  }
+}
+
+
+# 4. create a 3rd templates with same order but different settings
+#----------------------------------------------------------------
+# template 3
+PUT _template/my_template3
+{
+  "order": 0,
+  "template": "my_test",
+  "settings": {
+    "index.number_of_shards": 5,
+    "index.number_of_replicas": 1,
+    "index.refresh_interval": "20s"
+  },
+  "mappings": {
+    "_default_": {
+      "_all": {
+        "enabled": false
+      }
+    }
+  }
+} 
+
+# response - executed successfully
+{
+  "acknowledged": true
+}
+
+
+# 5. put data and let template get applied again (delete it at first)
+#----------------------------------------------------------------
+DELETE  my_test
+PUT my_test/doc/1
+{ "title" : "aaa" }
+
+# response - created successfully
+{
+  "_index": "my_test",
+  "_type": "doc",
+  "_id": "1",
+  "_version": 1,
+  "result": "created",
+  "_shards": {
+    "total": 2,
+    "successful": 1,
+    "failed": 0
+  },
+  "created": true
+}
+
+
+# 6. check the index settings
+#----------------------------------------------------------------
+GET my_test/_settings
+
+
+# response - the 3rd template was applied
+{
+  "my_test": {
+    "settings": {
+      "index": {
+        "refresh_interval": "20s",
+        "number_of_shards": "5",
+        "provided_name": "my_test",
+        "creation_date": "1520223100294",
+        "number_of_replicas": "1",
+        "uuid": "4_0RzqeZSyOf9KVAlNih6Q",
+        "version": {
+          "created": "5040399"
+        }
+      }
+    }
+  }
+}
+
+
+# conclusion : the latest template will be applied
+
+
+# additional information
+#----------------------------------------------------------------
+# how to get templates related to index
+GET _template/my_template*
+
+# response - 3 index templates returned back
+{
+  "my_template3": {
+    "order": 0,
+    "template": "my_test",
+    "settings": {
+      "index": {
+        "number_of_shards": "5",
+        "number_of_replicas": "1",
+        "refresh_interval": "20s"
+      }
+    },
+    "mappings": {
+      "_default_": {
+        "_all": {
+          "enabled": false
+        }
+      }
+    },
+    "aliases": {}
+  },
+  "my_template2": {
+    "order": 0,
+    "template": "my_test",
+    "settings": {
+      "index": {
+        "number_of_shards": "10",
+        "number_of_replicas": "1",
+        "refresh_interval": "1s"
+      }
+    },
+    "mappings": {
+      "_default_": {
+        "_all": {
+          "enabled": false
+        }
+      }
+    },
+    "aliases": {}
+  },
+  "my_template1": {
+    "order": 0,
+    "template": "my_test",
+    "settings": {
+      "index": {
+        "number_of_shards": "1",
+        "number_of_replicas": "0",
+        "refresh_interval": "100s"
+      }
+    },
+    "mappings": {
+      "_default_": {
+        "_all": {
+          "enabled": false
+        }
+      }
+    },
+    "aliases": {}
+  }
+}
