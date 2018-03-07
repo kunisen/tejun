@@ -1,0 +1,667 @@
+#------------------------------------------------
+# how-to-use-query-chain-in-watcher
+#------------------------------------------------
+# put some data
+DELETE my_test_watcher
+PUT my_test_watcher/doc/1
+{
+  "number": 1,
+  "mydate": "2018-03-01T00:00:00Z"
+}
+
+PUT my_test_watcher/doc/2
+{
+  "number": 2
+}
+
+PUT my_test_watcher/doc/3
+{"number": 3}
+
+GET .watches/_search
+# search 
+GET my_test_watcher/_search
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_watcher",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "number": 2
+        }
+      },
+      {
+        "_index": "my_test_watcher",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "number": 1
+        }
+      }
+    ]
+  }
+}
+
+DELETE _xpack/watcher/watch/my_test_watcher
+PUT _xpack/watcher/watch/my_test_watcher
+{
+  "trigger": {
+    "schedule": {
+      "interval": "100h"
+    }
+  },
+  "input": {
+    "chain": {
+      "inputs": [
+        {
+          "first": {
+            "search": {
+              "request": {
+                "search_type": "query_then_fetch",
+                "indices": [
+                  ".watcher-history-6-2018.03.07"
+                ],
+                "body": {
+                  "size": 300,
+                  "query": {
+                    "match": {
+                      "watch_id": "my_test_watcher"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "condition": {
+    "compare": {
+      "ctx.payload.first.hits.total": {
+        "gte": 0
+      }
+    }
+  },
+  "transform": {
+    "script": """
+      // how to do SimpleDateFormat parse - e.g. '2018-02-16 01:23:45';
+      String pattern = 'yyyy-MM-dd HH:mm:ss';
+      String timestamp = '2018-02-16 01:23:45';
+      SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+      Date date = simpleDateFormat.parse(timestamp);
+      long unixTime1 = (long)date.getTime()/1000;
+      
+      // how to do OffsetDateTime parse - e.g. '2018-02-16T06:50:14.611Z'
+      String scheduled_time = '2018-02-16T06:50:14.611Z';
+      OffsetDateTime odt1 = OffsetDateTime.parse(scheduled_time); 
+      long triggerUnixTime = odt1.toEpochSecond();
+
+      
+      // how to get last successful execution time by using query chain
+      //String last_successful_execution_time = ctx.payload.first.hits.hits[0]._source.status.actions.log_error.last_successful_execution.timestamp;
+      String last_successful_execution_time = '2018-03-07T13:54:43.469Z';
+      OffsetDateTime odt2 = OffsetDateTime.parse(last_successful_execution_time); 
+      long lastSuccessfulUnixTime = odt2.toEpochSecond();
+      
+
+        // prepare the date
+        def _triggerDate   = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date(triggerUnixTime * 1000));
+        def _lastSuccessfulDate    = new SimpleDateFormat('yyyy-MM-dd HH:mm:ss').format(new Date(lastSuccessfulUnixTime * 1000)); 
+        DateTimeFormatter f = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        def triggerDate    = LocalDateTime.parse(_triggerDate, f);
+        def lastSuccessfulDate     = LocalDateTime.parse(_lastSuccessfulDate, f);
+        
+        // calculate the time difference
+        def diff_seconds    = ChronoUnit.SECONDS.between(triggerDate, lastSuccessfulDate); 
+        def diff_minutes    = ChronoUnit.MINUTES.between(triggerDate, lastSuccessfulDate); 
+        def diff_hours      = ChronoUnit.HOURS.between(triggerDate, lastSuccessfulDate); 
+        def diff_days       = ChronoUnit.DAYS.between(triggerDate, lastSuccessfulDate); 
+        def diff_months     = ChronoUnit.MONTHS.between(triggerDate, lastSuccessfulDate); 
+        def diff_years      = ChronoUnit.YEARS.between(triggerDate, lastSuccessfulDate); 
+
+        // create the return string
+        def diff =   'Diff year ['     + diff_years 
+        + ']; Diff month ['    + diff_months 
+        + ']; Diff days ['     + diff_days 
+        + ']; Diff hours ['    + diff_hours 
+        + ']; Diff minutes ['  + diff_minutes 
+        + ']; Diff seconds ['  + diff_seconds 
+        + ']';
+
+      return [ 'my_test' : diff];
+"""
+  },
+  "actions": {
+    "log_error": {
+      "logging": {
+        "text": "ctx.payload - {{ctx.payload}}"
+      }
+    }
+  }
+}
+
+PUT _xpack/watcher/watch/my_test_watcher/_execute
+
+
+# response
+{
+  "_id": "my_test_watcher_a2c2cd1c-59f9-4d3d-8c34-8ea9c21fe7f6-2018-03-07T15:27:36.815Z",
+  "watch_record": {
+    "watch_id": "my_test_watcher",
+    "node": "KYPM2tTvTlGE5nLSLNwbUA",
+    "state": "executed",
+    "status": {
+      "state": {
+        "active": true,
+        "timestamp": "2018-03-07T15:26:45.261Z"
+      },
+      "last_checked": "2018-03-07T15:27:36.815Z",
+      "last_met_condition": "2018-03-07T15:27:36.815Z",
+      "actions": {
+        "log_error": {
+          "ack": {
+            "timestamp": "2018-03-07T15:27:36.815Z",
+            "state": "ackable"
+          },
+          "last_execution": {
+            "timestamp": "2018-03-07T15:27:36.815Z",
+            "successful": true
+          },
+          "last_successful_execution": {
+            "timestamp": "2018-03-07T15:27:36.815Z",
+            "successful": true
+          }
+        }
+      },
+      "version": 53669
+    },
+    "trigger_event": {
+      "type": "manual",
+      "triggered_time": "2018-03-07T15:27:36.815Z",
+      "manual": {
+        "schedule": {
+          "scheduled_time": "2018-03-07T15:27:36.815Z"
+        }
+      }
+    },
+    "input": {
+      "chain": {
+        "inputs": [
+          {
+            "first": {
+              "search": {
+                "request": {
+                  "search_type": "query_then_fetch",
+                  "indices": [
+                    ".watcher-history-6-2018.03.07"
+                  ],
+                  "types": [],
+                  "body": {
+                    "size": 300,
+                    "query": {
+                      "match": {
+                        "watch_id": "my_test_watcher"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "condition": {
+      "compare": {
+        "ctx.payload.first.hits.total": {
+          "gte": 0
+        }
+      }
+    },
+    "result": {
+      "execution_time": "2018-03-07T15:27:36.815Z",
+      "execution_duration": 15,
+      "input": {
+        "type": "chain",
+        "status": "success",
+        "payload": {
+          "first": {
+            "_shards": {
+              "total": 1,
+              "failed": 0,
+              "successful": 1,
+              "skipped": 0
+            },
+            "hits": {
+              "hits": [
+                {
+                  "_index": ".watcher-history-6-2018.03.07",
+                  "_type": "doc",
+                  "_source": {
+                    "result": {
+                      "input": {
+                        "chain": {
+                          "first": {
+                            "search": {
+                              "request": {
+                                "indices": [
+                                  ".watcher-history-6-2018.03.06"
+                                ],
+                                "types": [],
+                                "body": {
+                                  "size": 300,
+                                  "query": {
+                                    "match": {
+                                      "watch_id": "my_test_watcher"
+                                    }
+                                  }
+                                },
+                                "search_type": "query_then_fetch"
+                              }
+                            },
+                            "payload": {
+                              "_shards": {
+                                "total": 0,
+                                "failed": 0,
+                                "successful": 0,
+                                "skipped": 0
+                              },
+                              "hits": {
+                                "hits": [],
+                                "total": 0,
+                                "max_score": 0
+                              },
+                              "took": 0,
+                              "timed_out": false
+                            },
+                            "type": "search",
+                            "status": "success"
+                          }
+                        },
+                        "payload": {
+                          "first": {
+                            "_shards": {
+                              "total": 0,
+                              "failed": 0,
+                              "successful": 0,
+                              "skipped": 0
+                            },
+                            "hits": {
+                              "hits": [],
+                              "total": 0,
+                              "max_score": 0
+                            },
+                            "took": 0,
+                            "timed_out": false
+                          }
+                        },
+                        "type": "chain",
+                        "status": "success"
+                      },
+                      "condition": {
+                        "compare": {
+                          "resolved_values": {
+                            "ctx.payload.first.hits.total": 0
+                          }
+                        },
+                        "type": "compare",
+                        "met": true,
+                        "status": "success"
+                      },
+                      "transform": {
+                        "payload": {
+                          "my_test": []
+                        },
+                        "type": "script",
+                        "status": "success"
+                      },
+                      "execution_duration": 1,
+                      "actions": [
+                        {
+                          "logging": {
+                            "logged_text": "ctx.payload - {my_test=[]}"
+                          },
+                          "id": "log_error",
+                          "type": "logging",
+                          "status": "success"
+                        }
+                      ],
+                      "execution_time": "2018-03-07T10:08:42.044Z"
+                    },
+                    "node": "KYPM2tTvTlGE5nLSLNwbUA",
+                    "input": {
+                      "chain": {
+                        "inputs": [
+                          {
+                            "first": {
+                              "search": {
+                                "request": {
+                                  "indices": [
+                                    ".watcher-history-6-2018.03.06"
+                                  ],
+                                  "types": [],
+                                  "body": {
+                                    "size": 300,
+                                    "query": {
+                                      "match": {
+                                        "watch_id": "my_test_watcher"
+                                      }
+                                    }
+                                  },
+                                  "search_type": "query_then_fetch"
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "condition": {
+                      "compare": {
+                        "ctx.payload.first.hits.total": {
+                          "gte": 0
+                        }
+                      }
+                    },
+                    "watch_id": "my_test_watcher",
+                    "messages": [],
+                    "state": "executed",
+                    "trigger_event": {
+                      "schedule": {
+                        "scheduled_time": "2018-03-07T10:08:41.855Z"
+                      },
+                      "triggered_time": "2018-03-07T10:08:42.044Z",
+                      "type": "schedule"
+                    },
+                    "status": {
+                      "last_checked": "2018-03-07T10:08:42.044Z",
+                      "state": {
+                        "active": true,
+                        "timestamp": "2018-03-07T10:08:31.854Z"
+                      },
+                      "last_met_condition": "2018-03-07T10:08:42.044Z",
+                      "actions": {
+                        "log_error": {
+                          "last_execution": {
+                            "timestamp": "2018-03-07T10:08:42.044Z",
+                            "successful": true
+                          },
+                          "ack": {
+                            "state": "ackable",
+                            "timestamp": "2018-03-07T10:08:42.044Z"
+                          },
+                          "last_successful_execution": {
+                            "timestamp": "2018-03-07T10:08:42.044Z",
+                            "successful": true
+                          }
+                        }
+                      },
+                      "version": -1
+                    }
+                  },
+                  "_id": "my_test_watcher_93342e78-e970-4283-8690-5126ca456938-2018-03-07T10:08:42.044Z",
+                  "_score": 0.2876821
+                }
+              ],
+              "total": 1,
+              "max_score": 0.2876821
+            },
+            "took": 1,
+            "timed_out": false
+          }
+        },
+        "chain": {
+          "first": {
+            "type": "search",
+            "status": "success",
+            "payload": {
+              "_shards": {
+                "total": 1,
+                "failed": 0,
+                "successful": 1,
+                "skipped": 0
+              },
+              "hits": {
+                "hits": [
+                  {
+                    "_index": ".watcher-history-6-2018.03.07",
+                    "_type": "doc",
+                    "_source": {
+                      "result": {
+                        "input": {
+                          "chain": {
+                            "first": {
+                              "search": {
+                                "request": {
+                                  "indices": [
+                                    ".watcher-history-6-2018.03.06"
+                                  ],
+                                  "types": [],
+                                  "body": {
+                                    "size": 300,
+                                    "query": {
+                                      "match": {
+                                        "watch_id": "my_test_watcher"
+                                      }
+                                    }
+                                  },
+                                  "search_type": "query_then_fetch"
+                                }
+                              },
+                              "payload": {
+                                "_shards": {
+                                  "total": 0,
+                                  "failed": 0,
+                                  "successful": 0,
+                                  "skipped": 0
+                                },
+                                "hits": {
+                                  "hits": [],
+                                  "total": 0,
+                                  "max_score": 0
+                                },
+                                "took": 0,
+                                "timed_out": false
+                              },
+                              "type": "search",
+                              "status": "success"
+                            }
+                          },
+                          "payload": {
+                            "first": {
+                              "_shards": {
+                                "total": 0,
+                                "failed": 0,
+                                "successful": 0,
+                                "skipped": 0
+                              },
+                              "hits": {
+                                "hits": [],
+                                "total": 0,
+                                "max_score": 0
+                              },
+                              "took": 0,
+                              "timed_out": false
+                            }
+                          },
+                          "type": "chain",
+                          "status": "success"
+                        },
+                        "condition": {
+                          "compare": {
+                            "resolved_values": {
+                              "ctx.payload.first.hits.total": 0
+                            }
+                          },
+                          "type": "compare",
+                          "met": true,
+                          "status": "success"
+                        },
+                        "transform": {
+                          "payload": {
+                            "my_test": []
+                          },
+                          "type": "script",
+                          "status": "success"
+                        },
+                        "execution_duration": 1,
+                        "actions": [
+                          {
+                            "logging": {
+                              "logged_text": "ctx.payload - {my_test=[]}"
+                            },
+                            "id": "log_error",
+                            "type": "logging",
+                            "status": "success"
+                          }
+                        ],
+                        "execution_time": "2018-03-07T10:08:42.044Z"
+                      },
+                      "node": "KYPM2tTvTlGE5nLSLNwbUA",
+                      "input": {
+                        "chain": {
+                          "inputs": [
+                            {
+                              "first": {
+                                "search": {
+                                  "request": {
+                                    "indices": [
+                                      ".watcher-history-6-2018.03.06"
+                                    ],
+                                    "types": [],
+                                    "body": {
+                                      "size": 300,
+                                      "query": {
+                                        "match": {
+                                          "watch_id": "my_test_watcher"
+                                        }
+                                      }
+                                    },
+                                    "search_type": "query_then_fetch"
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "condition": {
+                        "compare": {
+                          "ctx.payload.first.hits.total": {
+                            "gte": 0
+                          }
+                        }
+                      },
+                      "watch_id": "my_test_watcher",
+                      "messages": [],
+                      "state": "executed",
+                      "trigger_event": {
+                        "schedule": {
+                          "scheduled_time": "2018-03-07T10:08:41.855Z"
+                        },
+                        "triggered_time": "2018-03-07T10:08:42.044Z",
+                        "type": "schedule"
+                      },
+                      "status": {
+                        "last_checked": "2018-03-07T10:08:42.044Z",
+                        "state": {
+                          "active": true,
+                          "timestamp": "2018-03-07T10:08:31.854Z"
+                        },
+                        "last_met_condition": "2018-03-07T10:08:42.044Z",
+                        "actions": {
+                          "log_error": {
+                            "last_execution": {
+                              "timestamp": "2018-03-07T10:08:42.044Z",
+                              "successful": true
+                            },
+                            "ack": {
+                              "state": "ackable",
+                              "timestamp": "2018-03-07T10:08:42.044Z"
+                            },
+                            "last_successful_execution": {
+                              "timestamp": "2018-03-07T10:08:42.044Z",
+                              "successful": true
+                            }
+                          }
+                        },
+                        "version": -1
+                      }
+                    },
+                    "_id": "my_test_watcher_93342e78-e970-4283-8690-5126ca456938-2018-03-07T10:08:42.044Z",
+                    "_score": 0.2876821
+                  }
+                ],
+                "total": 1,
+                "max_score": 0.2876821
+              },
+              "took": 1,
+              "timed_out": false
+            },
+            "search": {
+              "request": {
+                "search_type": "query_then_fetch",
+                "indices": [
+                  ".watcher-history-6-2018.03.07"
+                ],
+                "types": [],
+                "body": {
+                  "size": 300,
+                  "query": {
+                    "match": {
+                      "watch_id": "my_test_watcher"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "condition": {
+        "type": "compare",
+        "status": "success",
+        "met": true,
+        "compare": {
+          "resolved_values": {
+            "ctx.payload.first.hits.total": 1
+          }
+        }
+      },
+      "transform": {
+        "type": "script",
+        "status": "success",
+        "payload": {
+          "my_test": "Diff year [0]; Diff month [0]; Diff days [19]; Diff hours [463]; Diff minutes [27784]; Diff seconds [1667069]"
+        }
+      },
+      "actions": [
+        {
+          "id": "log_error",
+          "type": "logging",
+          "status": "success",
+          "logging": {
+            "logged_text": "ctx.payload - {my_test=Diff year [0]; Diff month [0]; Diff days [19]; Diff hours [463]; Diff minutes [27784]; Diff seconds [1667069]}"
+          }
+        }
+      ]
+    },
+    "messages": []
+  }
+}
