@@ -1,6 +1,13 @@
 #================================================
 # how-to-use-complicated-logic-in-watcher-2
 #================================================
+
+# descriptions
+#================================================
+# tested on ES & Kibana 6.2.2
+
+# main flow
+#================================================
 # 1. prepare data with time range
 # 2. prepare watcher history
 # 3. prepare the real watcher logic
