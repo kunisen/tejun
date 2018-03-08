@@ -1,0 +1,1348 @@
+#================================================
+# how-to-use-complicated-logic-in-watcher-2
+#================================================
+# 1. prepare data with time range
+# 2. prepare watcher history
+# 3. prepare the real watcher logic
+
+
+# 1. prepare data with time range
+#================================================
+# clear
+#------------------------------------------------
+# original data index
+DELETE my_test_index
+
+# dummy index for temp use
+DELETE my_test_index_dummy
+
+# index created after watcher execution
+DELETE my_test_index_after
+
+# watcher history index 
+# DELETE <.watcher-history-7-{now/d{YYYY.MM.dd}}>
+DELETE %3C.watcher-history-7-%7Bnow%2Fd%7BYYYY.MM.dd%7D%7D%3E
+
+
+# prepare index with time range 
+#------------------------------------------------
+PUT my_test_index/doc/1
+{"@timestamp":"2017-03-10T00:00:00Z"}
+
+PUT my_test_index/doc/2
+{"@timestamp":"2018-03-10T00:00:00Z"}
+
+PUT my_test_index/doc/3
+{"@timestamp":"2019-03-10T00:00:00Z"}
+
+
+# check data
+#------------------------------------------------
+GET my_test_index/_search
+
+# response - 3 hits
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 3,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_index",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 1,
+        "_source": {
+          "@timestamp": "2018-03-10T00:00:00Z"
+        }
+      },
+      {
+        "_index": "my_test_index",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 1,
+        "_source": {
+          "@timestamp": "2017-03-10T00:00:00Z"
+        }
+      },
+      {
+        "_index": "my_test_index",
+        "_type": "doc",
+        "_id": "3",
+        "_score": 1,
+        "_source": {
+          "@timestamp": "2019-03-10T00:00:00Z"
+        }
+      }
+    ]
+  }
+}
+
+
+
+# 2. prepare watcher history
+#================================================
+# check watcher history
+# - note
+# a. we expect no watcher history here
+# b. the watcher history date is current day 
+#------------------------------------------------
+# GET <.watcher-history-7-{now/d{YYYY.MM.dd}}>
+GET %3C.watcher-history-7-%7Bnow%2Fd%7BYYYY.MM.dd%7D%7D%3E
+
+
+# response - correct watcher history name here : .watcher-history-7-2018.03.08
+{
+  "error": {
+    "root_cause": [
+      {
+        "type": "index_not_found_exception",
+        "reason": "no such index",
+        "resource.type": "index_or_alias",
+        "resource.id": ".watcher-history-7-2018.03.08",
+        "index_uuid": "_na_",
+        "index": ".watcher-history-7-2018.03.08"
+      }
+    ],
+    "type": "index_not_found_exception",
+    "reason": "no such index",
+    "resource.type": "index_or_alias",
+    "resource.id": ".watcher-history-7-2018.03.08",
+    "index_uuid": "_na_",
+    "index": ".watcher-history-7-2018.03.08"
+  },
+  "status": 404
+}
+
+
+
+# create watcher for temporary purpose
+# - note
+# we use this watcher to generate watcher history of "index_test" action
+# this is because we need to generate the first "last_successful_execution" time data
+# we set the watcher trigger interval shortly to generate history fast
+# after run this query, need to wait for 5 seconds
+#------------------------------------------------
+PUT _xpack/watcher/watch/my_test_watcher
+{
+  "trigger": {
+    "schedule": {
+      "interval": "5s"
+    }
+  },
+  "input": {
+    "search": {
+      "request": {
+        "search_type": "query_then_fetch",
+        "indices": [
+          "my_test_index"
+        ],
+        "body": {
+          "query": {
+            "match_all": {}
+          }
+        }
+      }
+    }
+  },
+  "condition": {
+    "compare": {
+      "ctx.payload.hits.total": {
+        "gte": 0
+      }
+    }
+  },
+  "transform": {},
+  "actions": {
+    "index_test": {
+      "transform": {
+        "script": """
+          def list = [];
+          list.add(ctx.payload.hits.hits[0]._source);
+          return [ '_doc' : list]
+    """
+      },
+      "index": {
+        "index": "my_test_index_dummy",
+        "doc_type": "doc"
+      }
+    }
+  }
+}
+
+
+# delete temp watcher to stop generating watcher history
+#------------------------------------------------
+DELETE  _xpack/watcher/watch/my_test_watcher
+
+# response - deleted successfully
+{
+  "_id": "my_test_watcher",
+  "_version": 421,
+  "found": true
+}
+
+
+# now check the watcher history again
+#------------------------------------------------
+# <.watcher-history-7-{now/d{YYYY.MM.dd}}>
+GET %3C.watcher-history-7-%7Bnow%2Fd%7BYYYY.MM.dd%7D%7D%3E/_search
+{
+  "size": 1,
+  "query": {
+    "match": {
+      "watch_id": "my_test_watcher"
+    }
+  },
+  "sort": [
+    {
+      "result.execution_time": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+# response - now we got watcher history data here
+# also see last successful execution time : 
+# "last_successful_execution": { "timestamp": "2018-03-08T15:53:04.498Z",
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": null,
+    "hits": [
+      {
+        "_index": ".watcher-history-7-2018.03.08",
+        "_type": "doc",
+        "_id": "my_test_watcher_b0a8d6b1-07d4-4e40-8fb3-56296338345f-2018-03-08T15:53:04.498Z",
+        "_score": null,
+        "_source": {
+          "watch_id": "my_test_watcher",
+          "node": "rLfFAq3SRbK2NQQaOy89AA",
+          "state": "executed",
+          "status": {
+            "state": {
+              "active": true,
+              "timestamp": "2018-03-08T15:52:59.308Z"
+            },
+            "last_checked": "2018-03-08T15:53:04.498Z",
+            "last_met_condition": "2018-03-08T15:53:04.498Z",
+            "actions": {
+              "index_test": {
+                "ack": {
+                  "timestamp": "2018-03-08T15:53:04.498Z",
+                  "state": "ackable"
+                },
+                "last_execution": {
+                  "timestamp": "2018-03-08T15:53:04.498Z",
+                  "successful": true
+                },
+                "last_successful_execution": {
+                  "timestamp": "2018-03-08T15:53:04.498Z",
+                  "successful": true
+                }
+              }
+            },
+            "execution_state": "executed",
+            "version": -1
+          },
+          "trigger_event": {
+            "type": "schedule",
+            "triggered_time": "2018-03-08T15:53:04.498Z",
+            "schedule": {
+              "scheduled_time": "2018-03-08T15:53:04.309Z"
+            }
+          },
+          "input": {
+            "search": {
+              "request": {
+                "search_type": "query_then_fetch",
+                "indices": [
+                  "my_test_index"
+                ],
+                "types": [],
+                "body": {
+                  "query": {
+                    "match_all": {}
+                  }
+                }
+              }
+            }
+          },
+          "condition": {
+            "compare": {
+              "ctx.payload.hits.total": {
+                "gte": 0
+              }
+            }
+          },
+          "result": {
+            "execution_time": "2018-03-08T15:53:04.498Z",
+            "execution_duration": 62,
+            "input": {
+              "type": "search",
+              "status": "success",
+              "payload": {
+                "_shards": {
+                  "total": 5,
+                  "failed": 0,
+                  "successful": 5,
+                  "skipped": 0
+                },
+                "hits": {
+                  "hits": [
+                    {
+                      "_index": "my_test_index",
+                      "_type": "doc",
+                      "_source": {
+                        "@timestamp": "2018-03-10T00:00:00Z"
+                      },
+                      "_id": "2",
+                      "_score": 1
+                    },
+                    {
+                      "_index": "my_test_index",
+                      "_type": "doc",
+                      "_source": {
+                        "@timestamp": "2017-03-10T00:00:00Z"
+                      },
+                      "_id": "1",
+                      "_score": 1
+                    },
+                    {
+                      "_index": "my_test_index",
+                      "_type": "doc",
+                      "_source": {
+                        "@timestamp": "2019-03-10T00:00:00Z"
+                      },
+                      "_id": "3",
+                      "_score": 1
+                    }
+                  ],
+                  "total": 3,
+                  "max_score": 1
+                },
+                "took": 0,
+                "timed_out": false
+              },
+              "search": {
+                "request": {
+                  "search_type": "query_then_fetch",
+                  "indices": [
+                    "my_test_index"
+                  ],
+                  "types": [],
+                  "body": {
+                    "query": {
+                      "match_all": {}
+                    }
+                  }
+                }
+              }
+            },
+            "condition": {
+              "type": "compare",
+              "status": "success",
+              "met": true,
+              "compare": {
+                "resolved_values": {
+                  "ctx.payload.hits.total": 3
+                }
+              }
+            },
+            "actions": [
+              {
+                "id": "index_test",
+                "type": "index",
+                "status": "success",
+                "transform": {
+                  "type": "script",
+                  "status": "success",
+                  "payload": {
+                    "_doc": [
+                      {
+                        "@timestamp": "2018-03-10T00:00:00Z"
+                      }
+                    ]
+                  }
+                },
+                "index": {
+                  "response": [
+                    {
+                      "created": true,
+                      "result": "created",
+                      "id": "rElQBmIBPw9vPBku2S4q",
+                      "version": 1,
+                      "type": "doc",
+                      "index": "my_test_index_dummy"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "messages": []
+        },
+        "sort": [
+          1520524384498
+        ]
+      }
+    ]
+  }
+}
+
+
+# 3. prepare the real watcher logic
+#================================================
+
+# create watcher logic
+# - note
+# a. for testing purpose, we use 100h as interval, and we run it manually
+# b. we use 2 input chains here. 
+#    chain [watcher_history] - for searching watcher history
+#    chain [my_test_index]   - for searching our data index
+# c. user need to change the following parts
+#    - input chain name :         e.g. my_test_index
+#    - target index for search :  e.g. my_test_index
+#    - 
+#------------------------------------------------
+PUT _xpack/watcher/watch/my_test_watcher
+{
+  "trigger": {
+    "schedule": {
+      "interval": "100h"
+    }
+  },
+  "input": {
+    "chain": {
+      "inputs": [
+        {
+          "watcher_history": {
+            "search": {
+              "request": {
+                "search_type": "query_then_fetch",
+                "indices": [
+                  "<.watcher-history-7-{now/d{YYYY.MM.dd}}>"
+                ],
+                "body": {
+                  "query": {
+                    "match": {
+                      "watch_id": "my_test_watcher"
+                    }
+                  },
+                  "sort": [
+                    {
+                      "result.execution_time": {
+                        "order": "desc"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "my_test_index": {
+            "search": {
+              "request": {
+                "search_type": "query_then_fetch",
+                "indices": [
+                  "my_test_index"
+                ],
+                "body": {
+                  "query": {
+                    "range": {
+                      "@timestamp": {
+                        "to": "{{ctx.trigger.scheduled_time}}||+2400h"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "condition": {
+    "compare": {
+      "ctx.payload.my_test_index.hits.total": {
+        "gte": 0
+      }
+    }
+  },
+  "transform": {},
+  "actions": {
+    "index_test": {
+      "transform": {
+        "script": """
+          // get last_successful_execution timestamp convert it to epoch (for comparing purpose)
+          // - note : we get this value from watcher history index (we have history here because we generated it in the above steps)
+          String _last_successful_execution_time;
+          _last_successful_execution_time = ctx.payload.watcher_history.hits.hits[0]._source.status.actions.index_test.last_successful_execution.timestamp;
+          long last_successful_execution_time_epoch = OffsetDateTime.parse(_last_successful_execution_time).toEpochSecond();
+          long last_successful_execution_time_epoch_one_minute_before = last_successful_execution_time_epoch - 60;
+          
+          // declare the list we need to return
+          def list = [];
+          
+          // proceed each data in our data index (and we check the time range inside this for loop)
+          for (int i = 0; i < ctx.payload.my_test_index.hits.hits.length; ++i) {
+            
+            // get @timestamp data and convert it to epoch (for comparing purpose)
+            // - note : we get this value from the data index
+            String _timestamp = ctx.payload.my_test_index.hits.hits[i]._source['@timestamp'];
+            long _timestamp_epoch = OffsetDateTime.parse(_timestamp).toEpochSecond();
+            
+            // only proceed the data, which range of '@timestamp' is after last_successful_execution timestamp
+            //if (_timestamp_epoch > last_successful_execution_time_epoch_one_minute_before) { continue; }
+            if (last_successful_execution_time_epoch_one_minute_before < _timestamp_epoch) { 
+
+              //---------------
+              // do other jobs
+              //---------------
+              // add triggered_time            
+              ctx.payload.my_test_index.hits.hits[i]._source.triggered_time = ctx.trigger.triggered_time;
+  
+              // add alert_id with the following format
+              // <Unix epoch timestamp of triggered time>-0001-0001-0001-<i of ctx.payload.hits.hits[i] 
+              // (right justified, leading zeros, the number of characters is 4)> 
+              //----------------------------------------------------------------------------        
+              // prepare <unix epoch timestamp of triggered time
+              String triggered_time = ctx.trigger.triggered_time.toString();
+              OffsetDateTime odt = OffsetDateTime.parse(triggered_time); 
+              long epochTriggeredTime = odt.toEpochSecond();
+              String epochTriggeredTimeStr = epochTriggeredTime.toString();
+  
+              // prepare right justified sequential id
+              String rightJustifiedIdStr = i.toString();
+              String zeroPadding = '';
+              if (i < 10) { zeroPadding = '000'; }
+              else if (10 <= i && i < 99 ) { zeroPadding = '00'; }
+              else if (100 <= i && i < 999 ) { zeroPadding = '0'; }
+              else { zeroPadding = ''; }
+              rightJustifiedIdStr = zeroPadding + rightJustifiedIdStr;
+  
+              // prepare the final alert_id
+              ctx.payload.my_test_index.hits.hits[i]._source.alert_id = epochTriggeredTimeStr + '-0001-0001-0001-' + rightJustifiedIdStr;
+  
+              // add item to _list
+              list.add(ctx.payload.my_test_index.hits.hits[i]._source);
+            }
+          }  
+
+          // return this list as new payload, for indexing purpose
+          // and we index this new payload to another new index
+          return [ '_doc' : list];
+"""
+      },
+      "index": {
+        "index": "my_test_index_after",
+        "doc_type": "doc"
+      }
+    }
+  }
+}
+
+
+# response - we registered the watcher successfully
+{
+  "_id": "my_test_watcher",
+  "_version": 1,
+  "created": true
+}
+
+
+
+# now we execute the watcher
+#------------------------------------------------
+PUT _xpack/watcher/watch/my_test_watcher/_execute
+
+
+# response - we can see the "action" part shows that indexing process is successful
+{
+  "_id": "my_test_watcher_9604ce39-6efa-4a3a-8b90-f14b944d6ef5-2018-03-08T15:56:22.645Z",
+  "watch_record": {
+    "watch_id": "my_test_watcher",
+    "node": "rLfFAq3SRbK2NQQaOy89AA",
+    "state": "executed",
+    "status": {
+      "state": {
+        "active": true,
+        "timestamp": "2018-03-08T15:56:10.423Z"
+      },
+      "last_checked": "2018-03-08T15:56:22.645Z",
+      "last_met_condition": "2018-03-08T15:56:22.645Z",
+      "actions": {
+        "index_test": {
+          "ack": {
+            "timestamp": "2018-03-08T15:56:22.645Z",
+            "state": "ackable"
+          },
+          "last_execution": {
+            "timestamp": "2018-03-08T15:56:22.645Z",
+            "successful": true
+          },
+          "last_successful_execution": {
+            "timestamp": "2018-03-08T15:56:22.645Z",
+            "successful": true
+          }
+        }
+      },
+      "execution_state": "executed",
+      "version": 5
+    },
+    "trigger_event": {
+      "type": "manual",
+      "triggered_time": "2018-03-08T15:56:22.645Z",
+      "manual": {
+        "schedule": {
+          "scheduled_time": "2018-03-08T15:56:22.645Z"
+        }
+      }
+    },
+    "input": {
+      "chain": {
+        "inputs": [
+          {
+            "watcher_history": {
+              "search": {
+                "request": {
+                  "search_type": "query_then_fetch",
+                  "indices": [
+                    "<.watcher-history-7-{now/d{YYYY.MM.dd}}>"
+                  ],
+                  "types": [],
+                  "body": {
+                    "query": {
+                      "match": {
+                        "watch_id": "my_test_watcher"
+                      }
+                    },
+                    "sort": [
+                      {
+                        "result.execution_time": {
+                          "order": "desc"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "my_test_index": {
+              "search": {
+                "request": {
+                  "search_type": "query_then_fetch",
+                  "indices": [
+                    "my_test_index"
+                  ],
+                  "types": [],
+                  "body": {
+                    "query": {
+                      "range": {
+                        "@timestamp": {
+                          "to": "{{ctx.trigger.scheduled_time}}||+2400h"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "condition": {
+      "compare": {
+        "ctx.payload.my_test_index.hits.total": {
+          "gte": 0
+        }
+      }
+    },
+    "result": {
+      "execution_time": "2018-03-08T15:56:22.645Z",
+      "execution_duration": 62,
+      "input": {
+        "type": "chain",
+        "status": "success",
+        "payload": {
+          "watcher_history": {
+            "_shards": {
+              "total": 1,
+              "failed": 0,
+              "successful": 1,
+              "skipped": 0
+            },
+            "hits": {
+              "hits": [
+                {
+                  "_index": ".watcher-history-7-2018.03.08",
+                  "_type": "doc",
+                  "_source": {
+                    "result": {
+                      "input": {
+                        "search": {
+                          "request": {
+                            "indices": [
+                              "my_test_index"
+                            ],
+                            "types": [],
+                            "body": {
+                              "query": {
+                                "match_all": {}
+                              }
+                            },
+                            "search_type": "query_then_fetch"
+                          }
+                        },
+                        "payload": {
+                          "_shards": {
+                            "total": 5,
+                            "failed": 0,
+                            "successful": 5,
+                            "skipped": 0
+                          },
+                          "hits": {
+                            "hits": [
+                              {
+                                "_index": "my_test_index",
+                                "_type": "doc",
+                                "_source": {
+                                  "@timestamp": "2018-03-10T00:00:00Z"
+                                },
+                                "_id": "2",
+                                "_score": 1
+                              },
+                              {
+                                "_index": "my_test_index",
+                                "_type": "doc",
+                                "_source": {
+                                  "@timestamp": "2017-03-10T00:00:00Z"
+                                },
+                                "_id": "1",
+                                "_score": 1
+                              },
+                              {
+                                "_index": "my_test_index",
+                                "_type": "doc",
+                                "_source": {
+                                  "@timestamp": "2019-03-10T00:00:00Z"
+                                },
+                                "_id": "3",
+                                "_score": 1
+                              }
+                            ],
+                            "total": 3,
+                            "max_score": 1
+                          },
+                          "took": 0,
+                          "timed_out": false
+                        },
+                        "type": "search",
+                        "status": "success"
+                      },
+                      "condition": {
+                        "compare": {
+                          "resolved_values": {
+                            "ctx.payload.hits.total": 3
+                          }
+                        },
+                        "type": "compare",
+                        "met": true,
+                        "status": "success"
+                      },
+                      "execution_duration": 62,
+                      "actions": [
+                        {
+                          "transform": {
+                            "payload": {
+                              "_doc": [
+                                {
+                                  "@timestamp": "2018-03-10T00:00:00Z"
+                                }
+                              ]
+                            },
+                            "type": "script",
+                            "status": "success"
+                          },
+                          "index": {
+                            "response": [
+                              {
+                                "result": "created",
+                                "created": true,
+                                "index": "my_test_index_dummy",
+                                "id": "rElQBmIBPw9vPBku2S4q",
+                                "type": "doc",
+                                "version": 1
+                              }
+                            ]
+                          },
+                          "id": "index_test",
+                          "type": "index",
+                          "status": "success"
+                        }
+                      ],
+                      "execution_time": "2018-03-08T15:53:04.498Z"
+                    },
+                    "node": "rLfFAq3SRbK2NQQaOy89AA",
+                    "input": {
+                      "search": {
+                        "request": {
+                          "indices": [
+                            "my_test_index"
+                          ],
+                          "types": [],
+                          "body": {
+                            "query": {
+                              "match_all": {}
+                            }
+                          },
+                          "search_type": "query_then_fetch"
+                        }
+                      }
+                    },
+                    "condition": {
+                      "compare": {
+                        "ctx.payload.hits.total": {
+                          "gte": 0
+                        }
+                      }
+                    },
+                    "watch_id": "my_test_watcher",
+                    "messages": [],
+                    "state": "executed",
+                    "trigger_event": {
+                      "schedule": {
+                        "scheduled_time": "2018-03-08T15:53:04.309Z"
+                      },
+                      "triggered_time": "2018-03-08T15:53:04.498Z",
+                      "type": "schedule"
+                    },
+                    "status": {
+                      "last_checked": "2018-03-08T15:53:04.498Z",
+                      "state": {
+                        "active": true,
+                        "timestamp": "2018-03-08T15:52:59.308Z"
+                      },
+                      "last_met_condition": "2018-03-08T15:53:04.498Z",
+                      "execution_state": "executed",
+                      "actions": {
+                        "index_test": {
+                          "last_execution": {
+                            "timestamp": "2018-03-08T15:53:04.498Z",
+                            "successful": true
+                          },
+                          "ack": {
+                            "state": "ackable",
+                            "timestamp": "2018-03-08T15:53:04.498Z"
+                          },
+                          "last_successful_execution": {
+                            "timestamp": "2018-03-08T15:53:04.498Z",
+                            "successful": true
+                          }
+                        }
+                      },
+                      "version": -1
+                    }
+                  },
+                  "_id": "my_test_watcher_b0a8d6b1-07d4-4e40-8fb3-56296338345f-2018-03-08T15:53:04.498Z",
+                  "sort": [
+                    1520524384498
+                  ],
+                  "_score": null
+                }
+              ],
+              "total": 1,
+              "max_score": null
+            },
+            "took": 0,
+            "timed_out": false
+          },
+          "my_test_index": {
+            "_shards": {
+              "total": 5,
+              "failed": 0,
+              "successful": 5,
+              "skipped": 0
+            },
+            "hits": {
+              "hits": [
+                {
+                  "_index": "my_test_index",
+                  "_type": "doc",
+                  "_source": {
+                    "@timestamp": "2018-03-10T00:00:00Z",
+                    "triggered_time": "2018-03-08T15:56:22.645Z",
+                    "alert_id": "1520524582-0001-0001-0001-0000"
+                  },
+                  "_id": "2",
+                  "_score": 1
+                },
+                {
+                  "_index": "my_test_index",
+                  "_type": "doc",
+                  "_source": {
+                    "@timestamp": "2017-03-10T00:00:00Z"
+                  },
+                  "_id": "1",
+                  "_score": 1
+                }
+              ],
+              "total": 2,
+              "max_score": 1
+            },
+            "took": 0,
+            "timed_out": false
+          }
+        },
+        "chain": {
+          "watcher_history": {
+            "type": "search",
+            "status": "success",
+            "payload": {
+              "_shards": {
+                "total": 1,
+                "failed": 0,
+                "successful": 1,
+                "skipped": 0
+              },
+              "hits": {
+                "hits": [
+                  {
+                    "_index": ".watcher-history-7-2018.03.08",
+                    "_type": "doc",
+                    "_source": {
+                      "result": {
+                        "input": {
+                          "search": {
+                            "request": {
+                              "indices": [
+                                "my_test_index"
+                              ],
+                              "types": [],
+                              "body": {
+                                "query": {
+                                  "match_all": {}
+                                }
+                              },
+                              "search_type": "query_then_fetch"
+                            }
+                          },
+                          "payload": {
+                            "_shards": {
+                              "total": 5,
+                              "failed": 0,
+                              "successful": 5,
+                              "skipped": 0
+                            },
+                            "hits": {
+                              "hits": [
+                                {
+                                  "_index": "my_test_index",
+                                  "_type": "doc",
+                                  "_source": {
+                                    "@timestamp": "2018-03-10T00:00:00Z"
+                                  },
+                                  "_id": "2",
+                                  "_score": 1
+                                },
+                                {
+                                  "_index": "my_test_index",
+                                  "_type": "doc",
+                                  "_source": {
+                                    "@timestamp": "2017-03-10T00:00:00Z"
+                                  },
+                                  "_id": "1",
+                                  "_score": 1
+                                },
+                                {
+                                  "_index": "my_test_index",
+                                  "_type": "doc",
+                                  "_source": {
+                                    "@timestamp": "2019-03-10T00:00:00Z"
+                                  },
+                                  "_id": "3",
+                                  "_score": 1
+                                }
+                              ],
+                              "total": 3,
+                              "max_score": 1
+                            },
+                            "took": 0,
+                            "timed_out": false
+                          },
+                          "type": "search",
+                          "status": "success"
+                        },
+                        "condition": {
+                          "compare": {
+                            "resolved_values": {
+                              "ctx.payload.hits.total": 3
+                            }
+                          },
+                          "type": "compare",
+                          "met": true,
+                          "status": "success"
+                        },
+                        "execution_duration": 62,
+                        "actions": [
+                          {
+                            "transform": {
+                              "payload": {
+                                "_doc": [
+                                  {
+                                    "@timestamp": "2018-03-10T00:00:00Z"
+                                  }
+                                ]
+                              },
+                              "type": "script",
+                              "status": "success"
+                            },
+                            "index": {
+                              "response": [
+                                {
+                                  "result": "created",
+                                  "created": true,
+                                  "index": "my_test_index_dummy",
+                                  "id": "rElQBmIBPw9vPBku2S4q",
+                                  "type": "doc",
+                                  "version": 1
+                                }
+                              ]
+                            },
+                            "id": "index_test",
+                            "type": "index",
+                            "status": "success"
+                          }
+                        ],
+                        "execution_time": "2018-03-08T15:53:04.498Z"
+                      },
+                      "node": "rLfFAq3SRbK2NQQaOy89AA",
+                      "input": {
+                        "search": {
+                          "request": {
+                            "indices": [
+                              "my_test_index"
+                            ],
+                            "types": [],
+                            "body": {
+                              "query": {
+                                "match_all": {}
+                              }
+                            },
+                            "search_type": "query_then_fetch"
+                          }
+                        }
+                      },
+                      "condition": {
+                        "compare": {
+                          "ctx.payload.hits.total": {
+                            "gte": 0
+                          }
+                        }
+                      },
+                      "watch_id": "my_test_watcher",
+                      "messages": [],
+                      "state": "executed",
+                      "trigger_event": {
+                        "schedule": {
+                          "scheduled_time": "2018-03-08T15:53:04.309Z"
+                        },
+                        "triggered_time": "2018-03-08T15:53:04.498Z",
+                        "type": "schedule"
+                      },
+                      "status": {
+                        "last_checked": "2018-03-08T15:53:04.498Z",
+                        "state": {
+                          "active": true,
+                          "timestamp": "2018-03-08T15:52:59.308Z"
+                        },
+                        "last_met_condition": "2018-03-08T15:53:04.498Z",
+                        "execution_state": "executed",
+                        "actions": {
+                          "index_test": {
+                            "last_execution": {
+                              "timestamp": "2018-03-08T15:53:04.498Z",
+                              "successful": true
+                            },
+                            "ack": {
+                              "state": "ackable",
+                              "timestamp": "2018-03-08T15:53:04.498Z"
+                            },
+                            "last_successful_execution": {
+                              "timestamp": "2018-03-08T15:53:04.498Z",
+                              "successful": true
+                            }
+                          }
+                        },
+                        "version": -1
+                      }
+                    },
+                    "_id": "my_test_watcher_b0a8d6b1-07d4-4e40-8fb3-56296338345f-2018-03-08T15:53:04.498Z",
+                    "sort": [
+                      1520524384498
+                    ],
+                    "_score": null
+                  }
+                ],
+                "total": 1,
+                "max_score": null
+              },
+              "took": 0,
+              "timed_out": false
+            },
+            "search": {
+              "request": {
+                "search_type": "query_then_fetch",
+                "indices": [
+                  "<.watcher-history-7-{now/d{YYYY.MM.dd}}>"
+                ],
+                "types": [],
+                "body": {
+                  "query": {
+                    "match": {
+                      "watch_id": "my_test_watcher"
+                    }
+                  },
+                  "sort": [
+                    {
+                      "result.execution_time": {
+                        "order": "desc"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "my_test_index": {
+            "type": "search",
+            "status": "success",
+            "payload": {
+              "_shards": {
+                "total": 5,
+                "failed": 0,
+                "successful": 5,
+                "skipped": 0
+              },
+              "hits": {
+                "hits": [
+                  {
+                    "_index": "my_test_index",
+                    "_type": "doc",
+                    "_source": {
+                      "@timestamp": "2018-03-10T00:00:00Z",
+                      "triggered_time": "2018-03-08T15:56:22.645Z",
+                      "alert_id": "1520524582-0001-0001-0001-0000"
+                    },
+                    "_id": "2",
+                    "_score": 1
+                  },
+                  {
+                    "_index": "my_test_index",
+                    "_type": "doc",
+                    "_source": {
+                      "@timestamp": "2017-03-10T00:00:00Z"
+                    },
+                    "_id": "1",
+                    "_score": 1
+                  }
+                ],
+                "total": 2,
+                "max_score": 1
+              },
+              "took": 0,
+              "timed_out": false
+            },
+            "search": {
+              "request": {
+                "search_type": "query_then_fetch",
+                "indices": [
+                  "my_test_index"
+                ],
+                "types": [],
+                "body": {
+                  "query": {
+                    "range": {
+                      "@timestamp": {
+                        "to": "2018-03-08T15:56:22.645Z||+2400h"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "condition": {
+        "type": "compare",
+        "status": "success",
+        "met": true,
+        "compare": {
+          "resolved_values": {
+            "ctx.payload.my_test_index.hits.total": 2
+          }
+        }
+      },
+      "actions": [
+        {
+          "id": "index_test",
+          "type": "index",
+          "status": "success",
+          "transform": {
+            "type": "script",
+            "status": "success",
+            "payload": {
+              "_doc": [
+                {
+                  "@timestamp": "2018-03-10T00:00:00Z",
+                  "triggered_time": "2018-03-08T15:56:22.645Z",
+                  "alert_id": "1520524582-0001-0001-0001-0000"
+                }
+              ]
+            }
+          },
+          "index": {
+            "response": [
+              {
+                "created": true,
+                "result": "created",
+                "id": "b0lTBmIBPw9vPBku3zAq",
+                "version": 1,
+                "type": "doc",
+                "index": "my_test_index_after"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "messages": []
+  }
+}
+
+# now we check the target index
+#-----------------------------------
+GET my_test_index_after/_search
+
+
+# response - we can get 1 records here
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "my_test_index_after",
+        "_type": "doc",
+        "_id": "b0lTBmIBPw9vPBku3zAq",
+        "_score": 1,
+        "_source": {
+          "@timestamp": "2018-03-10T00:00:00Z",
+          "triggered_time": "2018-03-08T15:56:22.645Z",
+          "alert_id": "1520524582-0001-0001-0001-0000"
+        }
+      }
+    ]
+  }
+}
+
+
+# result descriptions
+#-----------------------------------
+# remember our test date range is 
+# [from] "last_successful_execution" - 1min   ("2018-03-08T15:52:04.498Z")
+# [to]   "ctx.trigger.scheduled_time" + 2400h (100 days, which is "2018-03-08T15:56:22.645Z" + 100days)
+
+# and from our data, we have 3 data
+# PUT my_test_index/doc/1 -> {"@timestamp":"2017-03-10T00:00:00Z"}
+# PUT my_test_index/doc/2 -> {"@timestamp":"2018-03-10T00:00:00Z"}
+# PUT my_test_index/doc/3 -> {"@timestamp":"2019-03-10T00:00:00Z"}
+
+# so we should have 1 hit (doc 2) here.
+
+
+
+
+# appendix - change the time range and search again
+#======================================================
+# [from] "last_successful_execution" - 1min  ("2018-03-08T15:52:04.498Z")
+# [to]   "ctx.trigger.scheduled_time" -1min  ("2018-03-08T15:55:22.645Z")
+
+# create watcher 
+# - note
+# we changed time range [from] "range":{"@timestamp":{"to":"{{ctx.trigger.scheduled_time}}||-1m"}}}
+#---------------------
+PUT _xpack/watcher/watch/my_test_watcher
+{"trigger":{"schedule":{"interval":"100h"}},"input":{"chain":{"inputs":[{"watcher_history":{"search":{"request":{"search_type":"query_then_fetch","indices":["<.watcher-history-7-{now/d{YYYY.MM.dd}}>"],"body":{"query":{"match":{"watch_id":"my_test_watcher"}},"sort":[{"result.execution_time":{"order":"desc"}}]}}}}},{"my_test_index":{"search":{"request":{"search_type":"query_then_fetch","indices":["my_test_index"],"body":{"query":{"range":{"@timestamp":{"to":"{{ctx.trigger.scheduled_time}}||-1m"}}}}}}}}]}},"condition":{"compare":{"ctx.payload.my_test_index.hits.total":{"gte":0}}},"transform":{},"actions":{"index_test":{"transform":{"script":"          // get last_successful_execution timestamp convert it to epoch (for comparing purpose)\n          // - note : we get this value from watcher history index (we have history here because we generated it in the above steps)\n          String _last_successful_execution_time;\n          _last_successful_execution_time = ctx.payload.watcher_history.hits.hits[0]._source.status.actions.index_test.last_successful_execution.timestamp;\n          long last_successful_execution_time_epoch = OffsetDateTime.parse(_last_successful_execution_time).toEpochSecond();\n          long last_successful_execution_time_epoch_one_minute_before = last_successful_execution_time_epoch - 60;\n          \n          // declare the list we need to return\n          def list = [];\n          \n          // proceed each data in our data index (and we check the time range inside this for loop)\n          for (int i = 0; i < ctx.payload.my_test_index.hits.hits.length; ++i) {\n            \n            // get @timestamp data and convert it to epoch (for comparing purpose)\n            // - note : we get this value from the data index\n            String _timestamp = ctx.payload.my_test_index.hits.hits[i]._source['@timestamp'];\n            long _timestamp_epoch = OffsetDateTime.parse(_timestamp).toEpochSecond();\n            \n            // only proceed the data, which range of '@timestamp' is after last_successful_execution timestamp\n            //if (_timestamp_epoch > last_successful_execution_time_epoch_one_minute_before) { continue; }\n            if (last_successful_execution_time_epoch_one_minute_before < _timestamp_epoch) { \n\n              //---------------\n              // do other jobs\n              //---------------\n              // add triggered_time            \n              ctx.payload.my_test_index.hits.hits[i]._source.triggered_time = ctx.trigger.triggered_time;\n  \n              // add alert_id with the following format\n              // <Unix epoch timestamp of triggered time>-0001-0001-0001-<i of ctx.payload.hits.hits[i] \n              // (right justified, leading zeros, the number of characters is 4)> \n              //----------------------------------------------------------------------------        \n              // prepare <unix epoch timestamp of triggered time\n              String triggered_time = ctx.trigger.triggered_time.toString();\n              OffsetDateTime odt = OffsetDateTime.parse(triggered_time); \n              long epochTriggeredTime = odt.toEpochSecond();\n              String epochTriggeredTimeStr = epochTriggeredTime.toString();\n  \n              // prepare right justified sequential id\n              String rightJustifiedIdStr = i.toString();\n              String zeroPadding = '';\n              if (i < 10) { zeroPadding = '000'; }\n              else if (10 <= i && i < 99 ) { zeroPadding = '00'; }\n              else if (100 <= i && i < 999 ) { zeroPadding = '0'; }\n              else { zeroPadding = ''; }\n              rightJustifiedIdStr = zeroPadding + rightJustifiedIdStr;\n  \n              // prepare the final alert_id\n              ctx.payload.my_test_index.hits.hits[i]._source.alert_id = epochTriggeredTimeStr + '-0001-0001-0001-' + rightJustifiedIdStr;\n  \n              // add item to _list\n              list.add(ctx.payload.my_test_index.hits.hits[i]._source);\n            }\n          }  \n\n          // return this list as new payload, for indexing purpose\n          // and we index this new payload to another new index\n          return [ '_doc' : list];"},"index":{"index":"my_test_index_after","doc_type":"doc"}}}}
+
+
+# response - we registered the watcher successfully
+{
+  "_id": "my_test_watcher",
+  "_version": 6,
+  "created": false
+}
+
+
+
+# now we execute the watcher again
+#------------------------------------------------
+PUT _xpack/watcher/watch/my_test_watcher/_execute
+
+
+# response (only action part) - now we can see no result hit here ^_^
+{
+      "actions": [
+        {
+          "id": "index_test",
+          "type": "index",
+          "status": "failure",
+          "error": {
+            "root_cause": [
+              {
+                "type": "action_request_validation_exception",
+                "reason": "Validation Failed: 1: no requests added;"
+              }
+            ],
+            "type": "action_request_validation_exception",
+            "reason": "Validation Failed: 1: no requests added;"
+          }
+        }
+      ]
+    },
+    "messages": []
+  }
+}
+
