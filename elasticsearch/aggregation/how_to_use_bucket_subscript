@@ -118,3 +118,47 @@ GET my_test_bucketscript/_search
   }
 }
 
+
+# response - get total result correctly
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 4,
+    "max_score": 0,
+    "hits": []
+  },
+  "aggregations": {
+    "result": {
+      "doc_count_error_upper_bound": 0,
+      "sum_other_doc_count": 0,
+      "buckets": [
+        {
+          "key": "total value aggregation",
+          "doc_count": 4,
+          "filter1": {
+            "doc_count": 2,
+            "sum_xxx_value": {
+              "value": 33
+            }
+          },
+          "filter2": {
+            "doc_count": 2,
+            "sum_yyy_value": {
+              "value": 77
+            }
+          },
+          "total_value": {
+            "value": 110
+          }
+        }
+      ]
+    }
+  }
+}
