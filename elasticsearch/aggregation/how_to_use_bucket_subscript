@@ -1,0 +1,120 @@
+#--------------------------------
+# how to use bucket_script
+#--------------------------------
+# prepare data
+DELETE my_test_bucketscript
+PUT my_test_bucketscript
+{
+  "mappings": {
+    "doc": {
+      "properties": {
+        "name": {
+          "type": "keyword"
+        },
+        "value": {
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+
+PUT my_test_bucketscript/doc/1
+{
+  "name": "XXX",
+  "value": 11
+}
+
+PUT my_test_bucketscript/doc/2
+{
+  "name": "XXX",
+  "value": 22
+}
+
+PUT my_test_bucketscript/doc/3
+{
+  "name": "YYY",
+  "value": 33
+}
+
+PUT my_test_bucketscript/doc/4
+{
+  "name": "YYY",
+  "value": 44
+}
+
+
+# check data
+GET my_test_bucketscript/_search?size=0
+
+# response - 4 hits
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 4,
+    "max_score": 0,
+    "hits": []
+  }
+}
+
+
+# test bucket_script
+#------------------------------
+GET my_test_bucketscript/_search
+{
+  "size": 0,
+  "aggs": {
+    "result": {
+      "terms": {
+        "script": "'total value aggregation'"
+      },
+      "aggs": {
+        "filter1": {
+          "filter": {
+            "term": {
+              "name": "XXX"
+            }
+          },
+          "aggs": {
+            "sum_xxx_value": {
+              "sum": {
+                "field": "value"
+              }
+            }
+          }
+        },
+        "filter2": {
+          "filter": {
+            "term": {
+              "name": "YYY"
+            }
+          },
+          "aggs": {
+            "sum_yyy_value": {
+              "sum": {
+                "field": "value"
+              }
+            }
+          }
+        },
+        "total_value": {
+          "bucket_script": {
+            "buckets_path": {
+              "my_sum1": "filter1>sum_xxx_value",
+              "my_sum2": "filter2>sum_yyy_value"
+            },
+            "script": "params.my_sum1 + params.my_sum2"
+          }
+        }
+      }
+    }
+  }
+}
+
