@@ -1,0 +1,55 @@
+#--------------------------------------------------------
+# how_to_use_logstash_multi_file_input_and_elasticsearch_output_plugin
+# ES version : 5.6.7
+# LS version : 5.6.5
+#--------------------------------------------------------
+
+# 1. put this file to logstash config folder
+#--------------------------------------------------------
+
+# 2. put json input file into logstash folder
+#--------------------------------------------------------
+# cd /path/to/logstash
+# rm -rf testdata1 && mkdir testdata1 && echo '{"timestamp": "2018-01-01 01:23:45 +0000 UTC","id": "001","mail": "aaa@aa","性別": "男性","年齢": 40,"職業": "エンジニア","other": [false,true]}' > testdata1/testdata1.json
+# rm -rf testdata2 && mkdir testdata2 && echo '{"timestamp": "2018-01-01 01:23:45 +0000 UTC","id": "001","mail": "aaa@aa","性別": "男性","年齢": 40,"職業": "エンジニア","other": [false,true]}' > testdata2/testdata2.json
+
+# 2. run the following command
+#--------------------------------------------------------
+# ./bin/logstash -f config/logstash-file-input-json.conf
+
+input {
+   file {
+     codec => json
+     type => "testdata1"
+     tags => "tag_testdata1"
+     path => "/Users/kuniyasu/Work/installer/logstash/logstash-5.6.5/testdata1/*.json"
+     start_position => "beginning"
+     sincedb_path => "/Users/kuniyasu/Work/installer/logstash/logstash-5.6.5/testdata1/sincedb"
+   }
+
+   file {
+     codec => json
+     type => "testdata2"
+     tags => "tag_testdata2"
+     path => "/Users/kuniyasu/Work/installer/logstash/logstash-5.6.5/testdata2/*.json"
+     start_position => "beginning"
+     sincedb_path => "/Users/kuniyasu/Work/installer/logstash/logstash-5.6.5/testdata2/sincedb"
+   }
+}
+
+filter {
+  grok {
+    match => { "message" => "%{GREEDYDATA}"}
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+  elasticsearch {
+    hosts => [ "localhost:9200" ]
+    index => "my_test_logstash"  
+    user => elastic
+    password => changeme
+  }
+}
+
