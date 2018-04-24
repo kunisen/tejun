@@ -1,0 +1,124 @@
+#------------------------------
+# how_to_use_synonym
+# tested env: ES 6.2.3
+#------------------------------
+
+
+# put settings and mappings
+DELETE my_test_synonym
+PUT my_test_synonym
+{
+  "settings": {
+    "analysis": {
+      "filter": {
+        "synonym": {
+          "type": "synonym",
+          "synonyms": [
+            "i-pod, i pod => ipod",
+            "universe, cosmos"
+          ]
+        }
+      },
+      "analyzer": {
+        "my_analyzer": {
+          "filter": [
+            "synonym"
+          ],
+          "tokenizer": "kuromoji_tokenizer"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "doc": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "analyzer": "my_analyzer"
+        }
+      }
+    }
+  }
+}
+
+# put data
+PUT my_test_synonym/doc/1
+{"title":"universe"}
+
+PUT my_test_synonym/doc/2
+{"title":"cosmos"}
+
+# search "universe"
+GET my_test_synonym/_search
+{
+  "query": {
+    "match": {
+      "title": "universe"
+    }
+  }
+}
+
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 0.46029136,
+    "hits": [
+      {
+        "_index": "my_test_synonym",
+        "_type": "doc",
+        "_id": "2",
+        "_score": 0.46029136,
+        "_source": {
+          "title": "cosmos"
+        }
+      },
+      {
+        "_index": "my_test_synonym",
+        "_type": "doc",
+        "_id": "1",
+        "_score": 0.46029136,
+        "_source": {
+          "title": "universe"
+        }
+      }
+    ]
+  }
+}
+
+
+# check query
+GET my_test_synonym/_validate/query?explain=true
+{
+  "query": {
+    "match": {
+      "title": "universe"
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_test_synonym",
+      "valid": true,
+      "explanation": "Synonym(title:cosmos title:universe)"
+    }
+  ]
+}
