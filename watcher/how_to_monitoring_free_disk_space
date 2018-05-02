@@ -1,0 +1,516 @@
+----------------------------------------------------------------------
+how_to_monitoring_free_disk_space
+----------------------------------------------------------------------
+
+
+・1. Create watcher in Kibana - Management - Watcher - Create new watch - Advanced Watch
+----------------------------------------------------------------------
+[Examples]
+・ID : my_test_watcher_1 
+・Name : monitoring_free_disk_space
+
+・2. Copy watcher.json body into Watch JSON ( Syntax ) section
+----------------------------------------------------------------------
+[link of watcher.json]
+https://github.com/elastic/examples/tree/master/Alerting/Sample%20Watches/monitoring_free_disk_space
+
+[body of watcher.json]
+{
+  "trigger": {
+    "schedule": {
+      "interval": "5m"
+    }
+  },
+  "metadata": {
+    "lower_bound": 0.5
+  },
+  "input": {
+    "search": {
+      "request": {
+        "indices": ".monitoring-es-test",
+        "types": "doc",
+        "body": {
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "range": {
+                    "timestamp": {
+                      "gte": "{{ctx.trigger.scheduled_time}}||-5m"
+                    }
+                  }
+                },
+                {
+                  "term": {
+                    "type" : "node_stats"
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "nodes": {
+              "terms": {
+                "field": "source_node.name",
+                "size": 100
+              },
+              "aggs": {
+                "total_in_bytes": {
+                  "max": {
+                    "field": "node_stats.fs.total.total_in_bytes"
+                  }
+                },
+                "available_in_bytes": {
+                  "max": {
+                    "field": "node_stats.fs.total.available_in_bytes"
+                  }
+                },
+                "free_ratio": {
+                  "bucket_script": {
+                    "buckets_path": {
+                      "available_in_bytes": "available_in_bytes",
+                      "total_in_bytes": "total_in_bytes"
+                    },
+                    "script": "params.available_in_bytes / params.total_in_bytes"
+                  }
+                }
+              }
+            }
+          },
+          "size": 0
+        }
+      }
+    }
+  },
+  "throttle_period": "30m",
+  "condition": {
+    "script": {
+      "id": "condition"
+    }
+  },
+  "transform": {
+    "script": {
+      "id": "transform"
+    }
+  },
+  "actions": {
+    "log": {
+      "logging": {
+        "text": "Available space on Filesystem is below recommended ratio of {{ctx.metadata.lower_bound}} for following nodes: {{#ctx.payload._value}}For node {{node_name}}: {{available_in_gb}}gb of {{total_in_gb}}gb is available:{{/ctx.payload._value}}"
+      }
+    }
+  }
+}
+
+
+
+・3. Replace condition section by condition.json
+----------------------------------------------------------------------
+[link of condition.json]
+https://github.com/elastic/examples/blob/master/Alerting/Sample%20Watches/monitoring_free_disk_space/scripts/condition.json
+
+[how to replace]
+・before
+^^^^^^^^^^
+  "condition": {
+    "script": {
+      "id": "condition"
+    }
+  },
+
+
+・after
+^^^^^^^^^^^
+  "condition": {
+	  "script": {
+	    "lang": "painless",
+	    "source": "return ctx.payload.aggregations.nodes.buckets.stream().anyMatch(it -> it.free_ratio.value < ctx.metadata.lower_bound);"
+	  }
+  },
+
+
+
+・4. Replace transform section by transform.json
+----------------------------------------------------------------------
+[link of transform.json]
+https://github.com/elastic/examples/blob/master/Alerting/Sample%20Watches/monitoring_free_disk_space/scripts/transform.json
+
+[how to replace]
+・before
+^^^^^^^^^^
+  "transform": {
+    "script": {
+      "id": "transform"
+    }
+  },
+
+
+・after
+^^^^^^^^^^^
+  "transform": {
+	  "script": {
+	    "lang": "painless",
+	    "source": "ctx.payload.aggregations.nodes.buckets.stream().filter(it -> it.free_ratio.value < ctx.metadata.lower_bound).map(it -> ['node_name':it.key,'available_in_gb':Math.round((it.available_in_bytes.value/1073741824) * 100)/100,'total_in_gb':Math.round((it.total_in_bytes.value/1073741824)* 100)/100]).collect(Collectors.toList());"
+	  }
+  },
+
+
+
+・5. The full watcher after the replacement
+----------------------------------------------------------------------
+{
+  "trigger": {
+    "schedule": {
+      "interval": "5m"
+    }
+  },
+  "input": {
+    "search": {
+      "request": {
+        "search_type": "query_then_fetch",
+        "indices": [
+          ".monitoring-es-*"
+        ],
+        "types": [
+          "doc"
+        ],
+        "body": {
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "range": {
+                    "timestamp": {
+                      "gte": "{{ctx.trigger.scheduled_time}}||-5m"
+                    }
+                  }
+                },
+                {
+                  "term": {
+                    "type": "node_stats"
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "nodes": {
+              "terms": {
+                "field": "source_node.name",
+                "size": 100
+              },
+              "aggs": {
+                "total_in_bytes": {
+                  "max": {
+                    "field": "node_stats.fs.total.total_in_bytes"
+                  }
+                },
+                "available_in_bytes": {
+                  "max": {
+                    "field": "node_stats.fs.total.available_in_bytes"
+                  }
+                },
+                "free_ratio": {
+                  "bucket_script": {
+                    "buckets_path": {
+                      "available_in_bytes": "available_in_bytes",
+                      "total_in_bytes": "total_in_bytes"
+                    },
+                    "script": "params.available_in_bytes / params.total_in_bytes"
+                  }
+                }
+              }
+            }
+          },
+          "size": 0
+        }
+      }
+    }
+  },
+  "condition": {
+    "script": {
+      "source": "return ctx.payload.aggregations.nodes.buckets.stream().anyMatch(it -> it.free_ratio.value < ctx.metadata.lower_bound);",
+      "lang": "painless"
+    }
+  },
+  "actions": {
+    "log": {
+      "logging": {
+        "level": "info",
+        "text": "Available space on Filesystem is below recommended ratio of {{ctx.metadata.lower_bound}} for following nodes: {{#ctx.payload._value}}For node {{node_name}}: {{available_in_gb}}gb of {{total_in_gb}}gb is available:{{/ctx.payload._value}}"
+      }
+    }
+  },
+  "metadata": {
+    "lower_bound": 0.5
+  },
+  "transform": {
+    "script": {
+      "source": "ctx.payload.aggregations.nodes.buckets.stream().filter(it -> it.free_ratio.value < ctx.metadata.lower_bound).map(it -> ['node_name':it.key,'available_in_gb':Math.round((it.available_in_bytes.value/1073741824) * 100)/100,'total_in_gb':Math.round((it.total_in_bytes.value/1073741824)* 100)/100]).collect(Collectors.toList());",
+      "lang": "painless"
+    }
+  },
+  "throttle_period_in_millis": 1800000
+}
+
+
+
+・6. Save watcher and test it
+----------------------------------------------------------------------
+Click the "Save" button on the top right of the window to save it.
+After that, we can run it from Watches list, by clicking "my_test_watcher_1" (the ID we set in this example), and then click `Edit` - `Simulate` - `Simulate Watch`.
+Please note this is the simulation of watcher execution and will not actually get executed.
+
+In additional, here is the simulation result in my lab.
+```
+{
+  "watch_id": "_inlined_",
+  "node": "R7GEhB9JQMif_1tKLg1svA",
+  "state": "executed",
+  "status": {
+    "state": {
+      "active": true,
+      "timestamp": "2018-05-02T06:02:32.069Z"
+    },
+    "last_checked": "2018-05-02T06:02:32.070Z",
+    "last_met_condition": "2018-05-02T06:02:32.070Z",
+    "actions": {
+      "log": {
+        "ack": {
+          "timestamp": "2018-05-02T06:02:32.070Z",
+          "state": "ackable"
+        },
+        "last_execution": {
+          "timestamp": "2018-05-02T06:02:32.070Z",
+          "successful": true
+        },
+        "last_successful_execution": {
+          "timestamp": "2018-05-02T06:02:32.070Z",
+          "successful": true
+        }
+      }
+    },
+    "execution_state": "executed",
+    "version": -1
+  },
+  "trigger_event": {
+    "type": "manual",
+    "triggered_time": "2018-05-02T06:02:32.069Z",
+    "manual": {
+      "schedule": {
+        "scheduled_time": "2018-05-02T06:02:32.069Z"
+      }
+    }
+  },
+  "input": {
+    "search": {
+      "request": {
+        "search_type": "query_then_fetch",
+        "indices": [
+          ".monitoring-es-*"
+        ],
+        "types": [
+          "doc"
+        ],
+        "body": {
+          "query": {
+            "bool": {
+              "filter": [
+                {
+                  "range": {
+                    "timestamp": {
+                      "gte": "{{ctx.trigger.scheduled_time}}||-5m"
+                    }
+                  }
+                },
+                {
+                  "term": {
+                    "type": "node_stats"
+                  }
+                }
+              ]
+            }
+          },
+          "aggs": {
+            "nodes": {
+              "terms": {
+                "field": "source_node.name",
+                "size": 100
+              },
+              "aggs": {
+                "total_in_bytes": {
+                  "max": {
+                    "field": "node_stats.fs.total.total_in_bytes"
+                  }
+                },
+                "available_in_bytes": {
+                  "max": {
+                    "field": "node_stats.fs.total.available_in_bytes"
+                  }
+                },
+                "free_ratio": {
+                  "bucket_script": {
+                    "buckets_path": {
+                      "available_in_bytes": "available_in_bytes",
+                      "total_in_bytes": "total_in_bytes"
+                    },
+                    "script": "params.available_in_bytes / params.total_in_bytes"
+                  }
+                }
+              }
+            }
+          },
+          "size": 0
+        }
+      }
+    }
+  },
+  "condition": {
+    "script": {
+      "source": "return ctx.payload.aggregations.nodes.buckets.stream().anyMatch(it -> it.free_ratio.value < ctx.metadata.lower_bound);",
+      "lang": "painless"
+    }
+  },
+  "metadata": {
+    "lower_bound": 0.5,
+    "name": "monitoring_free_disk_space",
+    "xpack": {
+      "type": "json"
+    }
+  },
+  "result": {
+    "execution_time": "2018-05-02T06:02:32.070Z",
+    "execution_duration": 10,
+    "input": {
+      "type": "search",
+      "status": "success",
+      "payload": {
+        "_shards": {
+          "total": 8,
+          "failed": 0,
+          "successful": 8,
+          "skipped": 0
+        },
+        "hits": {
+          "hits": [],
+          "total": 30,
+          "max_score": 0
+        },
+        "took": 9,
+        "timed_out": false,
+        "aggregations": {
+          "nodes": {
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0,
+            "buckets": [
+              {
+                "free_ratio": {
+                  "value": 0.3126164716606422
+                },
+                "doc_count": 30,
+                "total_in_bytes": {
+                  "value": 498954403840
+                },
+                "available_in_bytes": {
+                  "value": 155981365248
+                },
+                "key": "node-1"
+              }
+            ]
+          }
+        }
+      },
+      "search": {
+        "request": {
+          "search_type": "query_then_fetch",
+          "indices": [
+            ".monitoring-es-*"
+          ],
+          "types": [
+            "doc"
+          ],
+          "body": {
+            "query": {
+              "bool": {
+                "filter": [
+                  {
+                    "range": {
+                      "timestamp": {
+                        "gte": "2018-05-02T06:02:32.069Z||-5m"
+                      }
+                    }
+                  },
+                  {
+                    "term": {
+                      "type": "node_stats"
+                    }
+                  }
+                ]
+              }
+            },
+            "aggs": {
+              "nodes": {
+                "terms": {
+                  "field": "source_node.name",
+                  "size": 100
+                },
+                "aggs": {
+                  "total_in_bytes": {
+                    "max": {
+                      "field": "node_stats.fs.total.total_in_bytes"
+                    }
+                  },
+                  "available_in_bytes": {
+                    "max": {
+                      "field": "node_stats.fs.total.available_in_bytes"
+                    }
+                  },
+                  "free_ratio": {
+                    "bucket_script": {
+                      "buckets_path": {
+                        "available_in_bytes": "available_in_bytes",
+                        "total_in_bytes": "total_in_bytes"
+                      },
+                      "script": "params.available_in_bytes / params.total_in_bytes"
+                    }
+                  }
+                }
+              }
+            },
+            "size": 0
+          }
+        }
+      }
+    },
+    "condition": {
+      "type": "script",
+      "status": "success",
+      "met": true
+    },
+    "transform": {
+      "type": "script",
+      "status": "success",
+      "payload": {
+        "_value": [
+          {
+            "available_in_gb": 145,
+            "node_name": "node-1",
+            "total_in_gb": 464
+          }
+        ]
+      }
+    },
+    "actions": [
+      {
+        "id": "log",
+        "type": "logging",
+        "status": "simulated",
+        "logging": {
+          "logged_text": "Available space on Filesystem is below recommended ratio of 0.5 for following nodes: For node node-1: 145gb of 464gb is available:"
+        }
+      }
+    ]
+  },
+  "messages": []
+}
+```
