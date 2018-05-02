@@ -1,10 +1,12 @@
 ### 1. Create watcher in Kibana - Management - Watcher - Create new watch - Advanced Watch
+---
 Examples: 
-ID : my_test_watcher_1
-Name : monitoring_free_disk_space
+・ID : my_test_watcher_1
+・Name : monitoring_free_disk_space
 
 
-### 2. Copy `watcher.json` body into `Watch JSON ( Syntax ) section
+### 2. Copy `watcher.json` body into `Watch JSON ( Syntax ) section`
+---
 https://github.com/elastic/examples/tree/master/Alerting/Sample%20Watches/monitoring_free_disk_space
 
 Here is the body of watcher.json
