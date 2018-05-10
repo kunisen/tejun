@@ -1,0 +1,167 @@
+#------------------------------------------
+# how_to_use_phrase_slop_parameter
+# - tested env : ES 6.2.2
+#------------------------------------------
+# prepare mapping
+DELETE my_index_slop
+PUT my_index_slop
+{
+  "aliases": {},
+  "mappings": {
+    "t": {
+      "properties": {
+        "body": {
+          "type": "text",
+          "analyzer": "kuromoji"
+        }
+      }
+    }
+  },
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "0"
+    }
+  }
+}
+
+
+# prepare data
+PUT my_index_slop/t/1
+{
+  "body": "\"東京工業大学\""
+}
+
+# phrase search with phrase_slop: 0
+GET my_index_slop/_search
+{
+  "query": {
+    "query_string": {
+      "default_field": "body",
+      "query": "\"東京大学\"",
+      "default_operator": "AND",
+      "phrase_slop": 0
+    }
+  }
+}
+
+# response
+{
+  "took": 0,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 0,
+    "max_score": null,
+    "hits": []
+  }
+}
+
+
+# phrase search with phrase_slop: 1000
+GET my_index_slop/_search
+{
+  "query": {
+    "query_string": {
+      "default_field": "body",
+      "query": "\"東京大学\"",
+      "default_operator": "AND",
+      "phrase_slop": 1000
+    }
+  }
+}
+
+# response
+{
+  "took": 1,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1.4629316,
+    "hits": [
+      {
+        "_index": "my_index_slop",
+        "_type": "t",
+        "_id": "1",
+        "_score": 1.4629316,
+        "_source": {
+          "body": """"東京工業大学""""
+        }
+      }
+    ]
+  }
+}
+
+
+# check lucene query
+# - phrase search with phrase_slop: 0
+GET my_index_slop/_validate/query?explain=true
+{
+  "query": {
+    "query_string": {
+      "default_field": "body",
+      "query": "\"東京大学\"",
+      "default_operator": "AND",
+      "phrase_slop": 0
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_index_slop",
+      "valid": true,
+      "explanation": "spanOr([spanNear([body:東京, body:大学], 0, true), body:東京大学])"
+    }
+  ]
+}
+
+# - phrase search with phrase_slop: 1000
+GET my_index_slop/_validate/query?explain=true
+{
+  "query": {
+    "query_string": {
+      "default_field": "body",
+      "query": "\"東京大学\"",
+      "default_operator": "AND",
+      "phrase_slop": 1000
+    }
+  }
+}
+
+# response
+{
+  "valid": true,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "explanations": [
+    {
+      "index": "my_index_slop",
+      "valid": true,
+      "explanation": "spanOr([spanNear([body:東京, body:大学], 1000, true), body:東京大学])"
+    }
+  ]
+}
+
