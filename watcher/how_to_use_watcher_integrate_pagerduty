@@ -1,0 +1,94 @@
+Q.
+====
+how exactly watcher event created through UI in Kibana will be passed to PagerDuty?
+
+A
+=====
+To let the event to be triggered, you need to set the condition in watcher "condition" part.
+https://www.elastic.co/guide/en/x-pack/6.1/condition.html
+
+And if the event is triggered, then the API service of PagerDuty will be internally called and the alert message will be sent according to your definition in "action" part.
+https://www.elastic.co/guide/en/x-pack/6.1/actions-pagerduty.html#configuring-pagerduty-actions
+
+Additional information 1
+=========================
+Here is an example of how to use this in elasticsearch 6.x.
+Hope it will help.
+And remember to test it in your dev environment before running it in production.
+
+1. Setup PagerDuty account and copy your integration key
+------------------------------------------------------------
+This is a PagerDuty talk, so let me skip this part.
+
+2. Add the integration key to your elasticsearch.yml
+------------------------------------------------------------
+Read the following document and set your PagerDuty account.
+
+https://www.elastic.co/guide/en/x-pack/6.1/actions-pagerduty.html#configuring-pagerduty
+note: Put your "integration key" to the "service_api_key" part.
+
+3. Restart your elasticsearch cluster to let this setting take effect.
+--------------------------------------------------------------------------------
+You need to restart your all nodes to let this configuration take effect.
+
+4. Create a test index
+-------------------------
+Run the following request in Kibana - Dev Tools.
+
+POST my_test/doc
+{"title":"aaaa"}
+
+5. Create a watcher event 
+-----------------------------
+Here is a simple watcher example to trigger all events defined if the number of indices is greater than 0 in every 5 seconds.
+And the action is to let PagerDuty API service send a "TEST : Main system down now, please check!" message to the user.
+
+request 
+^^^^^^^^^^
+PUT _xpack/watcher/watch/my_test
+{
+  "trigger": {
+    "schedule": {
+      "interval": "5s"
+    }
+  },
+  "input": {
+    "search": {
+      "request": {
+        "indices": [
+          "my_test"
+        ],
+        "body": {
+          "query": {
+            "match_all": {}
+          }
+        }
+      }
+    }
+  },
+  "condition": {
+    "compare": {
+      "ctx.payload.hits.total": {
+        "gte": 0
+      }
+    }
+  },
+  "actions": {
+    "notify-pagerduty": {
+      "throttle_period": "5s",
+      "pagerduty": {
+        "description": "TEST : Main system down now, please check!"
+      }
+    }
+  }
+}
+
+6. Check the result
+-----------------------
+You can check the result in the PagerDuty page.
+Here is the screenshot in my lab (00172421_screenshot.png).
+
+Additional Information 2
+=====================
+We have some good watcher examples in this repo. By checking those you could have a better start.
+https://github.com/elastic/examples/tree/master/Alerting/Sample%20Watches
