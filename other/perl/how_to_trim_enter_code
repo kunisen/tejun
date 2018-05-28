@@ -1,0 +1,1 @@
+cat kore | perl -pe 's/\n//g'

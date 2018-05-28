@@ -1,7 +1,8 @@
-#----------------
-# watcher sample : use watcher to indexing a new index separately
-#----------------
-# put some data
+## A simple example of how to use watcher result to indexing to a new index separately
+
+### prepare data
+
+```
 DELETE my_test
 PUT my_test/doc/1
 {"number": 1}
@@ -11,11 +12,13 @@ PUT my_test/doc/2
 
 PUT my_test/doc/3
 {"number": 3}
+```
 
-# search "aaaa"
+### check data
+```
 GET my_test/_search
 
-# result
+# result - we have data fed successfully.
 {
   "took": 1,
   "timed_out": false,
@@ -59,13 +62,19 @@ GET my_test/_search
     ]
   }
 }
+```
 
+### prepare & execute watcher
 
-# prepare for watcher
-# condition : if hits total >= 0
-# transform : n/a
-# action    : 1. output some messages to console
-#             2. indexing data to another new index per document
+**condition** : if hits total >= 0
+
+**transform** : n/a
+
+**action**    :
+1. output some messages to console
+2. indexing data to another new index per document
+
+```
 DELETE _xpack/watcher/watch/my_test_watcher
 PUT _xpack/watcher/watch/my_test_watcher
 {
@@ -107,7 +116,7 @@ PUT _xpack/watcher/watch/my_test_watcher
           for (int i = 0; i < ctx.payload.hits.hits.length; ++i) {
             // copy the source field to new index
             ctx.payload.hits.hits[i] = ctx.payload.hits.hits[i]._source;
-            
+
             // add a new field to new index
             ctx.payload.hits.hits[i].test_field = i;
           }  
@@ -127,9 +136,12 @@ POST _xpack/watcher/watch/my_test_watcher/_execute
 
 # result from console
 # [2018-01-24T17:26:38,502][INFO ][o.e.x.w.a.l.ExecutableLoggingAction] [buvHyIV] watcher is running
+```
 
+### check the new index
+**We will find my_test2 index are created successfully.**
 
-# check the new index
+```
 DELETE my_test2
 GET my_test2/_search
 
@@ -180,4 +192,4 @@ GET my_test2/_search
     ]
   }
 }
-
+```
