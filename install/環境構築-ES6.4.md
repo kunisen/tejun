@@ -1,4 +1,4 @@
-# Elastic Stack 6.4 + SSL 有効化の構築手順
+# Elastic Stack 6.4 + SSL 有効化の構築手順 (現状は elasticsearch のみ完了)
 
 ## 環境設定 (VM ごとに立ち上げ後に実施)
 
