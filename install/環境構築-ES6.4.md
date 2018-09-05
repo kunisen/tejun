@@ -85,7 +85,7 @@ cd $KIBANA_HOME
 sudo sh -c "echo 'node.name: node1' >> $ES_PATH_CONF/elasticsearch.yml"
 
 #------------------------------
-# trial license を適用 ★
+# trial license を適用 
 #------------------------------
 sudo systemctl start elasticsearch
 sleep 60
@@ -178,7 +178,7 @@ curl http://localhost:9200/_cat/nodes?v -u elastic:changeme -k
 sudo systemctl stop elasticsearch.service
 sleep 60
 
-# network.host を設定 ★
+# network.host を設定 
 sudo sh -c "echo 'network.host: _site_' >> $ES_PATH_CONF/elasticsearch.yml"
 
 # discovery 関連の設定
@@ -249,7 +249,7 @@ sudo sh -c "echo 'node.name: node3' >> $ES_PATH_CONF/elasticsearch.yml"
 sudo scp -r kuniyasu_sen@10.146.0.3:/etc/elasticsearch/certificate /etc/elasticsearch/
 
 #------------------------------
-# trial license を適用 ★
+# trial license を適用 
 #------------------------------
 sudo systemctl start elasticsearch
 sleep 60
@@ -315,7 +315,7 @@ curl http://localhost:9200/_cat/nodes?v -u elastic:changeme -k
 sudo systemctl stop elasticsearch.service
 sleep 60
 
-# network.host を設定 ★
+# network.host を設定 
 sudo sh -c "echo 'network.host: _site_' >> $ES_PATH_CONF/elasticsearch.yml"
 
 # discovery 関連の設定
