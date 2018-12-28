@@ -1,0 +1,47 @@
+#=======================================================
+# Kibana UI の検索 query を ES curl 検索に変換する方法
+#=======================================================
+# 対象 index 例 : logstash-*
+
+# 1. slowlog を仕掛ける
+#--------------------------------
+PUT logstash-*/_settings
+{
+  "index.search.slowlog.threshold.query.debug": "0ms",
+  "index.search.slowlog.threshold.fetch.debug": "0ms"
+}
+
+
+# 2. 設定後、Kibana で検索
+#--------------------------------
+# Discover 画面で検索を実施
+
+
+# 3. 検索後、slowlog を止める
+# （これを実施しないと、log が膨大化し、ディスク圧迫のリスクがある）
+#--------------------------------
+PUT logstash-*/_settings
+{
+  "index.search.slowlog.threshold.query.debug": null,
+  "index.search.slowlog.threshold.fetch.debug": null
+}
+
+# 4. 実際の query を特定
+#--------------------------------
+# 4-1. ES log フォルダ配下から、slowlog の場所を特定し、slowlog のファイルを開く
+# 4-2. slowlog の中から下記のようなログが出力される
+# [2018-12-27T14:40:07,921][DEBUG][index.search.slowlog.fetch] [jni72Ql] [logstash-0][0] took[125.3ms], took_millis[125], total_hits[14005], types[], stats[], search_type[QUERY_THEN_FETCH], total_shards[1], source[{"size":500,"query":{"bool":{"must":[{"range":{"@timestamp":{"from":null,"to":null,"include_lower":true,"include_upper":true,"boost":1.0}}}],"filter":[{"match_all":{"boost":1.0}}],"adjust_pure_negative":true,"boost":1.0}},"version":true,"_source":{"includes":[],"excludes":[]},"stored_fields":"*","docvalue_fields":[{"field":"@timestamp","format":"date_time"},{"field":"relatedContent.article:modified_time","format":"date_time"},{"field":"relatedContent.article:published_time","format":"date_time"},{"field":"utc_time","format":"date_time"}],"script_fields":{},"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}],"aggregations":{"2":{"date_histogram":{"field":"@timestamp","time_zone":"Etc/UTC","interval":"1M","offset":0,"order":{"_key":"asc"},"keyed":false,"min_doc_count":1}}},"highlight":{"pre_tags":["@kibana-highlighted-field@"],"post_tags":["@/kibana-highlighted-field@"],"fragment_size":2147483647,"fields":{"*":{}}}}], id[], 
+
+# 4-3. source[ と ] で囲まれた部分を切り取って、Kibana Dev Tools に貼り付ける
+# 例えば下記のようになる
+GET logstash-*/_search
+{"size":500,"query":{"bool":{"must":[{"range":{"@timestamp":{"from":null,"to":null,"include_lower":true,"include_upper":true,"boost":1}}}],"filter":[{"match_all":{"boost":1}}],"adjust_pure_negative":true,"boost":1}},"version":true,"_source":{"includes":[],"excludes":[]},"stored_fields":"*","docvalue_fields":[{"field":"@timestamp","format":"date_time"},{"field":"relatedContent.article:modified_time","format":"date_time"},{"field":"relatedContent.article:published_time","format":"date_time"},{"field":"utc_time","format":"date_time"}],"script_fields":{},"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}],"aggregations":{"2":{"date_histogram":{"field":"@timestamp","time_zone":"Etc/UTC","interval":"1M","offset":0,"order":{"_key":"asc"},"keyed":false,"min_doc_count":1}}},"highlight":{"pre_tags":["@kibana-highlighted-field@"],"post_tags":["@/kibana-highlighted-field@"],"fragment_size":2147483647,"fields":{"*":{}}}}
+
+# 4-4 Dev Tools の query をマウスでクリックして、右側のレンチのアイコンをクリックし、Copy as cURL を選択。そしたら、下記のような curl のクエリが表示される。
+# curl -XGET "http://localhost:9200/logstash-*/_search" -H 'Content-Type: application/json' -d'
+{"size":500,"query":{"bool":{"must":[{"range":{"@timestamp":{"from":null,"to":null,"include_lower":true,"include_upper":true,"boost":1}}}],"filter":[{"match_all":{"boost":1}}],"adjust_pure_negative":true,"boost":1}},"version":true,"_source":{"includes":[],"excludes":[]},"stored_fields":"*","docvalue_fields":[{"field":"@timestamp","format":"date_time"},{"field":"relatedContent.article:modified_time","format":"date_time"},{"field":"relatedContent.article:published_time","format":"date_time"},{"field":"utc_time","format":"date_time"}],"script_fields":{},"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}],"aggregations":{"2":{"date_histogram":{"field":"@timestamp","time_zone":"Etc/UTC","interval":"1M","offset":0,"order":{"_key":"asc"},"keyed":false,"min_doc_count":1}}},"highlight":{"pre_tags":["@kibana-highlighted-field@"],"post_tags":["@/kibana-highlighted-field@"],"fragment_size":2147483647,"fields":{"*":{}}}}'
+
+# 5. curl で必要に応じて hostname や username / password を変更し、リクエストを投げる
+#--------------------------------
+curl -uelastic:changeme -XGET "https://node1:9200/logstash-*/_search" -H 'Content-Type: application/json' -d'
+{"size":500,"query":{"bool":{"must":[{"range":{"@timestamp":{"from":null,"to":null,"include_lower":true,"include_upper":true,"boost":1}}}],"filter":[{"match_all":{"boost":1}}],"adjust_pure_negative":true,"boost":1}},"version":true,"_source":{"includes":[],"excludes":[]},"stored_fields":"*","docvalue_fields":[{"field":"@timestamp","format":"date_time"},{"field":"relatedContent.article:modified_time","format":"date_time"},{"field":"relatedContent.article:published_time","format":"date_time"},{"field":"utc_time","format":"date_time"}],"script_fields":{},"sort":[{"@timestamp":{"order":"desc","unmapped_type":"boolean"}}],"aggregations":{"2":{"date_histogram":{"field":"@timestamp","time_zone":"Etc/UTC","interval":"1M","offset":0,"order":{"_key":"asc"},"keyed":false,"min_doc_count":1}}},"highlight":{"pre_tags":["@kibana-highlighted-field@"],"post_tags":["@/kibana-highlighted-field@"],"fragment_size":2147483647,"fields":{"*":{}}}}'
