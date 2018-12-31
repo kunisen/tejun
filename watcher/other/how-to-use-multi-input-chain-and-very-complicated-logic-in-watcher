@@ -879,8 +879,7 @@ PUT _xpack/watcher/watch/my_test_watcher/_execute
                   "_type": "doc",
                   "_source": {
                     "@timestamp": "2018-03-10T00:00:00Z",
-                    "triggered_time": "2018-03-08T15:56:22.645Z",
-                    "alert_id": "1520524582-0001-0001-0001-0000"
+                    "triggered_time": "2018-03-08T15:56:22.645Z"
                   },
                   "_id": "2",
                   "_score": 1
@@ -1139,8 +1138,7 @@ PUT _xpack/watcher/watch/my_test_watcher/_execute
                     "_type": "doc",
                     "_source": {
                       "@timestamp": "2018-03-10T00:00:00Z",
-                      "triggered_time": "2018-03-08T15:56:22.645Z",
-                      "alert_id": "1520524582-0001-0001-0001-0000"
+                      "triggered_time": "2018-03-08T15:56:22.645Z"
                     },
                     "_id": "2",
                     "_score": 1
@@ -1204,8 +1202,7 @@ PUT _xpack/watcher/watch/my_test_watcher/_execute
               "_doc": [
                 {
                   "@timestamp": "2018-03-10T00:00:00Z",
-                  "triggered_time": "2018-03-08T15:56:22.645Z",
-                  "alert_id": "1520524582-0001-0001-0001-0000"
+                  "triggered_time": "2018-03-08T15:56:22.645Z"
                 }
               ]
             }
@@ -1255,8 +1252,7 @@ GET my_test_index_after/_search
         "_score": 1,
         "_source": {
           "@timestamp": "2018-03-10T00:00:00Z",
-          "triggered_time": "2018-03-08T15:56:22.645Z",
-          "alert_id": "1520524582-0001-0001-0001-0000"
+          "triggered_time": "2018-03-08T15:56:22.645Z"
         }
       }
     ]
