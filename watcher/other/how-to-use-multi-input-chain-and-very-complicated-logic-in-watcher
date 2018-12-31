@@ -27,6 +27,9 @@ DELETE my_test_index_dummy
 DELETE my_test_index_after
 
 # watcher history index 
+####################################################################
+# YOU NEED TO USE .watcher-hisotry-9- for ES 6.5 and afterward
+####################################################################
 # DELETE <.watcher-history-7-{now/d{YYYY.MM.dd}}>
 DELETE %3C.watcher-history-7-%7Bnow%2Fd%7BYYYY.MM.dd%7D%7D%3E
 
