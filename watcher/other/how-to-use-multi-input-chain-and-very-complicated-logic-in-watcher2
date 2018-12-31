@@ -526,8 +526,33 @@ PUT _xpack/watcher/watch/my_test_watcher
               //---------------
               // do other jobs
               //---------------
-              // do other jobs ...
-
+              // add triggered_time            
+              ctx.payload.my_test_index.hits.hits[i]._source.triggered_time = ctx.trigger.triggered_time;
+  
+              // add alert_id with the following format
+              // <Unix epoch timestamp of triggered time>-0001-0001-0001-<i of ctx.payload.hits.hits[i] 
+              // (right justified, leading zeros, the number of characters is 4)> 
+              //----------------------------------------------------------------------------        
+              // prepare <unix epoch timestamp of triggered time
+              String triggered_time = ctx.trigger.triggered_time.toString();
+              OffsetDateTime odt = OffsetDateTime.parse(triggered_time); 
+              long epochTriggeredTime = odt.toEpochSecond();
+              String epochTriggeredTimeStr = epochTriggeredTime.toString();
+  
+              // prepare right justified sequential id
+              String rightJustifiedIdStr = i.toString();
+              String zeroPadding = '';
+              if (i < 10) { zeroPadding = '000'; }
+              else if (10 <= i && i < 99 ) { zeroPadding = '00'; }
+              else if (100 <= i && i < 999 ) { zeroPadding = '0'; }
+              else { zeroPadding = ''; }
+              rightJustifiedIdStr = zeroPadding + rightJustifiedIdStr;
+  
+              // prepare the final alert_id
+              ctx.payload.my_test_index.hits.hits[i]._source.alert_id = epochTriggeredTimeStr + '-0001-0001-0001-' + rightJustifiedIdStr;
+  
+              // add item to _list
+              list.add(ctx.payload.my_test_index.hits.hits[i]._source);
             }
           }  
 
@@ -1287,7 +1312,7 @@ GET my_test_index_after/_search
 # we changed time range [from] "range":{"@timestamp":{"to":"{{ctx.trigger.scheduled_time}}||-1m"}}}
 #---------------------
 PUT _xpack/watcher/watch/my_test_watcher
-# ...
+{"trigger":{"schedule":{"interval":"100h"}},"input":{"chain":{"inputs":[{"watcher_history":{"search":{"request":{"search_type":"query_then_fetch","indices":["<.watcher-history-7-{now/d{YYYY.MM.dd}}>"],"body":{"query":{"match":{"watch_id":"my_test_watcher"}},"sort":[{"result.execution_time":{"order":"desc"}}]}}}}},{"my_test_index":{"search":{"request":{"search_type":"query_then_fetch","indices":["my_test_index"],"body":{"query":{"range":{"@timestamp":{"to":"{{ctx.trigger.scheduled_time}}||-1m"}}}}}}}}]}},"condition":{"compare":{"ctx.payload.my_test_index.hits.total":{"gte":0}}},"transform":{},"actions":{"index_test":{"transform":{"script":"          // get last_successful_execution timestamp convert it to epoch (for comparing purpose)\n          // - note : we get this value from watcher history index (we have history here because we generated it in the above steps)\n          String _last_successful_execution_time;\n          _last_successful_execution_time = ctx.payload.watcher_history.hits.hits[0]._source.status.actions.index_test.last_successful_execution.timestamp;\n          long last_successful_execution_time_epoch = OffsetDateTime.parse(_last_successful_execution_time).toEpochSecond();\n          long last_successful_execution_time_epoch_one_minute_before = last_successful_execution_time_epoch - 60;\n          \n          // declare the list we need to return\n          def list = [];\n          \n          // proceed each data in our data index (and we check the time range inside this for loop)\n          for (int i = 0; i < ctx.payload.my_test_index.hits.hits.length; ++i) {\n            \n            // get @timestamp data and convert it to epoch (for comparing purpose)\n            // - note : we get this value from the data index\n            String _timestamp = ctx.payload.my_test_index.hits.hits[i]._source['@timestamp'];\n            long _timestamp_epoch = OffsetDateTime.parse(_timestamp).toEpochSecond();\n            \n            // only proceed the data, which range of '@timestamp' is after last_successful_execution timestamp\n            //if (_timestamp_epoch > last_successful_execution_time_epoch_one_minute_before) { continue; }\n            if (last_successful_execution_time_epoch_one_minute_before < _timestamp_epoch) { \n\n              //---------------\n              // do other jobs\n              //---------------\n              // add triggered_time            \n              ctx.payload.my_test_index.hits.hits[i]._source.triggered_time = ctx.trigger.triggered_time;\n  \n              // add alert_id with the following format\n              // <Unix epoch timestamp of triggered time>-0001-0001-0001-<i of ctx.payload.hits.hits[i] \n              // (right justified, leading zeros, the number of characters is 4)> \n              //----------------------------------------------------------------------------        \n              // prepare <unix epoch timestamp of triggered time\n              String triggered_time = ctx.trigger.triggered_time.toString();\n              OffsetDateTime odt = OffsetDateTime.parse(triggered_time); \n              long epochTriggeredTime = odt.toEpochSecond();\n              String epochTriggeredTimeStr = epochTriggeredTime.toString();\n  \n              // prepare right justified sequential id\n              String rightJustifiedIdStr = i.toString();\n              String zeroPadding = '';\n              if (i < 10) { zeroPadding = '000'; }\n              else if (10 <= i && i < 99 ) { zeroPadding = '00'; }\n              else if (100 <= i && i < 999 ) { zeroPadding = '0'; }\n              else { zeroPadding = ''; }\n              rightJustifiedIdStr = zeroPadding + rightJustifiedIdStr;\n  \n              // prepare the final alert_id\n              ctx.payload.my_test_index.hits.hits[i]._source.alert_id = epochTriggeredTimeStr + '-0001-0001-0001-' + rightJustifiedIdStr;\n  \n              // add item to _list\n              list.add(ctx.payload.my_test_index.hits.hits[i]._source);\n            }\n          }  \n\n          // return this list as new payload, for indexing purpose\n          // and we index this new payload to another new index\n          return [ '_doc' : list];"},"index":{"index":"my_test_index_after","doc_type":"doc"}}}}
 
 
 # response - we registered the watcher successfully
