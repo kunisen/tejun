@@ -34,7 +34,7 @@ PUT _template/data
           "synonym": {
             "type": "synonym",
             "lenient": false,
-            "synonyms_path": "analysis/synonym.txt"
+            "synonyms" : ["a good day => Monday"]
           }
         },
         "analyzer": {
